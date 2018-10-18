@@ -40,3 +40,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/btcsuite/btcd"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.2.2"
