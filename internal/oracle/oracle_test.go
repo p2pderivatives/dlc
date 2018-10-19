@@ -4,16 +4,16 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {
+	assert := assert.New(t)
+
 	name := "test"
 	params := chaincfg.RegressionNetParams
 	digit := 1
 
 	_, err := New(name, params, digit)
-	if err != nil {
-		t.Errorf("Failed to create oracle: %v", err)
-		return
-	}
+	assert.Nil(err)
 }
