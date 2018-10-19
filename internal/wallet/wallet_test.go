@@ -5,6 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -17,9 +18,6 @@ func TestNewWallet(t *testing.T) {
 	params := chaincfg.RegressionNetParams
 	seed, _ := hdkeychain.GenerateSeed(RecommendedSeedLen)
 
-	_, err := NewWallet(params, seed)
-	if err != nil {
-		t.Errorf("Failed to create wallet: %v", err)
-		return
-	}
+	wallet, _ := NewWallet(params, seed)
+	assert.NotNil(t, wallet)
 }
