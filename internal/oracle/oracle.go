@@ -13,13 +13,13 @@ const TimeFormat = "20060102"
 
 // Oracle is a struct
 type Oracle struct {
-	name   string                  // display name
-	digit  int                     // digit
-	extKey *hdkeychain.ExtendedKey // extended key
+	name     string                  // display name
+	nRpoints int                     // number of commited R-points
+	extKey   *hdkeychain.ExtendedKey // extended key
 }
 
 // New creates a oracle
-func New(name string, params chaincfg.Params, digit int) (*Oracle, error) {
+func New(name string, params chaincfg.Params, nRpoints int) (*Oracle, error) {
 	if isMainNet(params) {
 		return nil, fmt.Errorf("mainnet isn't supported yet")
 	}
@@ -32,7 +32,7 @@ func New(name string, params chaincfg.Params, digit int) (*Oracle, error) {
 	// TODO: define path for oracle's HD keys
 	// See also bip44, bip47
 
-	oracle := &Oracle{name: name, digit: digit, extKey: extKey}
+	oracle := &Oracle{name: name, nRpoints: nRpoints, extKey: extKey}
 	return oracle, nil
 }
 

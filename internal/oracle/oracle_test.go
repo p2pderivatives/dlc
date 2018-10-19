@@ -12,8 +12,8 @@ func TestNew(t *testing.T) {
 
 	name := "test"
 	params := chaincfg.RegressionNetParams
-	digit := 1
+	nRpoints := 1
 
-	_, err := New(name, params, digit)
+	_, err := New(name, params, nRpoints)
 	assert.Nil(err)
 }

@@ -9,7 +9,7 @@ import (
 func newTestOracle(t *testing.T) (*Oracle, error) {
 	name := "test"
 	params := chaincfg.RegressionNetParams
-	digit := 1
+	nRpoints := 1
 
 	return New(name, params, digit)
 }

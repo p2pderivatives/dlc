@@ -22,6 +22,7 @@ func (k KeySet) ToJSON() ([]byte, error) {
 }
 
 // KeySet returns a key set for given fixing time
+// TODO: Add a document for keyset generation
 func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
 	// TODO: Should we check if it's later than now?
 
@@ -45,7 +46,7 @@ func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
 
 func (oracle Oracle) committedRpoints(hdpath []int) ([]string, error) {
 	keys := []string{}
-	for i := 0; i < oracle.digit; i++ {
+	for i := 0; i < oracle.nRpoints; i++ {
 		_, key, err := oracle.deriveKeys(append(hdpath, i)...)
 		if err != nil {
 			return nil, err
