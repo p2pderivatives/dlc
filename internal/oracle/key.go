@@ -32,13 +32,13 @@ func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
 		return KeySet{}, err
 	}
 
-	// derive pubkeys for all digits at the given time
-	dPubkeys, err := oracle.committedRpoints(hdpath)
+	// derive pubkeys for all committed R-points at the given time
+	rpoints, err := oracle.committedRpoints(hdpath)
 	if err != nil {
 		return KeySet{}, err
 	}
 
-	keyset := KeySet{pubKeyToString(pubkey), dPubkeys}
+	keyset := KeySet{pubKeyToString(pubkey), rpoints}
 
 	return keyset, nil
 }
