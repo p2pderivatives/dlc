@@ -15,8 +15,8 @@ type Wallet struct {
 	extKey *hdkeychain.ExtendedKey
 	params chaincfg.Params
 	size   int
-	rpc    *rpc.BtcRPC
-	infos  []*Info
+	// rpc    *rpc.BtcRPC
+	infos []*Info
 }
 
 // Info is info data.
@@ -27,10 +27,11 @@ type Info struct {
 }
 
 // NewWallet returns a new Wallet
-func NewWallet(params chaincfg.Params, rpc *rpc.BtcRPC, seed []byte) (*Wallet, error) {
+// func NewWallet(params chaincfg.Params, rpc *rpc.BtcRPC, seed []byte) (*Wallet, error) {
+func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
 	wallet := &Wallet{}
 	wallet.params = params
-	wallet.rpc = rpc
+	// wallet.rpc = rpc
 	wallet.size = 16
 	mExtKey, err := hdkeychain.NewMaster(seed, &params)
 	if err != nil {
@@ -57,7 +58,7 @@ func NewWallet(params chaincfg.Params, rpc *rpc.BtcRPC, seed []byte) (*Wallet, e
 		adr, _ := btcutil.NewAddressWitnessPubKeyHash(btcutil.Hash160(pub.SerializeCompressed()), &wallet.params)
 		info := &Info{uint32(i), pub, adr.EncodeAddress()}
 		wallet.infos = append(wallet.infos, info)
-		_, err = rpc.Request("importaddress", adr.EncodeAddress(), "", false)
+		// _, err = rpc.Request("importaddress", adr.EncodeAddress(), "", false)
 		if err != nil {
 			return nil, err
 		}
