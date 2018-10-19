@@ -22,23 +22,23 @@ func (k KeySet) ToJSON() ([]byte, error) {
 }
 
 // KeySet returns a key set for given fixing time
-func (oracle Oracle) KeySet(ftime time.Time) (*KeySet, error) {
+func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
 	// TODO: Should we check if it's later than now?
 
 	// derive oracle's pubkey for the given time
 	hdpath := timeToHDpath(ftime)
 	_, pubkey, err := oracle.deriveKeys(hdpath...)
 	if err != nil {
-		return nil, err
+		return KeySet{}, err
 	}
 
 	// derive pubkeys for all digits at the given time
 	dPubkeys, err := oracle.digitPubkeys(hdpath)
 	if err != nil {
-		return nil, err
+		return KeySet{}, err
 	}
 
-	keyset := &KeySet{pubKeyToString(pubkey), dPubkeys}
+	keyset := KeySet{pubKeyToString(pubkey), dPubkeys}
 
 	return keyset, nil
 }
@@ -57,7 +57,7 @@ func (oracle Oracle) digitPubkeys(hdpath []int) ([]string, error) {
 }
 
 func timeToHDpath(t time.Time) []int {
-	return []int{t.Year(), int(t.Month()), t.Day(), t.Hour()}
+	return []int{t.Year(), int(t.Month()), t.Day(), t.Hour(), t.Minute(), t.Second()}
 }
 
 func pubKeyToString(key *btcec.PublicKey) string {

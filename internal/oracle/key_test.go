@@ -35,4 +35,10 @@ func TestKeySet(t *testing.T) {
 
 	keysetHourLater, _ := o.KeySet(ftime.Add(1 * time.Hour)) // an hour later
 	assert.NotEqual(keyset, keysetHourLater)
+
+	keysetMiniteLater, _ := o.KeySet(ftime.Add(1 * time.Minute)) // a minute later
+	assert.NotEqual(keyset, keysetMiniteLater)
+
+	keysetSecondLater, _ := o.KeySet(ftime.Add(1 * time.Second)) // a second later
+	assert.NotEqual(keyset, keysetSecondLater)
 }
