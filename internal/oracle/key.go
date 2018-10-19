@@ -3,10 +3,8 @@ package oracle
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcutil/hdkeychain"
 )
 
@@ -21,6 +19,24 @@ func (k KeySet) ToJSON() ([]byte, error) {
 	return json.Marshal(k)
 }
 
+// Extended key wrapper
+type privExtKey struct {
+	key *hdkeychain.ExtendedKey
+}
+
+func (key privExtKey) pubKeyStr() (string, error) {
+	pubkey, err := key.key.ECPubKey()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(pubkey.SerializeCompressed()), nil
+}
+
+func (oracle Oracle) baseKey() privExtKey {
+	// TODO: define HD path following bip44, 47
+	return privExtKey{oracle.masterKey}
+}
+
 // KeySet returns a key set for given fixing time
 // TODO: Add a document for keyset generation
 func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
@@ -28,30 +44,38 @@ func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
 
 	// derive oracle's pubkey for the given time
 	hdpath := timeToHDpath(ftime)
-	_, pubkey, err := oracle.deriveKeys(hdpath...)
+	extKey, err := deriveKeys(oracle.baseKey(), hdpath...)
+	if err != nil {
+		return KeySet{}, err
+	}
+	pubkey, err := extKey.pubKeyStr()
 	if err != nil {
 		return KeySet{}, err
 	}
 
 	// derive pubkeys for all committed R-points at the given time
-	rpoints, err := oracle.committedRpoints(hdpath)
+	rpoints, err := committedRpoints(extKey, oracle.nRpoints)
 	if err != nil {
 		return KeySet{}, err
 	}
 
-	keyset := KeySet{pubKeyToString(pubkey), rpoints}
+	keyset := KeySet{pubkey, rpoints}
 
 	return keyset, nil
 }
 
-func (oracle Oracle) committedRpoints(hdpath []int) ([]string, error) {
+func committedRpoints(extKey privExtKey, nRpoints int) ([]string, error) {
 	keys := []string{}
-	for i := 0; i < oracle.nRpoints; i++ {
-		_, key, err := oracle.deriveKeys(append(hdpath, i)...)
+	for i := 0; i < nRpoints; i++ {
+		k, err := deriveKeys(extKey, i)
 		if err != nil {
 			return nil, err
 		}
-		keys = append(keys, pubKeyToString(key))
+		pubKeyStr, err := k.pubKeyStr()
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, pubKeyStr)
 	}
 
 	return keys, nil
@@ -61,45 +85,15 @@ func timeToHDpath(t time.Time) []int {
 	return []int{t.Year(), int(t.Month()), t.Day(), t.Hour(), t.Minute(), t.Second()}
 }
 
-func pubKeyToString(key *btcec.PublicKey) string {
-	return hex.EncodeToString(key.SerializeCompressed())
-}
-
 // deriveKeys derives private and public keys using hierarchical deterministic format
-func (oracle *Oracle) deriveKeys(hdpath ...int) (
-	*btcec.PrivateKey, *btcec.PublicKey, error,
-) {
-	var err error
-
-	key := oracle.extKey
-	if key == nil {
-		err = fmt.Errorf("Extended key must exist")
-		return nil, nil, err
-	}
-
-	// follow the HD path
-	for _, i := range hdpath {
-		key, err = key.Child(uint32(i))
+func deriveKeys(extKey privExtKey, path ...int) (privExtKey, error) {
+	for _, i := range path {
+		key, err := extKey.key.Child(uint32(i))
 		if err != nil {
-			return nil, nil, err
+			return privExtKey{}, err
 		}
+		extKey = privExtKey{key}
 	}
 
-	return ecKeys(key)
-}
-
-func ecKeys(key *hdkeychain.ExtendedKey) (
-	*btcec.PrivateKey, *btcec.PublicKey, error,
-) {
-	prvKey, err := key.ECPrivKey()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	pubKey, err := key.ECPubKey()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return prvKey, pubKey, nil
+	return extKey, nil
 }

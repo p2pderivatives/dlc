@@ -11,5 +11,5 @@ func newTestOracle(t *testing.T) (*Oracle, error) {
 	params := chaincfg.RegressionNetParams
 	nRpoints := 1
 
-	return New(name, params, digit)
+	return New(name, params, nRpoints)
 }
