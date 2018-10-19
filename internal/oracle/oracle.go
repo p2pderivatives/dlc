@@ -25,10 +25,12 @@ func New(name string, params chaincfg.Params, digit int) (*Oracle, error) {
 	}
 
 	extKey, err := randomExtKey(name, params)
-
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: define path for oracle's HD keys
+	// See also bip44, bip47
 
 	oracle := &Oracle{name: name, digit: digit, extKey: extKey}
 	return oracle, nil
