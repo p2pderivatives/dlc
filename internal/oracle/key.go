@@ -12,8 +12,8 @@ import (
 
 // KeySet contains oracle's pub key and keys for all rate
 type KeySet struct {
-	Pubkey       string   `json:"pubkey"`
-	DigitPubkeys []string `json:"digit_pubkeys"`
+	Pubkey           string   `json:"pubkey"`
+	CommittedRpoints []string `json:"committed_rpoints"`
 }
 
 // ToJSON encodes keyset to json
@@ -33,7 +33,7 @@ func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
 	}
 
 	// derive pubkeys for all digits at the given time
-	dPubkeys, err := oracle.digitPubkeys(hdpath)
+	dPubkeys, err := oracle.committedRpoints(hdpath)
 	if err != nil {
 		return KeySet{}, err
 	}
@@ -43,7 +43,7 @@ func (oracle Oracle) KeySet(ftime time.Time) (KeySet, error) {
 	return keyset, nil
 }
 
-func (oracle Oracle) digitPubkeys(hdpath []int) ([]string, error) {
+func (oracle Oracle) committedRpoints(hdpath []int) ([]string, error) {
 	keys := []string{}
 	for i := 0; i < oracle.digit; i++ {
 		_, key, err := oracle.deriveKeys(append(hdpath, i)...)

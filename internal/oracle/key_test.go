@@ -18,7 +18,7 @@ func TestKeySet(t *testing.T) {
 	keyset, err := o.KeySet(ftime)
 	assert.Nil(err)
 	assert.IsType("", keyset.Pubkey)
-	assert.IsType([]string{}, keyset.DigitPubkeys)
+	assert.IsType([]string{}, keyset.CommittedRpoints)
 
 	// Compare with other keysets
 	keysetSame, _ := o.KeySet(ftime) // same time
