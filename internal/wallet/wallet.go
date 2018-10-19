@@ -33,6 +33,8 @@ func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
 	wallet.params = params
 	// wallet.rpc = rpc
 	wallet.size = 16
+
+	// TODO: change later, not safe for protection!!!
 	mExtKey, err := hdkeychain.NewMaster(seed, &params)
 	if err != nil {
 		log.Printf("hdkeychain.NewMaster error : %v", err)
