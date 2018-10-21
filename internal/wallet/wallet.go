@@ -2,10 +2,14 @@
 package wallet
 
 import (
+	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
 )
@@ -66,4 +70,35 @@ func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
 		}
 	}
 	return wallet, nil
+}
+
+// GetWitnessSignature returns signature
+func (w *Wallet) GetWitnessSignature(tx *wire.MsgTx, idx int, amt int64,
+	script []byte, pub *btcec.PublicKey) ([]byte, error) {
+	return w.GetWitnessSignaturePlus(tx, idx, amt, script, pub, nil)
+}
+
+// GetWitnessSignaturePlus returns signature for added private key
+func (w *Wallet) GetWitnessSignaturePlus(tx *wire.MsgTx, idx int, amt int64,
+	script []byte, pub *btcec.PublicKey, add *big.Int) ([]byte, error) {
+	var pri *btcec.PrivateKey
+	for _, info := range w.infos {
+		if info.pub.IsEqual(pub) {
+			key, _ := w.extKey.Child(info.idx)
+			pri, _ = key.ECPrivKey()
+		}
+	}
+	if pri == nil {
+		return nil, fmt.Errorf("unknown public key %x", pub.SerializeCompressed())
+	}
+	if add != nil {
+		num := new(big.Int).Mod(new(big.Int).Add(pri.D, add), btcec.S256().N)
+		pri, _ = btcec.PrivKeyFromBytes(btcec.S256(), num.Bytes())
+	}
+	sighash := txscript.NewTxSigHashes(tx)
+	sign, err := txscript.RawTxInWitnessSignature(tx, sighash, idx, amt, script, txscript.SigHashAll, pri)
+	if err != nil {
+		return nil, err
+	}
+	return sign, nil
 }

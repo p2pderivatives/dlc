@@ -21,3 +21,6 @@ func TestNewWallet(t *testing.T) {
 	wallet, _ := NewWallet(params, seed)
 	assert.NotNil(t, wallet)
 }
+
+func TestGetWitnessSignature(t *testing.T) {
+}
