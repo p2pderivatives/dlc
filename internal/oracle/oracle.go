@@ -8,14 +8,12 @@ import (
 	"github.com/btcsuite/btcutil/hdkeychain"
 )
 
-// TimeFormat is a format of settlement time
-const TimeFormat = "20060102"
-
 // Oracle is a struct
 type Oracle struct {
 	name      string                  // display name
 	nRpoints  int                     // number of commited R-points
 	masterKey *hdkeychain.ExtendedKey // master HD extended key (private)
+	db        *memdb                  // memory db for testing
 }
 
 // New creates a oracle

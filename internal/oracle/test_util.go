@@ -6,10 +6,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 )
 
-func newTestOracle(t *testing.T) (*Oracle, error) {
+func newTestOracle(t *testing.T, nRpoints int) (*Oracle, error) {
 	name := "test"
 	params := chaincfg.RegressionNetParams
-	nRpoints := 1
 
 	return New(name, params, nRpoints)
 }
