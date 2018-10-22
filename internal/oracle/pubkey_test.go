@@ -69,7 +69,7 @@ func TestCommit(t *testing.T) {
 		if mkey.X == nil {
 			mkey.X, mkey.Y = p.X, p.Y
 		} else {
-			mkey.X, mkey.Y = btcec.S256().Add(mkey.X, mkey.Y, mkey.X, mkey.Y)
+			mkey.X, mkey.Y = btcec.S256().Add(mkey.X, mkey.Y, p.X, p.Y)
 		}
 	}
 
