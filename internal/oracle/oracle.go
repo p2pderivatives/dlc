@@ -8,9 +8,6 @@ import (
 	"github.com/btcsuite/btcutil/hdkeychain"
 )
 
-// TimeFormat is a format of settlement time
-const TimeFormat = "20060102"
-
 // Oracle is a struct
 type Oracle struct {
 	name      string                  // display name
