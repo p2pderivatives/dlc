@@ -15,8 +15,7 @@ import (
 //   R: R-point
 //   m: message
 //   V: oracle's public key
-func Commit(
-	V *btcec.PublicKey, R *btcec.PublicKey, m []byte) *btcec.PublicKey {
+func Commit(V, R *btcec.PublicKey, m []byte) *btcec.PublicKey {
 	// - h(R, m)
 	h := hash(R, m)
 	h = new(big.Int).Neg(h)
@@ -47,8 +46,7 @@ func Commit(
 //   rpriv: random point EC private key
 //   opriv: oracle's EC private key
 //   m: message
-func Sign(
-	opriv *btcec.PrivateKey, rpriv *btcec.PrivateKey, m []byte) *big.Int {
+func Sign(opriv, rpriv *btcec.PrivateKey, m []byte) *big.Int {
 	R := rpriv.PubKey()
 	k := rpriv.D
 	v := opriv.D
