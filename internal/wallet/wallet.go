@@ -10,17 +10,17 @@ import (
 	"github.com/btcsuite/btcutil/hdkeychain"
 )
 
-// Wallet is wallet
+// Wallet is hierarchical deterministic wallet
 type Wallet struct {
 	extKey *hdkeychain.ExtendedKey
 	params chaincfg.Params
 	size   int
 	// rpc    *rpc.BtcRPC
-	infos []*Info
+	pubKeyInfos []*PublicKeyInfo
 }
 
-// Info is info data.
-type Info struct {
+// PublicKeyInfo is publickey data.
+type PublicKeyInfo struct {
 	idx uint32
 	pub *btcec.PublicKey
 	adr string
@@ -53,13 +53,13 @@ func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
 		}
 	}
 	wallet.extKey = key
-	wallet.infos = []*Info{}
+	wallet.pubKeyInfos = []*PublicKeyInfo{}
 	for i := 0; i < wallet.size; i++ {
 		key, _ := wallet.extKey.Child(uint32(i))
 		pub, _ := key.ECPubKey()
 		adr, _ := btcutil.NewAddressWitnessPubKeyHash(btcutil.Hash160(pub.SerializeCompressed()), &wallet.params)
-		info := &Info{uint32(i), pub, adr.EncodeAddress()}
-		wallet.infos = append(wallet.infos, info)
+		info := &PublicKeyInfo{uint32(i), pub, adr.EncodeAddress()}
+		wallet.pubKeyInfos = append(wallet.pubKeyInfos, info)
 		// _, err = rpc.Request("importaddress", adr.EncodeAddress(), "", false)
 		if err != nil {
 			return nil, err
