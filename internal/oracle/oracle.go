@@ -13,6 +13,7 @@ type Oracle struct {
 	name      string                  // display name
 	nRpoints  int                     // number of commited R-points
 	masterKey *hdkeychain.ExtendedKey // master HD extended key (private)
+	db        *memdb                  // memory db for testing
 }
 
 // New creates a oracle

@@ -1,23 +1,20 @@
 package oracle
 
 import (
-	"encoding/json"
 	"time"
+
+	"github.com/btcsuite/btcd/btcec"
 )
 
 // PubkeySet contains oracle's pub key and keys for all rate
 type PubkeySet struct {
-	Pubkey           string   `json:"pubkey"`
-	CommittedRpoints []string `json:"committed_rpoints"`
-}
-
-// ToJSON encodes pubkey set to json
-func (k *PubkeySet) ToJSON() ([]byte, error) {
-	return json.Marshal(k)
+	Pubkey           *btcec.PublicKey
+	CommittedRpoints []*btcec.PublicKey
 }
 
 // PubkeySet returns a key set for given fixing time
 // TODO: Add a document for pubkey set generation
+// TODO: implement serialization and parsing
 func (oracle *Oracle) PubkeySet(ftime time.Time) (PubkeySet, error) {
 	// TODO: Should we check if it's later than now?
 
@@ -26,7 +23,7 @@ func (oracle *Oracle) PubkeySet(ftime time.Time) (PubkeySet, error) {
 	if err != nil {
 		return PubkeySet{}, err
 	}
-	pubkey, err := extKey.pubKeyStr()
+	pubkey, err := extKey.ECPubKey()
 	if err != nil {
 		return PubkeySet{}, err
 	}
@@ -42,19 +39,20 @@ func (oracle *Oracle) PubkeySet(ftime time.Time) (PubkeySet, error) {
 	return keyset, nil
 }
 
-func committedRpoints(extKey *privExtKey, nRpoints int) ([]string, error) {
-	keys := []string{}
+func committedRpoints(
+	extKey *privExtKey, nRpoints int) ([]*btcec.PublicKey, error) {
+	pubs := []*btcec.PublicKey{}
 	for i := 0; i < nRpoints; i++ {
 		k, err := extKey.derive(i)
 		if err != nil {
 			return nil, err
 		}
-		pubKeyStr, err := k.pubKeyStr()
+		pub, err := k.ECPubKey()
 		if err != nil {
 			return nil, err
 		}
-		keys = append(keys, pubKeyStr)
+		pubs = append(pubs, pub)
 	}
 
-	return keys, nil
+	return pubs, nil
 }

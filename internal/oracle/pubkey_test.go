@@ -10,14 +10,13 @@ import (
 func TestPubkeySet(t *testing.T) {
 	assert := assert.New(t)
 
-	o, _ := newTestOracle(t)
+	o := NewTestOracle()
 
 	// Get KeySet
 	ftime := time.Now()
 	keyset, err := o.PubkeySet(ftime)
 	assert.Nil(err)
-	assert.IsType("", keyset.Pubkey)
-	assert.IsType([]string{}, keyset.CommittedRpoints)
+	assert.IsType(PubkeySet{}, keyset)
 
 	// Compare with other keysets
 	keysetSame, _ := o.PubkeySet(ftime) // same time

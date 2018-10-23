@@ -1,7 +1,6 @@
 package oracle
 
 import (
-	"encoding/hex"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -24,14 +23,6 @@ func (key *privExtKey) ECPubKey() (*btcec.PublicKey, error) {
 
 func (key *privExtKey) ECPrivKey() (*btcec.PrivateKey, error) {
 	return key.key.ECPrivKey()
-}
-
-func (key *privExtKey) pubKeyStr() (string, error) {
-	pubkey, err := key.ECPubKey()
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(pubkey.SerializeCompressed()), nil
 }
 
 // deriveKeys derives child key following HD path
