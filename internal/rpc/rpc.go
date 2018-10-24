@@ -137,7 +137,3 @@ func (rpc *BtcRPC) log(format string, v ...interface{}) {
 		log.Printf(format, v...)
 	}
 }
-
-func main() {
-	fmt.Println("Hello World")
-}
