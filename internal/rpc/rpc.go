@@ -2,8 +2,6 @@
 package rpc
 
 import (
-	"log"
-
 	"github.com/btcsuite/btcd/rpcclient"
 )
 
@@ -49,10 +47,4 @@ func NewBtcdRPC(url, user, pass string) (*rpcclient.Client, error) {
 	}
 
 	return rpcclient.New(connCfg, nil)
-}
-
-func (rpc *BtcRPC) log(format string, v ...interface{}) {
-	if rpc.View {
-		log.Printf(format, v...)
-	}
 }
