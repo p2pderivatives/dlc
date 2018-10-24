@@ -5,36 +5,6 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 )
 
-// BtcRPC is request info.
-type BtcRPC struct {
-	URL  string // bitcoin full node endpoint url
-	User string // rpcuser
-	Pass string // rpcpassword
-	View bool   // If true, the log is displayed.
-}
-
-// BtcRPCRequest is request parameters.
-type BtcRPCRequest struct {
-	// bitcoin rpc request format
-	Jsonrpc string        `json:"jsonrpc,"`
-	ID      string        `json:"id,"`
-	Method  string        `json:"method,"`
-	Params  []interface{} `json:"params,"`
-}
-
-// Response is response details.
-type Response struct {
-	Result interface{} `json:"result,"`
-	Error  interface{} `json:"error,"`
-	ID     string      `json:"id,"`
-}
-
-// Error is error details.
-type Error struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
-
 // NewBtcdRPC returns new rpcclient.Client.
 func NewBtcdRPC(url, user, pass string) (*rpcclient.Client, error) {
 	// convert url, user, pass strings into connConfig
