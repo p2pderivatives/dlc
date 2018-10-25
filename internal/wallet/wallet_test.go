@@ -105,10 +105,3 @@ func TestNewAddress(t *testing.T) {
 		return nil
 	})
 }
-
-func TestGetWitnessSignature(t *testing.T) {
-	// GetWitnessSignature(tx *wire.MsgTx, idx int, amt int64,
-	// 	script []byte, pub *btcec.PublicKey) ([]byte, error)
-}
-func TestGetWitnessSignaturePlus(t *testing.T) {
-}
