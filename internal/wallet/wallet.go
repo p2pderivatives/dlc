@@ -2,7 +2,11 @@
 package wallet
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -10,6 +14,22 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/btcsuite/btcwallet/waddrmgr"
+	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/btcsuite/btcwallet/wtxmgr"
+)
+
+const (
+	PUBPASSPHRASE []byte = pubpass
+	PRIPASSPHRASE []byte = pripass
+
+	// BIRTHDAY  Time.time =
+)
+
+// Namespace bucket keys.
+var (
+	waddrmgrNamespaceKey = []byte("waddrmgr")
+	wtxmgrNamespaceKey   = []byte("wtxmgr")
 )
 
 // Wallet is hierarchical deterministic wallet
@@ -19,6 +39,7 @@ type Wallet struct {
 	size   int
 	// rpc    *rpc.BtcRPC
 	pubKeyInfos []*PublicKeyInfo
+	Manager     *waddrmgr.Manager
 }
 
 // PublicKeyInfo is publickey data.
@@ -35,6 +56,40 @@ func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
 	wallet.params = params
 	// wallet.rpc = rpc
 	wallet.size = 16
+
+	dbPath := filepath.Join(os.TempDir(), "dev.db")
+	db, err := walletdb.Create("bdb", dbPath)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	err = walletdb.Update(db,
+		func(tx walletdb.ReadWriteTx) error {
+			addrmgrNs, err := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
+			if err != nil {
+				return err
+			}
+			txmgrNs, err := tx.CreateTopLevelBucket(wtxmgrNamespaceKey)
+			if err != nil {
+				return err
+			}
+
+			err = waddrmgr.Create(
+				addrmgrNs, seed, pubPass, privPass, params, nil,
+				birthday,
+			)
+			if err != nil {
+				return err
+			}
+			return wtxmgr.Create(txmgrNs)
+		})
+
+	addrmgrNs, err := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	wallet.Manager = waddrmgr.Create(ns, seed, PUBPASSPHRASE, PRIPASSPHRASE, params, nil, time.Now())
 
 	// TODO: change later, not safe for protection!!!
 	mExtKey, err := hdkeychain.NewMaster(seed, &params)
