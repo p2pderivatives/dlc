@@ -15,12 +15,6 @@ import (
 	"github.com/btcsuite/btcwallet/wtxmgr"
 )
 
-const (
-	PUBPASSPHRASE = "pubpass"
-	PRIPASSPHRASE = "pripass"
-	// BIRTHDAY  Time.time =
-)
-
 // Namespace bucket keys.
 var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
@@ -33,8 +27,9 @@ type Wallet struct {
 	size   int // is this parameter still needed?
 	// rpc    *rpc.BtcRPC
 
-	db      walletdb.DB
-	Manager *waddrmgr.Manager
+	db               walletdb.DB
+	Manager          *waddrmgr.Manager
+	publicPassphrase []byte
 }
 
 // PublicKeyInfo is publickey data.
@@ -46,11 +41,12 @@ type PublicKeyInfo struct {
 
 // NewWallet returns a new Wallet
 // func NewWallet(params chaincfg.Params, rpc *rpc.BtcRPC, seed []byte) (*Wallet, error) {
-func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
+func NewWallet(params chaincfg.Params, seed, pubPass, privPass []byte) (*Wallet, error) {
 	wallet := &Wallet{}
 	wallet.params = params
 	// wallet.rpc = rpc
 	wallet.size = 16
+	wallet.publicPassphrase = pubPass
 
 	dbPath := filepath.Join(os.TempDir(), "dev.db")
 	db, err := walletdb.Create("bdb", dbPath)
@@ -70,7 +66,7 @@ func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
 
 		birthday := time.Now()
 		err = waddrmgr.Create(
-			addrmgrNs, seed, []byte(PUBPASSPHRASE), []byte(PRIPASSPHRASE), &params, nil,
+			addrmgrNs, seed, pubPass, privPass, &params, nil,
 			birthday,
 		)
 		if err != nil {
