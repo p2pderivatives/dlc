@@ -6,7 +6,7 @@ import (
 	"github.com/dgarage/dlc/internal/schnorr"
 )
 
-// SignSet contains fixing messages and signs for committed R points
+// SignSet contains fixed messages and signs
 // TODO: implement serialization and parsing
 type SignSet struct {
 	Msgs  [][]byte
@@ -25,7 +25,7 @@ func (oracle *Oracle) SignSet(ftime time.Time) (SignSet, error) {
 		return SignSet{}, err
 	}
 
-	signs, err := signsMsgs(msgs, extKey)
+	signs, err := signMsgs(msgs, extKey)
 	if err != nil {
 		return SignSet{}, err
 	}
@@ -33,7 +33,7 @@ func (oracle *Oracle) SignSet(ftime time.Time) (SignSet, error) {
 	return SignSet{msgs, signs}, nil
 }
 
-func signsMsgs(msgs [][]byte, extKey *privExtKey) ([][]byte, error) {
+func signMsgs(msgs [][]byte, extKey *privExtKey) ([][]byte, error) {
 	opriv, err := extKey.ECPrivKey()
 	if err != nil {
 		return [][]byte{}, err
