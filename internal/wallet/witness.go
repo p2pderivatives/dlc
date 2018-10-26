@@ -1,6 +1,8 @@
 package wallet
 
 import (
+	"fmt"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
@@ -16,8 +18,32 @@ func P2WPKHpkScript(pub *btcec.PublicKey) ([]byte, error) {
 	return builder.Script()
 }
 
+// SignP2WPKH appends witness to P2WPKH txin
+func (wallet *Wallet) SignP2WPKH(
+	tx *wire.MsgTx,
+	idx int,
+	amt int64,
+	script []byte,
+	pub *btcec.PublicKey,
+) error {
+	priv, err := wallet.privkeyFromPubkey(pub)
+	if err != nil {
+		return err
+	}
+
+	sign, err := witnessSignature(tx, idx, amt, script, priv)
+	if err != nil {
+		return err
+	}
+
+	wt := wire.TxWitness{sign, pub.SerializeCompressed()}
+	tx.TxIn[idx].Witness = wt
+
+	return nil
+}
+
 // WitnessSignature returns signature for given script
-func WitnessSignature(
+func witnessSignature(
 	tx *wire.MsgTx,
 	idx int,
 	amt int64,
@@ -29,10 +55,7 @@ func WitnessSignature(
 		tx, sighash, idx, amt, script, txscript.SigHashAll, priv)
 }
 
-// WitnessForP2WPKH returns witness for P2WPKH
-func WitnessForP2WPKH(sign []byte, pub *btcec.PublicKey) [][]byte {
-	tw := wire.TxWitness{}
-	tw = append(tw, sign)
-	tw = append(tw, pub.SerializeCompressed())
-	return tw
+// TODO: implement me
+func (wallet *Wallet) privkeyFromPubkey(pub *btcec.PublicKey) (*btcec.PrivateKey, error) {
+	return &btcec.PrivateKey{}, fmt.Errorf("Impelment me")
 }

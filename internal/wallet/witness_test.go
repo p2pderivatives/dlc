@@ -13,6 +13,7 @@ func TestP2WPKHpkScript(t *testing.T) {
 	var err error
 	assert := assert.New(t)
 
+	wallet := test.NewWallet()
 	pri, pub := test.RandKeys()
 	amt := int64(10000)
 	pkScript, _ := P2WPKHpkScript(pub)
@@ -27,10 +28,9 @@ func TestP2WPKHpkScript(t *testing.T) {
 	// create redeem tx from source tx
 	redeemTx := createRedeemTx(sourceTx)
 
-	// append witness signature to redeem tx
-	sign, err := WitnessSignature(redeemTx, 0, amt, pkScript, pri)
+	// sign P2WPKH
+	err := wallet.SignP2WPKH(redeemTx, 0, amt, pkScript, pub)
 	assert.Nil(err)
-	redeemTx.TxIn[0].Witness = WitnessForP2WPKH(sign, pub)
 
 	// execute script
 	err = executeScript(pkScript, redeemTx, amt)
