@@ -11,16 +11,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewWallet(t *testing.T) {
+func TestCreateWallet(t *testing.T) {
 	params := chaincfg.RegressionNetParams
 	pubPass := []byte("testpub")
 	privPass := []byte("testpri")
 	dbFilePath := "~/testdb"
+	walletName := "testwallet"
 	seed, _ := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 
-	wallet, _ := NewWallet(params, seed, pubPass, privPass, dbFilePath)
+	wallet, _ := CreateWallet(params, seed, pubPass, privPass, dbFilePath, walletName)
 	assert.NotNil(t, wallet)
 	assert.NotNil(t, wallet.Manager)
+	assert.NotNil(t, wallet.db)
+	assert.NotNil(t, wallet.publicPassphrase)
 
 	// delete created db
 	_ = os.RemoveAll(dbFilePath)
@@ -28,18 +31,20 @@ func TestNewWallet(t *testing.T) {
 
 // TODO: create testing interface
 
-func TestCreateNewAccount(t *testing.T) {
+func TestCreateAccount(t *testing.T) {
 	params := chaincfg.RegressionNetParams
 	pubPass := []byte("testpub")
 	privPass := []byte("testpri")
 	dbFilePath := "~/testdb2"
+	walletName := "testwallet"
+
 	seed, _ := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 
-	wallet, _ := NewWallet(params, seed, pubPass, privPass, dbFilePath)
+	wallet, _ := CreateWallet(params, seed, pubPass, privPass, dbFilePath, walletName)
 	assert.NotNil(t, wallet.Manager)
 
 	testAccountName := "testy"
-	account, _ := wallet.NewAccount(waddrmgr.KeyScopeBIP0084, testAccountName, privPass)
+	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, privPass)
 
 	// TODO: actually use a testing library
 	fmt.Printf("account: %d, \n", account)

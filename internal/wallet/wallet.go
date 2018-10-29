@@ -38,16 +38,15 @@ type PublicKeyInfo struct {
 }
 
 // NewWallet returns a new Wallet
-// func NewWallet(params chaincfg.Params, rpc *rpc.BtcRPC, seed []byte) (*Wallet, error) {
-func CreateNewWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath string) (*Wallet, error) {
+func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath, walletName string) (*Wallet, error) {
 	wallet := &Wallet{}
 	wallet.params = params
 	// wallet.rpc = rpc
 	wallet.publicPassphrase = pubPass
 
 	// TODO: add prompts for dbDirPath, walletDBname
-	dbDirPath := filepath.Join(dbFilePath, "testnet")
-	walletDBname := "dev.db"
+	dbDirPath := filepath.Join(dbFilePath, params.Name)
+	walletDBname := walletName + ".db"
 	dbPath := filepath.Join(dbDirPath, walletDBname)
 	exists, err := fileExists(dbPath)
 	if err != nil {
@@ -71,12 +70,12 @@ func CreateNewWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbF
 	wallet.db = db
 
 	var mgr *waddrmgr.Manager
-	fmt.Printf("creating wallet Manager @@@@@@@@@@ \n")
 	err = walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
 		addrmgrNs, err := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
 		if err != nil {
 			return err
 		}
+		// TODO: figure out if txmgrNs is needed
 		//txmgrNs, err := tx.CreateTopLevelBucket(wtxmgrNamespaceKey)
 		//if err != nil {
 		//	return err
@@ -89,7 +88,6 @@ func CreateNewWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbF
 		)
 		if err != nil {
 			db.Close()
-			//_  = os.RemoveAll(dirName)
 			return err
 		}
 		mgr, err = waddrmgr.Open(addrmgrNs, pubPass, &params)
@@ -101,7 +99,7 @@ func CreateNewWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbF
 	return wallet, nil
 }
 
-func (w *Wallet) NewAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
+func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
