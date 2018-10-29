@@ -2,68 +2,129 @@
 package wallet
 
 import (
-	"log"
+	"errors"
+	"os"
+	"path/filepath"
+	"time"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil"
-	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/btcsuite/btcwallet/waddrmgr"
+	"github.com/btcsuite/btcwallet/walletdb"
+	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
+)
+
+// Namespace bucket keys.
+var (
+	waddrmgrNamespaceKey = []byte("waddrmgr")
 )
 
 // Wallet is hierarchical deterministic wallet
 type Wallet struct {
-	extKey *hdkeychain.ExtendedKey
 	params chaincfg.Params
-	size   int
 	// rpc    *rpc.BtcRPC
-	pubKeyInfos []*PublicKeyInfo
+
+	db               walletdb.DB
+	Manager          *waddrmgr.Manager
+	publicPassphrase []byte
 }
 
-// PublicKeyInfo is publickey data.
-type PublicKeyInfo struct {
-	idx uint32
-	pub *btcec.PublicKey
-	adr string
-}
-
-// NewWallet returns a new Wallet
-// func NewWallet(params chaincfg.Params, rpc *rpc.BtcRPC, seed []byte) (*Wallet, error) {
-func NewWallet(params chaincfg.Params, seed []byte) (*Wallet, error) {
+// CreateWallet returns a new Wallet, also creates db where wallet resides
+func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath, walletName string) (*Wallet, error) {
 	wallet := &Wallet{}
 	wallet.params = params
 	// wallet.rpc = rpc
-	wallet.size = 16
+	wallet.publicPassphrase = pubPass
 
-	// TODO: change later, not safe for protection!!!
-	mExtKey, err := hdkeychain.NewMaster(seed, &params)
+	// TODO: add prompts for dbDirPath, walletDBname
+	dbDirPath := filepath.Join(dbFilePath, params.Name)
+	walletDBname := walletName + ".db"
+	dbPath := filepath.Join(dbDirPath, walletDBname)
+	exists, err := fileExists(dbPath)
 	if err != nil {
-		log.Printf("hdkeychain.NewMaster error : %v", err)
 		return nil, err
 	}
-	key := mExtKey
-	// m/44'/coin-type'/0'/0
-	path := []uint32{44 | hdkeychain.HardenedKeyStart,
-		params.HDCoinType | hdkeychain.HardenedKeyStart,
-		0 | hdkeychain.HardenedKeyStart, 0}
-	for _, i := range path {
-		key, err = key.Child(i)
-		if err != nil {
-			log.Printf("key.Child error : %v", err)
-			return nil, err
-		}
+	if exists {
+		return nil, errors.New("something already exists on this filepath")
 	}
-	wallet.extKey = key
-	wallet.pubKeyInfos = []*PublicKeyInfo{}
-	for i := 0; i < wallet.size; i++ {
-		key, _ := wallet.extKey.Child(uint32(i))
-		pub, _ := key.ECPubKey()
-		adr, _ := btcutil.NewAddressWitnessPubKeyHash(btcutil.Hash160(pub.SerializeCompressed()), &wallet.params)
-		info := &PublicKeyInfo{uint32(i), pub, adr.EncodeAddress()}
-		wallet.pubKeyInfos = append(wallet.pubKeyInfos, info)
-		// _, err = rpc.Request("importaddress", adr.EncodeAddress(), "", false)
-		if err != nil {
-			return nil, err
-		}
+	err = os.MkdirAll(dbDirPath, 0700)
+	if err != nil {
+		return nil, err
 	}
+
+	db, err := walletdb.Create("bdb", dbPath)
+	if err != nil {
+		return nil, err
+	}
+	wallet.db = db
+
+	var mgr *waddrmgr.Manager
+	err = walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
+		addrmgrNs, err := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
+		if err != nil {
+			return err
+		}
+
+		birthday := time.Now()
+		err = waddrmgr.Create(
+			addrmgrNs, seed, pubPass, privPass, &params, nil,
+			birthday,
+		)
+		if err != nil {
+			// TODO: figure out how to gracefully close db
+			//   possibly defer db.Close() ?
+			db.Close()
+			return err
+		}
+		mgr, err = waddrmgr.Open(addrmgrNs, pubPass, &params)
+		wallet.Manager = mgr
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return wallet, nil
+}
+
+// CreateAccount creates a new account in ScopedKeyManagar of scope
+func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
+	// unlock Manager
+	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
+		err := w.Manager.Unlock(ns, privPass)
+		return err
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
+	if err != nil {
+		return 0, err
+	}
+
+	var account uint32
+	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
+		account, err = scopedMgr.NewAccount(ns, name)
+		return err
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return account, nil
+}
+
+// Helper function, TODO: move somewhere else?
+func fileExists(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
