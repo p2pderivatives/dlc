@@ -4,5 +4,8 @@ This package provides a secure(?) hierarchical deterministic wallet. The hierarc
 
 ## How address management works
 
-When a wallet is created, `Manager` is created as part of the wallet. A `ScopedKeyManager` is a sub key manager under the main root key manager; each scoped key managagers handles the cointype key for a particular key scope (m/purpose/cointype)
+When a wallet is created, `Manager` is created as part of the wallet. `Manager` is the root manager; it handles the root HD key (m/). A `ScopedKeyManager` is a sub key manager under the main root key manager; each scoped key managagers handles the cointype key for a particular key scope (m/purpose/cointype). 
 
+Under each `ScopedKeyManager` are `Account` types associated with that `ScopedKeyManager`.
+
+For more information on address management, please consult the original [godoc](https://godoc.org/github.com/btcsuite/btcwallet/waddrmgr). 
