@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -48,6 +49,30 @@ func TestCreateAccount(t *testing.T) {
 	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, privPass)
 
 	assert.Equal(t, expectedAccountNumber, account)
+
+	_ = os.RemoveAll(dbFilePath)
+}
+
+func TestNewExternalAddress(t *testing.T) {
+	params := chaincfg.RegressionNetParams
+	pubPass := []byte("testpub")
+	privPass := []byte("testpri")
+	dbFilePath := "./testdb2"
+	walletName := "testwallet"
+
+	seed, _ := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
+
+	wallet, _ := CreateWallet(params, seed, pubPass, privPass, dbFilePath, walletName)
+	assert.NotNil(t, wallet.Manager)
+
+	testAccountName := "testy"
+	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, privPass)
+
+	numAddresses := uint32(4)
+
+	addrs, _ := wallet.NewExternalAddress(waddrmgr.KeyScopeBIP0084, privPass, account, numAddresses)
+	fmt.Printf("%+v", addrs)
+	fmt.Printf("%+v", addrs[0])
 
 	_ = os.RemoveAll(dbFilePath)
 }

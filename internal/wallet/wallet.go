@@ -118,6 +118,40 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 	return account, nil
 }
 
+// request next external adddress?
+func (w *Wallet) NewExternalAddress(scope waddrmgr.KeyScope, privPass []byte, account uint32,
+	numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
+
+	// unlock Manager
+	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
+		e := w.Manager.Unlock(ns, privPass)
+		return e
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// get ScopedKeyManager
+	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
+	if err != nil {
+		return nil, err
+	}
+
+	var addrs []waddrmgr.ManagedAddress
+	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
+		var e error
+		addrs, e = scopedMgr.NextExternalAddresses(ns, account, 3)
+		return e
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return addrs, nil
+}
+
 // Helper function, TODO: move somewhere else?
 func fileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
