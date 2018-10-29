@@ -43,10 +43,9 @@ func Commit(V, R *btcec.PublicKey, m []byte) *btcec.PublicKey {
 //   G: elliptic curve base
 //   v: oracle's private key
 // Parameters:
-//   rpriv: random point EC private key
-//   opriv: oracle's EC private key
+//   rpriv: random point EC private key opriv: oracle's EC private key
 //   m: message
-func Sign(opriv, rpriv *btcec.PrivateKey, m []byte) *big.Int {
+func Sign(opriv, rpriv *btcec.PrivateKey, m []byte) []byte {
 	R := rpriv.PubKey()
 	k := rpriv.D
 	v := opriv.D
@@ -59,7 +58,8 @@ func Sign(opriv, rpriv *btcec.PrivateKey, m []byte) *big.Int {
 
 	// s mod N
 	s = new(big.Int).Mod(s, btcec.S256().N)
-	return s
+
+	return s.Bytes()
 }
 
 func hash(R *btcec.PublicKey, m []byte) *big.Int {
@@ -72,8 +72,8 @@ func hash(R *btcec.PublicKey, m []byte) *big.Int {
 }
 
 // Verify verfies sG = R - h(R, m) * V
-func Verify(P *btcec.PublicKey, sign *big.Int) bool {
+func Verify(P *btcec.PublicKey, sign []byte) bool {
 	sG := new(btcec.PublicKey)
-	sG.X, sG.Y = btcec.S256().ScalarBaseMult(sign.Bytes())
+	sG.X, sG.Y = btcec.S256().ScalarBaseMult(sign)
 	return P.IsEqual(sG)
 }
