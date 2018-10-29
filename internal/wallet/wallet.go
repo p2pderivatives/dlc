@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -17,7 +16,7 @@ import (
 // Namespace bucket keys.
 var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
-	wtxmgrNamespaceKey   = []byte("wtxmgr")
+	// wtxmgrNamespaceKey   = []byte("wtxmgr")
 )
 
 // Wallet is hierarchical deterministic wallet
@@ -30,14 +29,7 @@ type Wallet struct {
 	publicPassphrase []byte
 }
 
-// PublicKeyInfo is publickey data.
-type PublicKeyInfo struct {
-	idx uint32
-	pub *btcec.PublicKey
-	adr string
-}
-
-// NewWallet returns a new Wallet
+// CreateWallet returns a new Wallet, also creates db where wallet resides
 func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath, walletName string) (*Wallet, error) {
 	wallet := &Wallet{}
 	wallet.params = params
@@ -95,10 +87,15 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 
 		return err
 	})
+	if err != nil {
+		fmt.Printf("Error creating waddrmgr.Manager: %v", err)
+		return nil, err
+	}
 
 	return wallet, nil
 }
 
+// CreateAccount creates a new account in ScopedKeyManagar of scope
 func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
@@ -111,6 +108,10 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 	}
 
 	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
+	if err != nil {
+		fmt.Printf("FetchScopedKeyManager: unexpected error: %v", err)
+		return 0, err
+	}
 
 	var account uint32
 	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
