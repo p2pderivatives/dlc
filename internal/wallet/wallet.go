@@ -11,8 +11,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
-	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
-	"github.com/btcsuite/btcwallet/wtxmgr"
+	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
 )
 
 // Namespace bucket keys.
@@ -24,7 +23,6 @@ var (
 // Wallet is hierarchical deterministic wallet
 type Wallet struct {
 	params chaincfg.Params
-	size   int // is this parameter still needed?
 	// rpc    *rpc.BtcRPC
 
 	db               walletdb.DB
@@ -41,28 +39,48 @@ type PublicKeyInfo struct {
 
 // NewWallet returns a new Wallet
 // func NewWallet(params chaincfg.Params, rpc *rpc.BtcRPC, seed []byte) (*Wallet, error) {
-func NewWallet(params chaincfg.Params, seed, pubPass, privPass []byte) (*Wallet, error) {
+func CreateNewWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath string) (*Wallet, error) {
 	wallet := &Wallet{}
 	wallet.params = params
 	// wallet.rpc = rpc
-	wallet.size = 16
 	wallet.publicPassphrase = pubPass
 
-	dbPath := filepath.Join(os.TempDir(), "dev.db")
+	// TODO: add prompts for dbDirPath, walletDBname
+	dbDirPath := filepath.Join(dbFilePath, "testnet")
+	walletDBname := "dev.db"
+	dbPath := filepath.Join(dbDirPath, walletDBname)
+	exists, err := fileExists(dbPath)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		fmt.Printf("Something already exists on this filepath!")
+		return nil, err
+	}
+	err = os.MkdirAll(dbDirPath, 0700)
+	if err != nil {
+		return nil, err
+	}
+
 	db, err := walletdb.Create("bdb", dbPath)
 	if err != nil {
+		_ = os.RemoveAll(dbDirPath)
 		fmt.Println(err)
 		return nil, err
 	}
+	wallet.db = db
+
+	var mgr *waddrmgr.Manager
+	fmt.Printf("creating wallet Manager @@@@@@@@@@ \n")
 	err = walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
 		addrmgrNs, err := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
 		if err != nil {
 			return err
 		}
-		txmgrNs, err := tx.CreateTopLevelBucket(wtxmgrNamespaceKey)
-		if err != nil {
-			return err
-		}
+		//txmgrNs, err := tx.CreateTopLevelBucket(wtxmgrNamespaceKey)
+		//if err != nil {
+		//	return err
+		//}
 
 		birthday := time.Now()
 		err = waddrmgr.Create(
@@ -70,23 +88,55 @@ func NewWallet(params chaincfg.Params, seed, pubPass, privPass []byte) (*Wallet,
 			birthday,
 		)
 		if err != nil {
+			db.Close()
+			//_  = os.RemoveAll(dirName)
 			return err
 		}
-		return wtxmgr.Create(txmgrNs)
+		mgr, err = waddrmgr.Open(addrmgrNs, pubPass, &params)
+		wallet.Manager = mgr
+
+		return err
 	})
+
 	return wallet, nil
 }
 
-// func (w *Wallet) SendTx(tx *wire.MsgTx) (*chainhash.Hash, error) {
-// 	allowHighFees := false
-// 	//return w.rpc.SendRawTransaction(tx, allowHighFees)
+func (w *Wallet) NewAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
+	// unlock Manager
+	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
+		err := w.Manager.Unlock(ns, privPass)
+		return err
+	})
+	if err != nil {
+		return 0, err
+	}
 
-// 	// testing
-// 	// marshalled: `{"jsonrpc":"1.0","method":"sendrawtransaction","params":["1122"],"id":1}`,
-// 	// unmarshalled: &btcjson.SendRawTransactionCmd{
-// 	// 	HexTx:         "1122",
-// 	// 	AllowHighFees: btcjson.Bool(false),
-// 	// },
-// 	// https://github.com/btcsuite/btcd/blob/fdfc19097e7ac6b57035062056f5b7b4638b8898/btcjson/chainsvrcmds_test.go#L903
+	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
 
-// }
+	var account uint32
+	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
+		var err error
+		account, err = scopedMgr.NewAccount(ns, name)
+		return err
+	})
+	if err != nil {
+		fmt.Printf("NewAccount: unexpected error: %v", err)
+		return 0, err
+	}
+
+	return account, err
+}
+
+// Helper function, TODO: move somewhere else?
+func fileExists(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
