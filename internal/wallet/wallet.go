@@ -59,26 +59,26 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 
 	var mgr *waddrmgr.Manager
 	err = walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
-		addrmgrNs, err := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
-		if err != nil {
-			return err
+		addrmgrNs, e := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
+		if e != nil {
+			return e
 		}
 
 		birthday := time.Now()
-		err = waddrmgr.Create(
+		e = waddrmgr.Create(
 			addrmgrNs, seed, pubPass, privPass, &params, nil,
 			birthday,
 		)
-		if err != nil {
+		if e != nil {
 			// TODO: figure out how to gracefully close db
 			//   possibly defer db.Close() ?
 			db.Close()
-			return err
+			return e
 		}
-		mgr, err = waddrmgr.Open(addrmgrNs, pubPass, &params)
+		mgr, e = waddrmgr.Open(addrmgrNs, pubPass, &params)
 		wallet.Manager = mgr
 
-		return err
+		return e
 	})
 	if err != nil {
 		return nil, err
@@ -92,8 +92,8 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		err := w.Manager.Unlock(ns, privPass)
-		return err
+		e := w.Manager.Unlock(ns, privPass)
+		return e
 	})
 	if err != nil {
 		return 0, err
@@ -107,8 +107,9 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 	var account uint32
 	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		account, err = scopedMgr.NewAccount(ns, name)
-		return err
+		var e error
+		account, e = scopedMgr.NewAccount(ns, name)
+		return e
 	})
 	if err != nil {
 		return 0, err
