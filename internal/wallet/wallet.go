@@ -2,6 +2,7 @@
 package wallet
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,7 +17,6 @@ import (
 // Namespace bucket keys.
 var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
-	// wtxmgrNamespaceKey   = []byte("wtxmgr")
 )
 
 // Wallet is hierarchical deterministic wallet
@@ -45,8 +45,7 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 		return nil, err
 	}
 	if exists {
-		fmt.Printf("Something already exists on this filepath!")
-		return nil, err
+		return nil, errors.New("something already exists on this filepath")
 	}
 	err = os.MkdirAll(dbDirPath, 0700)
 	if err != nil {
@@ -67,11 +66,6 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 		if err != nil {
 			return err
 		}
-		// TODO: figure out if txmgrNs is needed
-		//txmgrNs, err := tx.CreateTopLevelBucket(wtxmgrNamespaceKey)
-		//if err != nil {
-		//	return err
-		//}
 
 		birthday := time.Now()
 		err = waddrmgr.Create(
@@ -88,7 +82,6 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 		return err
 	})
 	if err != nil {
-		fmt.Printf("Error creating waddrmgr.Manager: %v", err)
 		return nil, err
 	}
 
@@ -109,7 +102,6 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 
 	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
 	if err != nil {
-		fmt.Printf("FetchScopedKeyManager: unexpected error: %v", err)
 		return 0, err
 	}
 
@@ -121,7 +113,6 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 		return err
 	})
 	if err != nil {
-		fmt.Printf("NewAccount: unexpected error: %v", err)
 		return 0, err
 	}
 

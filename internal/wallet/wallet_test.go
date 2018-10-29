@@ -1,7 +1,6 @@
 package wallet
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -43,11 +42,12 @@ func TestCreateAccount(t *testing.T) {
 	wallet, _ := CreateWallet(params, seed, pubPass, privPass, dbFilePath, walletName)
 	assert.NotNil(t, wallet.Manager)
 
+	expectedAccountNumber := uint32(1)
+
 	testAccountName := "testy"
 	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, privPass)
 
-	// TODO: actually use a testing library
-	fmt.Printf("account: %d, \n", account)
+	assert.Equal(t, expectedAccountNumber, account)
 
 	_ = os.RemoveAll(dbFilePath)
 }
