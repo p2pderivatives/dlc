@@ -107,7 +107,6 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 	var account uint32
 	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		var err error
 		account, err = scopedMgr.NewAccount(ns, name)
 		return err
 	})
