@@ -3,7 +3,6 @@ package wallet
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -54,8 +53,6 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 
 	db, err := walletdb.Create("bdb", dbPath)
 	if err != nil {
-		_ = os.RemoveAll(dbDirPath)
-		fmt.Println(err)
 		return nil, err
 	}
 	wallet.db = db
@@ -73,6 +70,8 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 			birthday,
 		)
 		if err != nil {
+			// TODO: figure out how to gracefully close db
+			//   possibly defer db.Close() ?
 			db.Close()
 			return err
 		}
@@ -116,7 +115,7 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 		return 0, err
 	}
 
-	return account, err
+	return account, nil
 }
 
 // Helper function, TODO: move somewhere else?
