@@ -15,7 +15,7 @@ func TestCreateWallet(t *testing.T) {
 	params := chaincfg.RegressionNetParams
 	pubPass := []byte("testpub")
 	privPass := []byte("testpri")
-	dbFilePath := "~/testdb"
+	dbFilePath := "./testdb"
 	walletName := "testwallet"
 	seed, _ := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 
@@ -35,7 +35,7 @@ func TestCreateAccount(t *testing.T) {
 	params := chaincfg.RegressionNetParams
 	pubPass := []byte("testpub")
 	privPass := []byte("testpri")
-	dbFilePath := "~/testdb2"
+	dbFilePath := "./testdb2"
 	walletName := "testwallet"
 
 	seed, _ := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
