@@ -23,24 +23,28 @@ var (
 	pubPassphrase  = []byte("_DJr{fL4H0O}*-0\n:V1izc)(6BomK")
 	privPassphrase = []byte("81lUHXnOMZ@?XXd7O9xyDIWIbXX-lj")
 
-	//dirName    = "./testdb"
 	walletName               = "testwallet"
 	waddrmgrTestNamespaceKey = []byte("waddrmgr")
 )
 
 func TestCreateWallet(t *testing.T) {
-	params := chaincfg.RegressionNetParams
-	dbFilePath := "./testdb"
+	// dbFilePath := "./testdb"
+
+	// Create a temporary directory for testing.
+	dirName, err := ioutil.TempDir("", "managertest")
+	if err != nil {
+		t.Fatalf("Failed to create db temp dir: %v", err)
+	}
 
 	wallet, _ := CreateWallet(params, seed, pubPassphrase, privPassphrase,
-		dbFilePath, walletName)
+		dirName, walletName)
 	assert.NotNil(t, wallet)
 	assert.NotNil(t, wallet.Manager)
 	assert.NotNil(t, wallet.db)
 	assert.NotNil(t, wallet.publicPassphrase)
 
 	// delete created db
-	_ = os.RemoveAll(dbFilePath)
+	_ = os.RemoveAll(dirName)
 }
 
 // TODO: create testing interface
@@ -95,12 +99,9 @@ func TestNewAddress(t *testing.T) {
 
 	addrs, _ := wallet.NewAddress(waddrmgr.KeyScopeBIP0084,
 		privPassphrase, account, numAddresses)
-	err := walletdb.View(wallet.db, func(tx walletdb.ReadTx) error {
+	_ = walletdb.View(wallet.db, func(tx walletdb.ReadTx) error {
 		ns := tx.ReadBucket(waddrmgrTestNamespaceKey)
 		assert.False(t, addrs[0].Used(ns))
 		return nil
 	})
-	if err != nil {
-		t.Errorf("Unlock: unexpected error: %v", err)
-	}
 }
