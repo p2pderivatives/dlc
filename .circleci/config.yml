@@ -13,7 +13,19 @@ jobs:
       - checkout
       - run:
           name: dependency-installation
-          command: dep ensure
+          command: |
+            dep ensure
       - run:
           name: test
           command: go test -v ./...
+      - run:
+          name: linter-installation
+          command: |
+            go get -v github.com/alecthomas/gometalinter
+            gometalinter --install
+            go get -u github.com/bradleyfalzon/revgrep/...
+      - run:
+          name: linter
+          command: |
+            set +o pipefail
+            gometalinter --vendor --enable-all ./... |& revgrep master
