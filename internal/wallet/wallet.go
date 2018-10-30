@@ -55,6 +55,7 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 	if err != nil {
 		return nil, err
 	}
+	defer db.Close()
 	wallet.db = db
 
 	var mgr *waddrmgr.Manager
@@ -70,9 +71,6 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 			birthday,
 		)
 		if err != nil {
-			// TODO: figure out how to gracefully close db
-			//   possibly defer db.Close() ?
-			db.Close()
 			return err
 		}
 		mgr, err = waddrmgr.Open(addrmgrNs, pubPass, &params)
