@@ -4,10 +4,9 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
-  build:
+  build-and-test:
     docker:
       - image: circleci/golang:1.11
-
     working_directory: /go/src/github.com/dgarage/dlc
     steps:
       - checkout
@@ -16,8 +15,21 @@ jobs:
           command: |
             dep ensure
       - run:
+          name: build
+          command: go build -v ./...
+      - run:
           name: test
           command: go test -v ./...
+  lint:
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: /go/src/github.com/dgarage/dlc
+    steps:
+      - checkout
+      - run:
+          name: dependency-installation
+          command: |
+            dep ensure
       - run:
           name: linter-installation
           command: |
@@ -29,3 +41,10 @@ jobs:
           command: |
             set +o pipefail
             gometalinter --vendor --enable-all ./... |& revgrep origin/master
+
+workflows:
+  version: 2
+  build-test-lint:
+    jobs:
+      - build-and-test
+      - lint
