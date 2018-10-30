@@ -118,8 +118,9 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 	return account, nil
 }
 
-// NewExternalAddress returns a new
-func (w *Wallet) NewExternalAddress(scope waddrmgr.KeyScope, privPass []byte,
+// NewAddress returns a new ManagedAddress for a given scope and account number. NOTE:
+// this function callsNextExternalAddresses to generate a ManagadAdddress.
+func (w *Wallet) NewAddress(scope waddrmgr.KeyScope, privPass []byte,
 	account uint32, numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
