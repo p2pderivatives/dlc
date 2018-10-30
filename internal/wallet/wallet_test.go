@@ -26,13 +26,10 @@ var (
 
 func TestCreateWallet(t *testing.T) {
 	params := chaincfg.RegressionNetParams
-	pubPass := []byte("testpub")
-	privPass := []byte("testpri")
 	dbFilePath := "./testdb"
-	walletName := "testwallet"
 	seed, _ := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 
-	wallet, _ := CreateWallet(params, seed, pubPass, privPass, dbFilePath, walletName)
+	wallet, _ := CreateWallet(params, seed, pubPassphrase, privPassphrase, dbFilePath, walletName)
 	assert.NotNil(t, wallet)
 	assert.NotNil(t, wallet.Manager)
 	assert.NotNil(t, wallet.db)
@@ -54,7 +51,8 @@ func setupWallet(t *testing.T) (tearDownFunc func(), wallet *Wallet) {
 
 	seed, _ := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 
-	wallet, err = CreateWallet(params, seed, pubPassphrase, privPassphrase, dirName, walletName)
+	wallet, err = CreateWallet(params, seed, pubPassphrase, privPassphrase, 
+		dirName, walletName)
 	if err != nil {
 		wallet.db.Close()
 		_ = os.RemoveAll(dirName)
@@ -77,7 +75,8 @@ func TestCreateAccount(t *testing.T) {
 	expectedAccountNumber := uint32(1)
 
 	testAccountName := "testy"
-	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, privPassphrase)
+	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, 
+		privPassphrase)
 
 	assert.Equal(t, expectedAccountNumber, account)
 }
@@ -87,11 +86,13 @@ func TestNewExternalAddress(t *testing.T) {
 	defer tearDownFunc()
 
 	testAccountName := "testy"
-	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, privPassphrase)
+	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, 
+		privPassphrase)
 
 	numAddresses := uint32(4)
 
-	addrs, _ := wallet.NewExternalAddress(waddrmgr.KeyScopeBIP0084, privPassphrase, account, numAddresses)
+	addrs, _ := wallet.NewExternalAddress(waddrmgr.KeyScopeBIP0084, privPassphrase, 
+		account, numAddresses)
 	fmt.Printf("%+v", addrs)
 	fmt.Printf("%+v", addrs[0])
 }

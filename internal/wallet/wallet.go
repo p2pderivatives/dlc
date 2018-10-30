@@ -118,10 +118,9 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 	return account, nil
 }
 
-// request next external adddress?
-func (w *Wallet) NewExternalAddress(scope waddrmgr.KeyScope, privPass []byte, account uint32,
-	numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
-
+// NewExternalAddress returns a new
+func (w *Wallet) NewExternalAddress(scope waddrmgr.KeyScope, privPass []byte,
+	account uint32, numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
@@ -142,7 +141,7 @@ func (w *Wallet) NewExternalAddress(scope waddrmgr.KeyScope, privPass []byte, ac
 	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
 		var e error
-		addrs, e = scopedMgr.NextExternalAddresses(ns, account, 3)
+		addrs, e = scopedMgr.NextExternalAddresses(ns, account, numAddresses)
 		return e
 	})
 	if err != nil {
