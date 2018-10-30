@@ -28,4 +28,4 @@ jobs:
           name: linter
           command: |
             set +o pipefail
-            gometalinter --vendor --enable-all ./... |& revgrep master
+            gometalinter --vendor --enable-all ./... |& revgrep origin/master
