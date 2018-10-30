@@ -64,8 +64,8 @@ func Sign(opriv, rpriv *btcec.PrivateKey, m []byte) []byte {
 
 func hash(R *btcec.PublicKey, m []byte) *big.Int {
 	s := sha256.New()
-	s.Write(R.SerializeUncompressed())
-	s.Write(m)
+	_, _ = s.Write(R.SerializeUncompressed())
+	_, _ = s.Write(m)
 	h := new(big.Int).SetBytes(s.Sum(nil))
 	h = new(big.Int).Mod(h, btcec.S256().N)
 	return h
