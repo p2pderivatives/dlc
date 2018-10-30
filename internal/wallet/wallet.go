@@ -29,7 +29,8 @@ type Wallet struct {
 }
 
 // CreateWallet returns a new Wallet, also creates db where wallet resides
-// TODO: seperate db creation and Manager creation, creature loader script for wallet init
+// TODO: separate db creation and Manager creation, creature loader script for
+// wallet init
 func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath, walletName string) (*Wallet, error) {
 	wallet := &Wallet{}
 	wallet.params = params
@@ -89,7 +90,7 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 }
 
 // TODO: add Open wallet function
-// TODO: add Close wallet function that will gracefully close db, wallet Manager, etc...
+// TODO: add Close wallet function that will gracefully close db, Manager...
 
 // CreateAccount creates a new account in ScopedKeyManagar of scope
 func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
