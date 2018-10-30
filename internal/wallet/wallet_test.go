@@ -45,7 +45,7 @@ func TestCreateWallet(t *testing.T) {
 // TODO: create testing interface
 // setupManager creates a new address manager and returns a teardown function
 // that should be invoked to ensure it is closed and removed upon completion.
-func setupManager(t *testing.T) (tearDownFunc func(), wallet *Wallet) {
+func setupWallet(t *testing.T) (tearDownFunc func(), wallet *Wallet) {
 	// Create a temporary directory for testing.
 	dirName, err := ioutil.TempDir("", "managertest")
 	if err != nil {
@@ -71,7 +71,7 @@ func setupManager(t *testing.T) (tearDownFunc func(), wallet *Wallet) {
 }
 
 func TestCreateAccount(t *testing.T) {
-	tearDownFunc, wallet := setupManager(t)
+	tearDownFunc, wallet := setupWallet(t)
 	defer tearDownFunc()
 
 	expectedAccountNumber := uint32(1)
@@ -83,7 +83,7 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func TestNewExternalAddress(t *testing.T) {
-	tearDownFunc, wallet := setupManager(t)
+	tearDownFunc, wallet := setupWallet(t)
 	defer tearDownFunc()
 
 	testAccountName := "testy"
