@@ -49,7 +49,11 @@ type wallet struct {
 // TODO: separate db creation and Manager creation
 // TODO: create loader script for wallet init
 func CreateWallet(params *chaincfg.Params, seed, pubPass, privPass []byte,
+<<<<<<< HEAD
 	dbFilePath, walletName string) (Wallet, error) {
+=======
+	dbFilePath, walletName string) (*Wallet, error) {
+>>>>>>> refactored wallet init, seperated wallet and db creation
 	// TODO: add prompts for dbDirPath, walletDBname
 	// Create a new db at specified path
 	dbDirPath := filepath.Join(dbFilePath, params.Name)
