@@ -1,4 +1,3 @@
-// Package wallet project wallet.go
 package wallet
 
 import (
@@ -11,36 +10,35 @@ import (
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
+	"github.com/btcsuite/btcwallet/wtxmgr"
 )
 
 // Namespace bucket keys.
 var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
+	wtxmgrNamespaceKey   = []byte("wtxmgr")
 )
 
 // Wallet is hierarchical deterministic wallet
 type Wallet struct {
-	params chaincfg.Params
+	params           *chaincfg.Params
+	publicPassphrase []byte // I'm thinking this should removed...
 	// rpc    *rpc.BtcRPC
 
-	db               walletdb.DB
-	Manager          *waddrmgr.Manager
-	publicPassphrase []byte
+	db      walletdb.DB
+	Manager *waddrmgr.Manager
+	TxStore *wtxmgr.Store
 }
 
 // CreateWallet returns a new Wallet, also creates db where wallet resides
-// TODO: separate db creation and Manager creation, creature loader script for
-// wallet init
-func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath, walletName string) (*Wallet, error) {
-	wallet := &Wallet{}
-	wallet.params = params
-	// wallet.rpc = rpc
-	wallet.publicPassphrase = pubPass
-
+// TODO: separate db creation and Manager creation
+// TODO: create loader script for wallet init
+func CreateWallet(params *chaincfg.Params, seed, pubPass, privPass []byte,
+	dbFilePath, walletName string) (*Wallet, error) {
 	// TODO: add prompts for dbDirPath, walletDBname
+	// Create a new db at specified path
 	dbDirPath := filepath.Join(dbFilePath, params.Name)
-	walletDBname := walletName + ".db"
-	dbPath := filepath.Join(dbDirPath, walletDBname)
+	dbPath := filepath.Join(dbDirPath, walletName+".db")
 	exists, err := fileExists(dbPath)
 	if err != nil {
 		return nil, err
@@ -57,18 +55,35 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 	if err != nil {
 		return nil, err
 	}
-	wallet.db = db
 
-	var mgr *waddrmgr.Manager
-	err = walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
+	// Create Wallet struct
+	err = Create(db, params, seed, pubPass, privPass)
+	if err != nil {
+		return nil, err
+	}
+
+	// Open the wallet
+	wallet, err := Open(db, pubPass, params)
+
+	return wallet, err
+}
+
+// Create creates an new wallet, writing it to the passed in db.
+func Create(db walletdb.DB, params *chaincfg.Params, seed, pubPass,
+	privPass []byte) error {
+	err := walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
 		addrmgrNs, e := tx.CreateTopLevelBucket(waddrmgrNamespaceKey)
+		if e != nil {
+			return e
+		}
+		txmgrNs, e := tx.CreateTopLevelBucket(wtxmgrNamespaceKey)
 		if e != nil {
 			return e
 		}
 
 		birthday := time.Now()
 		e = waddrmgr.Create(
-			addrmgrNs, seed, pubPass, privPass, &params, nil,
+			addrmgrNs, seed, pubPass, privPass, params, nil,
 			birthday,
 		)
 		if e != nil {
@@ -77,23 +92,69 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 			db.Close()
 			return e
 		}
-		mgr, e = waddrmgr.Open(addrmgrNs, pubPass, &params)
-		wallet.Manager = mgr
+		e = wtxmgr.Create(txmgrNs)
+		return e
+	})
 
+	return err
+}
+
+// Open loads a wallet from the passed db and public pass phrase.
+func Open(db walletdb.DB, pubPass []byte,
+	params *chaincfg.Params) (*Wallet, error) {
+	err := walletdb.View(db, func(tx walletdb.ReadTx) error {
+		waddrmgrBucket := tx.ReadBucket(waddrmgrNamespaceKey)
+		if waddrmgrBucket == nil {
+			return errors.New("missing address manager namespace")
+		}
+		wtxmgrBucket := tx.ReadBucket(wtxmgrNamespaceKey)
+		if wtxmgrBucket == nil {
+			return errors.New("missing transaction manager namespace")
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Perform wallet upgrades if necessary?
+
+	// Open database abstraction instances
+	var (
+		addrMgr *waddrmgr.Manager
+		txMgr   *wtxmgr.Store
+	)
+	err = walletdb.View(db, func(tx walletdb.ReadTx) error {
+		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
+		txmgrNs := tx.ReadBucket(wtxmgrNamespaceKey)
+		var e error
+		addrMgr, e = waddrmgr.Open(addrmgrNs, pubPass, params)
+		if e != nil {
+			return e
+		}
+		txMgr, e = wtxmgr.Open(txmgrNs, params)
 		return e
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return wallet, nil
+	w := &Wallet{
+		params:           params,
+		publicPassphrase: pubPass,
+		db:               db,
+		Manager:          addrMgr,
+		TxStore:          txMgr,
+	}
+
+	return w, nil
 }
 
-// TODO: add Open wallet function
 // TODO: add Close wallet function that will gracefully close db, Manager...
 
 // CreateAccount creates a new account in ScopedKeyManagar of scope
-func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
+func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string,
+	privPass []byte) (uint32, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
