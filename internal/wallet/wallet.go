@@ -18,24 +18,40 @@ var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
 )
 
-// Wallet is hierarchical deterministic wallet
-type Wallet struct {
+// Wallet is an interface that provides access to manage pubkey addresses and
+// sign scripts of managed addressesc using private key. It also manags utxos.
+type Wallet interface {
+	CreateAccount(
+		scope waddrmgr.KeyScope,
+		name string,
+		privPass []byte) (account uint32, err error)
+
+	NewAddress(
+		scope waddrmgr.KeyScope,
+		privPass []byte,
+		account uint32,
+		numAddresses uint32) ([]waddrmgr.ManagedAddress, error)
+
+	Close() error
+}
+
+// wallet is hierarchical deterministic wallet
+type wallet struct {
 	params chaincfg.Params
 	// rpc    *rpc.BtcRPC
 
 	db               walletdb.DB
-	Manager          *waddrmgr.Manager
+	manager          *waddrmgr.Manager
 	publicPassphrase []byte
 }
 
 // CreateWallet returns a new Wallet, also creates db where wallet resides
 // TODO: separate db creation and Manager creation, creature loader script for
 // wallet init
-func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath, walletName string) (*Wallet, error) {
-	wallet := &Wallet{}
-	wallet.params = params
-	// wallet.rpc = rpc
-	wallet.publicPassphrase = pubPass
+func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFilePath, walletName string) (Wallet, error) {
+	w := &wallet{}
+	w.params = params
+	w.publicPassphrase = pubPass
 
 	// TODO: add prompts for dbDirPath, walletDBname
 	dbDirPath := filepath.Join(dbFilePath, params.Name)
@@ -57,7 +73,7 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 	if err != nil {
 		return nil, err
 	}
-	wallet.db = db
+	w.db = db
 
 	var mgr *waddrmgr.Manager
 	err = walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
@@ -78,7 +94,7 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 			return e
 		}
 		mgr, e = waddrmgr.Open(addrmgrNs, pubPass, &params)
-		wallet.Manager = mgr
+		w.manager = mgr
 
 		return e
 	})
@@ -86,25 +102,25 @@ func CreateWallet(params chaincfg.Params, seed, pubPass, privPass []byte, dbFile
 		return nil, err
 	}
 
-	return wallet, nil
+	return w, nil
 }
 
 // TODO: add Open wallet function
 // TODO: add Close wallet function that will gracefully close db, Manager...
 
 // CreateAccount creates a new account in ScopedKeyManagar of scope
-func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
+func (w *wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []byte) (uint32, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		e := w.Manager.Unlock(ns, privPass)
+		e := w.manager.Unlock(ns, privPass)
 		return e
 	})
 	if err != nil {
 		return 0, err
 	}
 
-	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
+	scopedMgr, err := w.manager.FetchScopedKeyManager(scope)
 	if err != nil {
 		return 0, err
 	}
@@ -125,12 +141,12 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string, privPass []
 
 // NewAddress returns a new ManagedAddress for a given scope and account number.
 // NOTE: this function callsNextExternalAddresses to generate a ManagadAdddress.
-func (w *Wallet) NewAddress(scope waddrmgr.KeyScope, privPass []byte,
+func (w *wallet) NewAddress(scope waddrmgr.KeyScope, privPass []byte,
 	account uint32, numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		e := w.Manager.Unlock(ns, privPass)
+		e := w.manager.Unlock(ns, privPass)
 		return e
 	})
 	if err != nil {
@@ -138,7 +154,7 @@ func (w *Wallet) NewAddress(scope waddrmgr.KeyScope, privPass []byte,
 	}
 
 	// get ScopedKeyManager
-	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
+	scopedMgr, err := w.manager.FetchScopedKeyManager(scope)
 	if err != nil {
 		return nil, err
 	}
@@ -167,4 +183,10 @@ func fileExists(filePath string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// Close closes address manager and database properly
+func (w *wallet) Close() error {
+	w.manager.Close()
+	return w.db.Close()
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/waddrmgr"
-	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,72 +35,67 @@ func TestCreateWallet(t *testing.T) {
 		t.Fatalf("Failed to create db temp dir: %v", err)
 	}
 
-	wallet, _ := CreateWallet(params, seed, pubPassphrase, privPassphrase,
+	w, _ := CreateWallet(params, seed, pubPassphrase, privPassphrase,
 		dirName, walletName)
-	assert.NotNil(t, wallet)
-	assert.NotNil(t, wallet.Manager)
-	assert.NotNil(t, wallet.db)
-	assert.NotNil(t, wallet.publicPassphrase)
-
-	// delete created db
-	_ = os.RemoveAll(dirName)
+	assert := assert.New(t)
+	assert.NotNil(w)
 }
 
 // TODO: create testing interface
 // setupManager creates a new address manager and returns a teardown function
 // that should be invoked to ensure it is closed and removed upon completion.
-func setupWallet(t *testing.T) (tearDownFunc func(), wallet *Wallet) {
+func setupWallet(t *testing.T) (tearDownFunc func(), wallet Wallet) {
 	// Create a temporary directory for testing.
 	dirName, err := ioutil.TempDir("", "managertest")
 	if err != nil {
 		t.Fatalf("Failed to create db temp dir: %v", err)
 	}
 
-	wallet, err = CreateWallet(params, seed, pubPassphrase, privPassphrase,
+	w, err := CreateWallet(params, seed, pubPassphrase, privPassphrase,
 		dirName, walletName)
 	if err != nil {
-		wallet.db.Close()
+		w.Close()
 		_ = os.RemoveAll(dirName)
 		t.Fatalf("Failed to create test Wallet: %v", err)
 	}
 
 	tearDownFunc = func() {
-		wallet.Manager.Close()
-		wallet.db.Close()
+		w.Close()
 		_ = os.RemoveAll(dirName)
 	}
 
-	return tearDownFunc, wallet
+	return tearDownFunc, w
 }
 
 func TestCreateAccount(t *testing.T) {
-	tearDownFunc, wallet := setupWallet(t)
+	tearDownFunc, w := setupWallet(t)
 	defer tearDownFunc()
 
 	expectedAccountNumber := uint32(1)
 
 	testAccountName := "testy"
-	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName,
+	account, err := w.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName,
 		privPassphrase)
 
-	assert.Equal(t, expectedAccountNumber, account)
+	assert := assert.New(t)
+	assert.Nil(err)
+	assert.Equal(expectedAccountNumber, account)
 }
 
 func TestNewAddress(t *testing.T) {
-	tearDownFunc, wallet := setupWallet(t)
+	tearDownFunc, w := setupWallet(t)
 	defer tearDownFunc()
 
 	testAccountName := "testy"
-	account, _ := wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName,
+	account, _ := w.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName,
 		privPassphrase)
 
 	numAddresses := uint32(1)
 
-	addrs, _ := wallet.NewAddress(waddrmgr.KeyScopeBIP0084,
+	addrs, err := w.NewAddress(waddrmgr.KeyScopeBIP0084,
 		privPassphrase, account, numAddresses)
-	_ = walletdb.View(wallet.db, func(tx walletdb.ReadTx) error {
-		ns := tx.ReadBucket(waddrmgrTestNamespaceKey)
-		assert.False(t, addrs[0].Used(ns))
-		return nil
-	})
+
+	assert := assert.New(t)
+	assert.Nil(err)
+	assert.NotNil(addrs)
 }
