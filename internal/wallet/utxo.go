@@ -94,7 +94,7 @@ func (w *Wallet) credit2ListUnspentResult(c wtxmgr.Credit, syncBlock waddrmgr.Bl
 		}
 	}
 
-	// not including this part... this func will assume there is no filter
+	// not including this part bc this func will assume there is no filter
 	// 	if filter {
 	// 		for _, addr := range addrs {
 	// 			_, ok := addresses[addr.EncodeAddress()]
