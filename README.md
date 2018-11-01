@@ -19,3 +19,6 @@ dep ensure
 ├── internal // Privade code that you don't want external applications importing
 └── vendor
 ```
+
+## License
+[MIT License](https://github.com/dgarage/dlc/blob/master/LICENSE)
