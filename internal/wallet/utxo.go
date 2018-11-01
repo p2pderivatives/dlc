@@ -127,7 +127,9 @@ func (w *Wallet) credit2ListUnspentResult(c wtxmgr.Credit, syncBlock waddrmgr.Bl
 	return result
 }
 
-// is spendable?
+// isSpendable determines if given ScriptClass is spendable or not.
+// Does NOT support watch-only addresses. This func will need to be rewritten
+// to support watch-only addresses
 func (w *Wallet) isSpendable(sc txscript.ScriptClass, addrs []btcutil.Address,
 	addrmgrNs walletdb.ReadBucket) (spendable bool) {
 	// At the moment watch-only addresses are not supported, so all
