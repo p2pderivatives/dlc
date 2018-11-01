@@ -3,13 +3,40 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ab6815e0f7c5f12fa55de1a367797cd0ace7cce2678d7b3e6c9dbb94b8e2a3fe"
+  digest = "1:862956ad818ac3089787a1286f720d4914eada311215dc3bdaa31d72bcfaf778"
+  name = "github.com/adiabat/btcd"
+  packages = [
+    "btcec",
+    "chaincfg",
+    "chaincfg/chainhash",
+    "txscript",
+    "wire",
+  ]
+  pruneopts = "UT"
+  revision = "09ac5b3e5420679a2e25683f59695fb1d0f58717"
+
+[[projects]]
+  branch = "master"
+  digest = "1:19f29d7d426240b6d9b26935addee70802427f66cd1941f63be686d649d5dd39"
+  name = "github.com/adiabat/btcutil"
+  packages = [
+    ".",
+    "base58",
+  ]
+  pruneopts = "UT"
+  revision = "85f68caa63c5e78274a758372b8ff1a53824d2cd"
+
+[[projects]]
+  branch = "master"
+  digest = "1:cb4e01d1c8a24e5f3eb7975d1223f37e1ec2b6a7cba06d6a310cc8e993ef1839"
   name = "github.com/btcsuite/btcd"
   packages = [
+    "blockchain",
     "btcec",
     "btcjson",
     "chaincfg",
     "chaincfg/chainhash",
+    "database",
     "rpcclient",
     "txscript",
     "wire",
@@ -40,7 +67,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8980602e62605c1c3421314cda12cf4ae8701f00b34e9d8fbb987d58248d4860"
+  digest = "1:83aa3de05caeb9faec1b32476a35418897a023543036eadb0bfc48db64664eb0"
   name = "github.com/btcsuite/btcwallet"
   packages = [
     "internal/zero",
@@ -48,9 +75,18 @@
     "waddrmgr",
     "walletdb",
     "walletdb/bdb",
+    "wtxmgr",
   ]
   pruneopts = "UT"
   revision = "c4dd27e481f9801866cf5226bfe532084772ec2a"
+
+[[projects]]
+  branch = "master"
+  digest = "1:f5a785a2836dce1d5a46a313275fe868c332090a3709b5aa58b84e1368ae006f"
+  name = "github.com/btcsuite/fastsha256"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "637e656429416087660c84436a2a035d69d54e2e"
 
 [[projects]]
   branch = "master"
@@ -62,12 +98,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:064d2cebe444ff7907a912c3ee249c70ae7859fd0fb03c25a0240cbcce2adb4c"
+  digest = "1:63067ea70d365ceb10bd42c9c1edf3b623cdf2ac01200f09a816c675761b120e"
   name = "github.com/btcsuite/golangcrypto"
   packages = [
     "nacl/secretbox",
     "pbkdf2",
     "poly1305",
+    "ripemd160",
     "salsa20/salsa",
     "scrypt",
   ]
@@ -116,9 +153,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b69153653dbbbd9b2be2be289dfb94014284c00bb92e73b800f8f8c239c1ca80"
+  digest = "1:734c27157144367f37acd13536569700f61f01576c4a5e9665ccb76f79966d97"
   name = "golang.org/x/crypto"
-  packages = ["ripemd160"]
+  packages = [
+    "pbkdf2",
+    "ripemd160",
+    "scrypt",
+  ]
   pruneopts = "UT"
   revision = "45a5f77698d342a8c2ef8423abdf0ba6880b008a"
 
@@ -134,14 +175,18 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/adiabat/btcd/btcec",
+    "github.com/adiabat/btcd/txscript",
     "github.com/btcsuite/btcd/btcec",
     "github.com/btcsuite/btcd/chaincfg",
     "github.com/btcsuite/btcd/chaincfg/chainhash",
     "github.com/btcsuite/btcd/rpcclient",
+    "github.com/btcsuite/btcutil",
     "github.com/btcsuite/btcutil/hdkeychain",
     "github.com/btcsuite/btcwallet/waddrmgr",
     "github.com/btcsuite/btcwallet/walletdb",
     "github.com/btcsuite/btcwallet/walletdb/bdb",
+    "github.com/btcsuite/btcwallet/wtxmgr",
     "github.com/stretchr/testify/assert",
   ]
   solver-name = "gps-cdcl"
