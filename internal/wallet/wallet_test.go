@@ -36,18 +36,22 @@ func TestCreateWallet(t *testing.T) {
 		t.Fatalf("Failed to create db temp dir: %v", err)
 	}
 
-	wallet, _ := CreateWallet(params, seed, pubPassphrase, privPassphrase,
+	wallet, err := CreateWallet(&params, seed, pubPassphrase, privPassphrase,
 		dirName, walletName)
-	assert.NotNil(t, wallet)
-	assert.NotNil(t, wallet.Manager)
-	assert.NotNil(t, wallet.db)
+
+	assert.Nil(t, err)
 	assert.NotNil(t, wallet.publicPassphrase)
+	assert.NotNil(t, wallet.params)
+	assert.NotNil(t, wallet.Manager)
+	assert.NotNil(t, wallet.TxStore)
 
 	// delete created db
 	_ = os.RemoveAll(dirName)
 }
 
-// TODO: create testing interface
+// TODO: add tests for Create(...) and Open(...)
+
+// TODO: move this func to testutil file/pkg?
 // setupManager creates a new address manager and returns a teardown function
 // that should be invoked to ensure it is closed and removed upon completion.
 func setupWallet(t *testing.T) (tearDownFunc func(), wallet *Wallet) {
@@ -57,10 +61,10 @@ func setupWallet(t *testing.T) (tearDownFunc func(), wallet *Wallet) {
 		t.Fatalf("Failed to create db temp dir: %v", err)
 	}
 
-	wallet, err = CreateWallet(params, seed, pubPassphrase, privPassphrase,
+	wallet, err = CreateWallet(&params, seed, pubPassphrase, privPassphrase,
 		dirName, walletName)
 	if err != nil {
-		wallet.db.Close()
+		//wallet.db.Close()
 		_ = os.RemoveAll(dirName)
 		t.Fatalf("Failed to create test Wallet: %v", err)
 	}
