@@ -10,6 +10,10 @@ import (
 
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 	// TODO: generate new pubkey and address using newAddress
+	_, err = w.newAddress(waddrmgr.KeyScopeBIP0084, []byte{}, uint32(1), uint32(1))
+	if err != nil {
+		return
+	}
 	return
 }
 

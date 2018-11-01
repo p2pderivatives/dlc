@@ -19,11 +19,10 @@ var (
 		0xb6, 0xb8, 0x39, 0xbe, 0xd9, 0xfd, 0x21, 0x6a, 0x6c,
 		0x03, 0xce, 0xe2, 0x2c, 0x84,
 	}
-	testPubPass       = []byte("_DJr{fL4H0O}*-0\n:V1izc)(6BomK")
-	testPrivPass      = []byte("81lUHXnOMZ@?XXd7O9xyDIWIbXX-lj")
-	testWalletName    = "testwallet"
-	testWaddrmgrNSKey = []byte("waddrmgr")
-	testAccountName   = "testy"
+	testPubPass     = []byte("_DJr{fL4H0O}*-0\n:V1izc)(6BomK")
+	testPrivPass    = []byte("81lUHXnOMZ@?XXd7O9xyDIWIbXX-lj")
+	testWalletName  = "testwallet"
+	testAccountName = "testy"
 )
 
 func setupDB(t *testing.T) (db walletdb.DB, tearDownFunc func()) {
