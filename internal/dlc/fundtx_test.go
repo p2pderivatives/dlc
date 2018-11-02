@@ -3,25 +3,78 @@ package dlc
 import (
 	"testing"
 
+	"github.com/btcsuite/btcutil"
+	"github.com/dgarage/dlc/internal/mocks"
+	"github.com/dgarage/dlc/internal/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPrepareFundTx(t *testing.T) {
-	assert := assert.New(t)
+// Hash of block 234439
+var testTxID = "14a0810ac680a3eb3f82edc878cea25ec41d6b790744e5daeef"
 
-	feeCalc := func(size int64) int64 { return size * 1 }
-	builder := NewBuilder(FirstParty, nil, feeCalc)
+// setup mocke wallet
+func setupTestWallet(balance btcutil.Amount) wallet.Wallet {
+	w := &mocks.Wallet{}
+	utxo := wallet.Utxo{
+		TxID:   testTxID,
+		Amount: float64(balance) / btcutil.SatoshiPerBitcoin,
+	}
+	w.On("ListUnspent").Return([]wallet.Utxo{utxo}, nil)
+	w.On("NewWitnessPubkeyScript").Return([]byte{0x01}, nil)
+	return w
+}
 
-	// fail if fund amounts aren't set
+// PrepareFundTx should fail if fund amounts aren't set
+func TestPrepareFundTxNoFundAmounts(t *testing.T) {
+	builder := NewBuilder(FirstParty, nil, testFeeCalc)
+
 	err := builder.PrepareFundTx()
-	assert.NotNil(err)
+	assert.NotNil(t, err)
+}
 
-	builder.SetFundAmounts(1, 1)
-	err = builder.PrepareFundTx()
+// PrepareFundTx should fail if the party doesn't have enough balance
+func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
+	var famt btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin // 1 BTC
+	var balance btcutil.Amount = famt
+	testWallet := setupTestWallet(balance)
+	builder := NewBuilder(FirstParty, testWallet, testFeeCalc)
+	builder.SetFundAmounts(famt, famt)
+
+	err := builder.PrepareFundTx()
+	assert.NotNil(t, err) // not enough balance for fee
+}
+
+// PrepareFundTx should prepare the txins and txouts of fundtx
+func TestPrepareFundTx(t *testing.T) {
+	var balance btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin // 1 BTC
+	testWallet := setupTestWallet(balance)
+	builder := NewBuilder(FirstParty, testWallet, testFeeCalc)
+
+	var famt btcutil.Amount = 1 // 1 satoshi
+	builder.SetFundAmounts(famt, 0)
+	err := builder.PrepareFundTx()
+	tx := builder.DLC().FundTx()
+
+	assert := assert.New(t)
 	assert.Nil(err)
+	assert.NotEmpty(tx.TxIn, "tx.TxIn")
+	assert.NotEmpty(tx.TxOut, "tx.TxOut")
+}
 
-	dlc := builder.DLC()
-	tx := dlc.FundTx()
-	assert.NotEmpty(tx.TxIn)
-	assert.NotEmpty(tx.TxOut)
+// PrepareFundTx shouldn't have txouts if no changes
+func TestPrepareFundTxNoChange(t *testing.T) {
+	var famt btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin // 1 BTC
+	var fee btcutil.Amount = testFeeCalc(fundTxBaseSize + fundTxInSize)
+	var balance btcutil.Amount = famt + fee
+	testWallet := setupTestWallet(balance)
+	builder := NewBuilder(FirstParty, testWallet, testFeeCalc)
+	builder.SetFundAmounts(famt, 0)
+
+	err := builder.PrepareFundTx()
+	tx := builder.DLC().FundTx()
+
+	assert := assert.New(t)
+	assert.Nil(err)
+	assert.NotEmpty(tx.TxIn, "tx.TxIn")
+	assert.Empty(tx.TxOut, "tx.TxOut")
 }

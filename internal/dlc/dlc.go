@@ -1,19 +1,20 @@
 package dlc
 
 import (
+	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/wallet"
 )
 
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	fundAmts   map[Contractor]int64
+	fundAmts   map[Contractor]btcutil.Amount
 	fundTxReqs *FundTxRequirements
 }
 
 func newDLC() *DLC {
 	return &DLC{
-		fundAmts:   make(map[Contractor]int64),
+		fundAmts:   make(map[Contractor]btcutil.Amount),
 		fundTxReqs: newFundTxRequirements(),
 	}
 }
@@ -37,7 +38,7 @@ type Builder struct {
 }
 
 // FeeCalculator calculates fee in sathoshi based on bytes
-type FeeCalculator func(int64) int64
+type FeeCalculator func(bytes int64) btcutil.Amount
 
 // NewBuilder creates a new Builder for a contractor
 func NewBuilder(

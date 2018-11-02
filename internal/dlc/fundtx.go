@@ -9,12 +9,12 @@ import (
 )
 
 // SetFundAmounts sets fund amounts to DLC
-func (b *Builder) SetFundAmounts(amt1, amt2 int64) {
+func (b *Builder) SetFundAmounts(amt1, amt2 btcutil.Amount) {
 	b.dlc.fundAmts[FirstParty] = amt1
 	b.dlc.fundAmts[SecondParty] = amt2
 }
 
-func (b *Builder) fundAmountByParty(party Contractor) (int64, error) {
+func (b *Builder) fundAmountByParty(party Contractor) (btcutil.Amount, error) {
 	famt, ok := b.dlc.fundAmts[party]
 	if !ok {
 		err := fmt.Errorf("fund amount isn't set yet")
@@ -27,6 +27,13 @@ func (b *Builder) fundAmountByParty(party Contractor) (int64, error) {
 type FundTxRequirements struct {
 	txIns  map[Contractor][]*wire.TxIn
 	txOuts map[Contractor][]*wire.TxOut
+}
+
+func newFundTxRequirements() *FundTxRequirements {
+	return &FundTxRequirements{
+		txIns:  make(map[Contractor][]*wire.TxIn),
+		txOuts: make(map[Contractor][]*wire.TxOut),
+	}
 }
 
 func (b *Builder) setFundTxIns(party Contractor, txins []*wire.TxIn) {
@@ -51,6 +58,7 @@ func (b *Builder) PrepareFundTx() error {
 	feeBase := b.feeCalc(fundTxBaseSize)
 
 	utxos, change, err := b.selectUtxos(famt + feeBase)
+
 	if err != nil {
 		return err
 	}
@@ -66,31 +74,32 @@ func (b *Builder) PrepareFundTx() error {
 		if err != nil {
 			return err
 		}
-		txout := wire.NewTxOut(change, pkScript)
+		txout := wire.NewTxOut(int64(change), pkScript)
 		b.setFundTxOuts(b.party, []*wire.TxOut{txout})
 	}
 
 	return nil
 }
 
-// selectUtxos selects utxos for requested amount
+// selectUtxos selects utxos for requested amount (in satoshi)
 // TODO: move utxo selection logic to wallet package by removing dependencies on tx sizes
-func (b *Builder) selectUtxos(amt int64) (utxos []wallet.Utxo, change int64, err error) {
+func (b *Builder) selectUtxos(amt btcutil.Amount) (
+	utxos []wallet.Utxo, change btcutil.Amount, err error) {
 	var utxosAll []wallet.Utxo
 	utxosAll, err = b.wallet.ListUnspent()
 	if err != nil {
 		return
 	}
 
-	var total int64
-	var fee int64
+	var total btcutil.Amount
+	var fee btcutil.Amount
 	var utxoAmt btcutil.Amount
 	for _, utxo := range utxosAll {
 		utxoAmt, err = btcutil.NewAmount(utxo.Amount)
 		if err != nil {
 			return
 		}
-		total += int64(utxoAmt)
+		total += utxoAmt
 		fee += b.feeCalc(fundTxInSize)
 		utxos = append(utxos, utxo)
 		if amt+fee == total {
@@ -113,5 +122,18 @@ const fundTxVersion = 2
 // FundTx constracts fund tx using prepared fund tx requirements
 func (dlc *DLC) FundTx() *wire.MsgTx {
 	tx := wire.NewMsgTx(fundTxVersion)
+
+	// TODO: add txout script for the txin of settlement tx
+
+	for _, p := range []Contractor{FirstParty, SecondParty} {
+		for _, txin := range dlc.fundTxReqs.txIns[p] {
+			tx.AddTxIn(txin)
+		}
+		// txout for changes
+		for _, txout := range dlc.fundTxReqs.txOuts[p] {
+			tx.AddTxOut(txout)
+		}
+	}
+
 	return tx
 }
