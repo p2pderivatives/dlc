@@ -114,12 +114,12 @@ func (b *Builder) selectUtxos(amt btcutil.Amount) (
 	}
 
 	err = fmt.Errorf("Not enough utxos")
-	return
+	return utxos, change, err
 }
 
 const fundTxVersion = 2
 
-// FundTx constracts fund tx using prepared fund tx requirements
+// FundTx constructs fund tx using prepared fund tx requirements
 func (dlc *DLC) FundTx() *wire.MsgTx {
 	tx := wire.NewMsgTx(fundTxVersion)
 
