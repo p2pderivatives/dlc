@@ -3,31 +3,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:862956ad818ac3089787a1286f720d4914eada311215dc3bdaa31d72bcfaf778"
-  name = "github.com/adiabat/btcd"
-  packages = [
-    "btcec",
-    "chaincfg",
-    "chaincfg/chainhash",
-    "txscript",
-    "wire",
-  ]
-  pruneopts = "UT"
-  revision = "09ac5b3e5420679a2e25683f59695fb1d0f58717"
-
-[[projects]]
-  branch = "master"
-  digest = "1:19f29d7d426240b6d9b26935addee70802427f66cd1941f63be686d649d5dd39"
-  name = "github.com/adiabat/btcutil"
-  packages = [
-    ".",
-    "base58",
-  ]
-  pruneopts = "UT"
-  revision = "85f68caa63c5e78274a758372b8ff1a53824d2cd"
-
-[[projects]]
-  branch = "master"
   digest = "1:cb4e01d1c8a24e5f3eb7975d1223f37e1ec2b6a7cba06d6a310cc8e993ef1839"
   name = "github.com/btcsuite/btcd"
   packages = [
@@ -82,14 +57,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f5a785a2836dce1d5a46a313275fe868c332090a3709b5aa58b84e1368ae006f"
-  name = "github.com/btcsuite/fastsha256"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "637e656429416087660c84436a2a035d69d54e2e"
-
-[[projects]]
-  branch = "master"
   digest = "1:1e6b2f7aa98b082c30a1303c29a702c369b2ec6d86b74a599bc8bbe2333db299"
   name = "github.com/btcsuite/go-socks"
   packages = ["socks"]
@@ -98,13 +65,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:63067ea70d365ceb10bd42c9c1edf3b623cdf2ac01200f09a816c675761b120e"
+  digest = "1:064d2cebe444ff7907a912c3ee249c70ae7859fd0fb03c25a0240cbcce2adb4c"
   name = "github.com/btcsuite/golangcrypto"
   packages = [
     "nacl/secretbox",
     "pbkdf2",
     "poly1305",
-    "ripemd160",
     "salsa20/salsa",
     "scrypt",
   ]
@@ -153,13 +119,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:734c27157144367f37acd13536569700f61f01576c4a5e9665ccb76f79966d97"
+  digest = "1:b69153653dbbbd9b2be2be289dfb94014284c00bb92e73b800f8f8c239c1ca80"
   name = "golang.org/x/crypto"
-  packages = [
-    "pbkdf2",
-    "ripemd160",
-    "scrypt",
-  ]
+  packages = ["ripemd160"]
   pruneopts = "UT"
   revision = "45a5f77698d342a8c2ef8423abdf0ba6880b008a"
 
@@ -175,12 +137,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/adiabat/btcd/btcec",
-    "github.com/adiabat/btcd/txscript",
     "github.com/btcsuite/btcd/btcec",
+    "github.com/btcsuite/btcd/btcjson",
     "github.com/btcsuite/btcd/chaincfg",
     "github.com/btcsuite/btcd/chaincfg/chainhash",
     "github.com/btcsuite/btcd/rpcclient",
+    "github.com/btcsuite/btcd/txscript",
     "github.com/btcsuite/btcutil",
     "github.com/btcsuite/btcutil/hdkeychain",
     "github.com/btcsuite/btcwallet/waddrmgr",

@@ -1,8 +1,8 @@
 package wallet
 
 import (
-	"github.com/adiabat/btcd/btcec"
-	"github.com/adiabat/btcd/txscript"
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
