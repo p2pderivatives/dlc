@@ -1,8 +1,6 @@
 package wallet
 
 import (
-	"fmt"
-
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -10,19 +8,14 @@ import (
 )
 
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
-
+	// TODO: remove later, only addded this line so tests would pass
 	testPrivPass := []byte("81lUHXnOMZ@?XXd7O9xyDIWIbXX-lj")
 
 	mAddrs, err := w.newAddress(waddrmgr.KeyScopeBIP0084, testPrivPass, uint32(1), uint32(1))
 	if err != nil {
 		return nil, err
 	}
-	// pub = (waddrmgr.ManagedPubKeyAddress(mAddr[0])).PubKey()
-	fmt.Printf("MADDRS[0}\n%+v\n", mAddrs[0])
-
 	pub = (mAddrs[0].(waddrmgr.ManagedPubKeyAddress)).PubKey()
-	fmt.Printf("PUB\n%+v\n", pub)
-
 	return pub, err
 }
 
