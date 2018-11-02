@@ -128,7 +128,7 @@ func Open(db walletdb.DB, pubPass, privPass []byte,
 		return nil, err
 	}
 
-	// TODO: Perform wallet upgrades if necessary?
+	// TODO: Perform wallet upgrades/updates if necessary?
 
 	// Open database abstraction instances
 	var (
