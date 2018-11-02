@@ -37,7 +37,6 @@ func TestListUnspent(t *testing.T) {
 	defer tearDownFunc()
 
 	utxos := fakeUtxos(wallet)
-	fmt.Printf("%+v\n", utxos)
 
 	syncBlock := wallet.manager.SyncedTo()
 
@@ -46,17 +45,16 @@ func TestListUnspent(t *testing.T) {
 		if wtxmgrBucket == nil {
 			return errors.New("missing transaction manager namespace")
 		}
-		fmt.Printf("successfully got wtxmgr?\n")
-		asdf := wallet.credit2ListUnspentResult(utxos[0], syncBlock, wtxmgrBucket)
-		fmt.Printf("%+v\n", asdf)
+		result := wallet.credit2ListUnspentResult(utxos[0], syncBlock, wtxmgrBucket)
 
-		assert.NotNil(t, asdf)
-
+		assert.NotNil(t, result)
 		return nil
 	})
 	if err != nil {
 		fmt.Println(err)
 	}
+	assert.Nil(t, err)
+
 }
 
 // fakeUtxos creates fake transactions, and inserts them into the provided wallet's db
@@ -81,45 +79,20 @@ func fakeUtxos(w *wallet) []wtxmgr.Credit {
 		if wtxmgrBucket == nil {
 			return errors.New("missing transaction manager namespace")
 		}
-		fmt.Printf("successfully got wtxmgr?\n")
 
-		e := w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordA, nil)
-		if e != nil {
-			fmt.Println(e)
-			return e
-		}
-		e = w.txStore.AddCredit(wtxmgrBucket, fakeTxRecordA, nil, 0, false)
-		if e != nil {
-			fmt.Println(e)
-			return e
-		}
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordA, nil)
+		_ = w.txStore.AddCredit(wtxmgrBucket, fakeTxRecordA, nil, 0, false)
 		fmt.Printf("created fake credit A\n")
 
 		// Insert a second transaction which spends the output, and creates two
 		// outputs.  Mark the second one (5 BTC) as wallet change.
-		e = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordB, nil)
-		if e != nil {
-			fmt.Println(e)
-			return e
-		}
-		e = w.txStore.AddCredit(wtxmgrBucket, fakeTxRecordB, nil, 1, true)
-		if e != nil {
-			fmt.Println(e)
-			return e
-		}
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordB, nil)
+		_ = w.txStore.AddCredit(wtxmgrBucket, fakeTxRecordB, nil, 1, true)
 		fmt.Printf("created fake credit B\n")
 
 		// // Mine each transaction in a block at height 100.
-		e = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordA, &exampleBlock100)
-		if e != nil {
-			fmt.Println(e)
-			return e
-		}
-		e = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordB, &exampleBlock100)
-		if e != nil {
-			fmt.Println(e)
-			return e
-		}
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordA, &exampleBlock100)
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordB, &exampleBlock100)
 		fmt.Printf("mined each transaction\n")
 
 		// Print the one confirmation balance.
