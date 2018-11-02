@@ -25,7 +25,7 @@ type Wallet interface {
 	ListUnspent() (utxos []Utxo, err error)
 
 	// SelectUtxos selects utxos for requested amount
-	// by considering addtional fee per txin and txout
+	// by considering additional fee per txin and txout
 	SelectUnspent(
 		amt, feePerTxIn, feePerTxOut btcutil.Amount,
 	) (utxos []Utxo, change btcutil.Amount, err error)

@@ -149,7 +149,7 @@ func confirmed(minconf, txHeight, curHeight int32) bool {
 	return confirms(txHeight, curHeight) >= minconf
 }
 
-// SelectUnspent is an implementaion of Wallet.SelectUnspent
+// SelectUnspent is an implementation of Wallet.SelectUnspent
 func (w *wallet) SelectUnspent(
 	amt, feePerTxIn, feePerTxOut btcutil.Amount,
 ) (utxos []Utxo, change btcutil.Amount, err error) {
