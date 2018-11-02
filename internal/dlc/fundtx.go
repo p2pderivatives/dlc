@@ -62,7 +62,7 @@ func (b *Builder) PrepareFundTx() error {
 	b.setFundTxIns(b.party, txins)
 
 	if change > 0 {
-		pkScript, err := b.wallet.NewWitnessPubKeyScript()
+		pkScript, err := b.wallet.NewWitnessPubkeyScript()
 		if err != nil {
 			return err
 		}

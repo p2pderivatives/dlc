@@ -24,7 +24,7 @@ const (
 // Builder builds DLC by interacting with wallet
 type Builder struct {
 	party   Contractor
-	wallet  *wallet.Wallet
+	wallet  wallet.Wallet
 	dlc     *DLC
 	feeCalc FeeCalculator
 }
@@ -34,12 +34,12 @@ type FeeCalculator func(int64) int64
 
 // NewBuilder creates a new Builder for a contractor
 func NewBuilder(
-	party Contractor, wallet *wallet.Wallet, feeCalc FeeCalculator,
+	party Contractor, w wallet.Wallet, feeCalc FeeCalculator,
 ) *Builder {
 	return &Builder{
 		dlc:     &DLC{fundAmts: make(map[Contractor]int64)},
 		party:   party,
-		wallet:  wallet,
+		wallet:  w,
 		feeCalc: feeCalc,
 	}
 }
