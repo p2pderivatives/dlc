@@ -11,6 +11,13 @@ type DLC struct {
 	fundTxReqs *FundTxRequirements
 }
 
+func newDLC() *DLC {
+	return &DLC{
+		fundAmts:   make(map[Contractor]int64),
+		fundTxReqs: newFundTxRequirements(),
+	}
+}
+
 // Contractor represents a contractor type
 type Contractor int
 
@@ -37,7 +44,7 @@ func NewBuilder(
 	party Contractor, w wallet.Wallet, feeCalc FeeCalculator,
 ) *Builder {
 	return &Builder{
-		dlc:     &DLC{fundAmts: make(map[Contractor]int64)},
+		dlc:     newDLC(),
 		party:   party,
 		wallet:  w,
 		feeCalc: feeCalc,

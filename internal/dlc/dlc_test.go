@@ -6,8 +6,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateDraft(t *testing.T) {
+func TestNewBuilder(t *testing.T) {
 	feeCalc := func(size int64) int64 { return size * 1 }
 	builder := NewBuilder(FirstParty, nil, feeCalc)
-	assert.NotNil(t, builder.DLC())
+
+	assert := assert.New(t)
+	assert.NotNil(builder)
+
+	dlc := builder.DLC()
+	assert.NotNil(dlc)
+	assert.NotNil(dlc.fundAmts, "fundAmts must exist")
+	assert.NotNil(dlc.fundTxReqs, "fundTxReqs must exist")
 }
