@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/btcsuite/btcwallet/wtxmgr"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -32,34 +33,34 @@ var (
 
 // TestListUnspent() will also need to check different types of scripts
 func TestListUnspent(t *testing.T) {
-	// tearDownFunc, wallet := setupWallet(t)
-	// defer tearDownFunc()
+	tearDownFunc, wallet := setupWallet(t)
+	defer tearDownFunc()
 
-	// utxos := fakeUtxos(wallet)
-	// fmt.Printf("%+v\n", utxos)
+	utxos := fakeUtxos(wallet)
+	fmt.Printf("%+v\n", utxos)
 
-	// syncBlock := wallet.manager.SyncedTo()
+	syncBlock := wallet.manager.SyncedTo()
 
-	// err := walletdb.View(wallet.db, func(tx walletdb.ReadTx) error {
-	// 	wtxmgrBucket := tx.ReadBucket(wtxmgrNamespaceKey)
-	// 	if wtxmgrBucket == nil {
-	// 		return errors.New("missing transaction manager namespace")
-	// 	}
-	// 	fmt.Printf("successfully got wtxmgr?\n")
-	// 	asdf := w.credit2ListUnspentResult(utxos[0], syncBlock, wtxmgrBucket)
-	// 	fmt.Printf("%+v\n", asdf)
+	err := walletdb.View(wallet.db, func(tx walletdb.ReadTx) error {
+		wtxmgrBucket := tx.ReadBucket(wtxmgrNamespaceKey)
+		if wtxmgrBucket == nil {
+			return errors.New("missing transaction manager namespace")
+		}
+		fmt.Printf("successfully got wtxmgr?\n")
+		asdf := wallet.credit2ListUnspentResult(utxos[0], syncBlock, wtxmgrBucket)
+		fmt.Printf("%+v\n", asdf)
 
-	// 	assert.NotNil(t, asdf)
+		assert.NotNil(t, asdf)
 
-	// 	return nil
-	// })
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // fakeUtxos creates fake transactions, and inserts them into the provided wallet's db
-func fakeUtxos(w wallet) []wtxmgr.Credit {
+func fakeUtxos(w *wallet) []wtxmgr.Credit {
 	tx := spendOutput(&chainhash.Hash{}, 0, 10e8)
 	rec, err := wtxmgr.NewTxRecordFromMsgTx(tx, timeNow())
 	if err != nil {
