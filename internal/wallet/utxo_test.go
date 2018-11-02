@@ -1,7 +1,17 @@
 package wallet
 
 import (
+	"encoding/binary"
+	"errors"
+	"fmt"
 	"testing"
+	"time"
+
+	"github.com/adiabat/btcd/chaincfg/chainhash"
+	"github.com/adiabat/btcd/wire"
+	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/btcsuite/btcwallet/wtxmgr"
+	"github.com/stretchr/testify/assert"
 )
 
 // Test setup?
@@ -11,6 +21,148 @@ import (
 
 // TestListUnspent() will also need to check different types of scripts
 func TestListUnspent(t *testing.T) {
-	// I'm not sure how to test this yet...
-	// just pray that it works lol
+	tearDownFunc, wallet := setupWallet(t)
+	defer tearDownFunc()
+
+	utxos := fakeUtxos(wallet)
+	fmt.Printf("%+v\n", utxos)
+
+	syncBlock := wallet.manager.SyncedTo()
+
+	err := walletdb.View(wallet.db, func(tx walletdb.ReadTx) error {
+		wtxmgrBucket := tx.ReadBucket(wtxmgrNamespaceKey)
+		if wtxmgrBucket == nil {
+			return errors.New("missing transaction manager namespace")
+		}
+		fmt.Printf("successfully got wtxmgr?\n")
+		asdf := w.credit2ListUnspentResult(utxos[0], syncBlock, wtxmgrBucket)
+		fmt.Printf("%+v\n", asdf)
+
+		assert.NotNil(t, asdf)
+
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+// fakeUtxos creates fake transactions, and inserts them into the provided wallet's db
+func fakeUtxos(w Wallet) []wtxmgr.Credit {
+	tx := spendOutput(&chainhash.Hash{}, 0, 10e8)
+	rec, err := wtxmgr.NewTxRecordFromMsgTx(tx, timeNow())
+	if err != nil {
+		panic(err)
+	}
+	fakeTxRecordA = rec
+
+	tx = spendOutput(&fakeTxRecordA.Hash, 0, 5e8, 5e8)
+	rec, err = wtxmgr.NewTxRecordFromMsgTx(tx, timeNow())
+	if err != nil {
+		panic(err)
+	}
+	fakeTxRecordB = rec
+
+	var utxos []wtxmgr.Credit
+	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		wtxmgrBucket := tx.ReadWriteBucket(wtxmgrNamespaceKey)
+		if wtxmgrBucket == nil {
+			return errors.New("missing transaction manager namespace")
+		}
+		fmt.Printf("successfully got wtxmgr?\n")
+
+		e := w.TxStore.InsertTx(wtxmgrBucket, fakeTxRecordA, nil)
+		if e != nil {
+			fmt.Println(e)
+			return e
+		}
+		e = w.TxStore.AddCredit(wtxmgrBucket, fakeTxRecordA, nil, 0, false)
+		if e != nil {
+			fmt.Println(e)
+			return e
+		}
+		fmt.Printf("created fake credit A\n")
+
+		// Insert a second transaction which spends the output, and creates two
+		// outputs.  Mark the second one (5 BTC) as wallet change.
+		e = w.TxStore.InsertTx(wtxmgrBucket, fakeTxRecordB, nil)
+		if e != nil {
+			fmt.Println(e)
+			return e
+		}
+		e = w.TxStore.AddCredit(wtxmgrBucket, fakeTxRecordB, nil, 1, true)
+		if e != nil {
+			fmt.Println(e)
+			return e
+		}
+		fmt.Printf("created fake credit B\n")
+
+		// // Mine each transaction in a block at height 100.
+		e = w.TxStore.InsertTx(wtxmgrBucket, fakeTxRecordA, &exampleBlock100)
+		if e != nil {
+			fmt.Println(e)
+			return e
+		}
+		e = w.TxStore.InsertTx(wtxmgrBucket, fakeTxRecordB, &exampleBlock100)
+		if e != nil {
+			fmt.Println(e)
+			return e
+		}
+		fmt.Printf("mined each transaction\n")
+
+		// Print the one confirmation balance.
+		bal, e := w.TxStore.Balance(wtxmgrBucket, 1, 100)
+		if e != nil {
+			fmt.Println(e)
+			return nil
+		}
+		fmt.Println(bal)
+
+		// Fetch unspent outputs.
+		utxos, e = w.TxStore.UnspentOutputs(wtxmgrBucket)
+		if e != nil {
+			fmt.Println(e)
+		}
+		return e
+	})
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	return utxos
+}
+
+func spendOutput(txHash *chainhash.Hash, index uint32, outputValues ...int64) *wire.MsgTx {
+	tx := wire.MsgTx{
+		TxIn: []*wire.TxIn{
+			{
+				PreviousOutPoint: wire.OutPoint{Hash: *txHash, Index: index},
+			},
+		},
+	}
+	for _, val := range outputValues {
+		tx.TxOut = append(tx.TxOut, &wire.TxOut{Value: val})
+	}
+	return &tx
+}
+
+func makeBlockMeta(height int32) wtxmgr.BlockMeta {
+	if height == -1 {
+		return wtxmgr.BlockMeta{Block: wtxmgr.Block{Height: -1}}
+	}
+
+	b := wtxmgr.BlockMeta{
+		Block: wtxmgr.Block{Height: height},
+		Time:  timeNow(),
+	}
+	// Give it a fake block hash created from the height and time.
+	binary.LittleEndian.PutUint32(b.Hash[0:4], uint32(height))
+	binary.LittleEndian.PutUint64(b.Hash[4:12], uint64(b.Time.Unix()))
+	return b
+}
+
+// Returns time.Now() with seconds resolution, this is what Store saves.
+func timeNow() time.Time {
+	return time.Unix(time.Now().Unix(), 0)
 }
