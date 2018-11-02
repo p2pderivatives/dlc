@@ -1,37 +1,38 @@
 package wallet
 
 import (
+	"encoding/hex"
+
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcutil"
+	"github.com/btcsuite/btcwallet/waddrmgr"
+	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/btcsuite/btcwallet/wtxmgr"
 )
 
 // Utxo is a unspend transaction output
-type Utxo btcjson.ListUnspentResult
+type Utxo = *btcjson.ListUnspentResult
 
-<<<<<<< HEAD
-// ListUnspent returns unspent transactions
-func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
-	return
-=======
 // ListUnspent returns unspent transactions.
 // TODO: add filter
 //   Only utxos with address contained the param addresses will be considered.
 //   If param addresses is empty, all addresses are considered and there is no
 //   filter
-func (w *Wallet) ListUnspent() ([]*btcjson.ListUnspentResult, error) {
+func (w *wallet) ListUnspent() ([]Utxo, error) {
 	var results []*btcjson.ListUnspentResult
 	err := walletdb.View(w.db, func(tx walletdb.ReadTx) error {
 		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
 		txmgrNs := tx.ReadBucket(wtxmgrNamespaceKey)
 
-		syncBlock := w.Manager.SyncedTo()
+		syncBlock := w.manager.SyncedTo()
 		// filter := len(addresses) != 0
 
-		unspent, e := w.TxStore.UnspentOutputs(txmgrNs)
+		unspent, e := w.txStore.UnspentOutputs(txmgrNs)
 		if e != nil {
 			return e
 		}
 
-		// make btcjson.ListUnspentResult from Credit types
 		results = make([]*btcjson.ListUnspentResult, 0, len(unspent))
 		for i := range unspent {
 			output := unspent[i]
@@ -44,7 +45,9 @@ func (w *Wallet) ListUnspent() ([]*btcjson.ListUnspentResult, error) {
 	return results, err
 }
 
-func (w *Wallet) credit2ListUnspentResult(c wtxmgr.Credit, syncBlock waddrmgr.BlockStamp,
+func (w *wallet) credit2ListUnspentResult(
+	c wtxmgr.Credit,
+	syncBlock waddrmgr.BlockStamp,
 	addrmgrNs walletdb.ReadBucket) *btcjson.ListUnspentResult {
 
 	// TODO: add minconf, maxconf params
@@ -85,7 +88,7 @@ func (w *Wallet) credit2ListUnspentResult(c wtxmgr.Credit, syncBlock waddrmgr.Bl
 		return nil // maybe?
 	}
 	if len(addrs) > 0 {
-		smgr, acct, err := w.Manager.AddrAccount(addrmgrNs, addrs[0])
+		smgr, acct, err := w.manager.AddrAccount(addrmgrNs, addrs[0])
 		if err == nil {
 			s, err := smgr.AccountName(addrmgrNs, acct)
 			if err == nil {
@@ -130,7 +133,7 @@ func (w *Wallet) credit2ListUnspentResult(c wtxmgr.Credit, syncBlock waddrmgr.Bl
 // isSpendable determines if given ScriptClass is spendable or not.
 // Does NOT support watch-only addresses. This func will need to be rewritten
 // to support watch-only addresses
-func (w *Wallet) isSpendable(sc txscript.ScriptClass, addrs []btcutil.Address,
+func (w *wallet) isSpendable(sc txscript.ScriptClass, addrs []btcutil.Address,
 	addrmgrNs walletdb.ReadBucket) (spendable bool) {
 	// At the moment watch-only addresses are not supported, so all
 	// recorded outputs that are not multisig are "spendable".
@@ -155,7 +158,7 @@ scSwitch:
 		spendable = true
 	case txscript.MultiSigTy:
 		for _, a := range addrs {
-			_, err := w.Manager.Address(addrmgrNs, a)
+			_, err := w.manager.Address(addrmgrNs, a)
 			if err == nil {
 				continue
 			}
@@ -186,5 +189,4 @@ func confirms(txHeight, curHeight int32) int32 {
 // confirmations for a blockchain at height curHeight.
 func confirmed(minconf, txHeight, curHeight int32) bool {
 	return confirms(txHeight, curHeight) >= minconf
->>>>>>> fixed lint issues
 }
