@@ -55,7 +55,7 @@ func setupWallet(t *testing.T) (tearDownFunc func(), w *wallet) {
 	err := Create(db, testNetParams, testSeed, testPubPass, testPrivPass)
 	assert.Nil(err)
 
-	w, err = Open(db, testPubPass, testNetParams)
+	w, err = Open(db, testPubPass, testPrivPass, testNetParams)
 	assert.Nil(err)
 
 	tearDownFunc = func() {

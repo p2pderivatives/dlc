@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -37,8 +36,9 @@ var (
 
 // Wallet is hierarchical deterministic wallet
 type wallet struct {
-	params           *chaincfg.Params
-	publicPassphrase []byte // I'm thinking this should removed...
+	params            *chaincfg.Params
+	publicPassphrase  []byte
+	privatePassphrase []byte
 	// rpc    *rpc.BtcRPC
 
 	db      walletdb.DB
@@ -79,7 +79,7 @@ func CreateWallet(params *chaincfg.Params, seed, pubPass, privPass []byte,
 	}
 
 	// Open the wallet
-	return Open(db, pubPass, params)
+	return Open(db, pubPass, privPass, params)
 }
 
 // Create creates an new wallet, writing it to the passed in db.
@@ -111,7 +111,7 @@ func Create(db walletdb.DB, params *chaincfg.Params, seed, pubPass,
 }
 
 // Open loads a wallet from the passed db and public pass phrase.
-func Open(db walletdb.DB, pubPass []byte,
+func Open(db walletdb.DB, pubPass, privPass []byte,
 	params *chaincfg.Params) (*wallet, error) {
 	err := walletdb.View(db, func(tx walletdb.ReadTx) error {
 		waddrmgrBucket := tx.ReadBucket(waddrmgrNamespaceKey)
@@ -151,11 +151,12 @@ func Open(db walletdb.DB, pubPass []byte,
 	}
 
 	w := &wallet{
-		params:           params,
-		publicPassphrase: pubPass,
-		db:               db,
-		manager:          addrMgr,
-		txStore:          txMgr,
+		params:            params,
+		publicPassphrase:  pubPass,
+		privatePassphrase: privPass,
+		db:                db,
+		manager:           addrMgr,
+		txStore:           txMgr,
 	}
 
 	return w, nil
@@ -197,33 +198,6 @@ func (w *wallet) CreateAccount(scope waddrmgr.KeyScope, name string,
 	}
 
 	return account, nil
-}
-
-func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
-	var results []*btcjson.ListUnspentResult
-	err = walletdb.View(w.db, func(tx walletdb.ReadTx) error {
-		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
-		txmgrNs := tx.ReadBucket(wtxmgrNamespaceKey)
-
-		syncBlock := w.manager.SyncedTo()
-		// filter := len(addresses) != 0
-
-		unspent, e := w.txStore.UnspentOutputs(txmgrNs)
-		if e != nil {
-			return e
-		}
-
-		// utxos = make([]*btcjson.ListUnspentResult, 0, len(unspent))
-		for i := range unspent {
-			output := unspent[i]
-			result := w.credit2ListUnspentResult(output, syncBlock, addrmgrNs)
-			// TODO: result might return nil... catch that nil?
-			results = append(results, result)
-		}
-		return nil
-	})
-	utxos = results
-	return utxos, err
 }
 
 // Helper function, TODO: move somewhere else?
