@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -49,7 +50,7 @@ type wallet struct {
 // TODO: separate db creation and Manager creation
 // TODO: create loader script for wallet init
 func CreateWallet(params *chaincfg.Params, seed, pubPass, privPass []byte,
-	dbFilePath, walletName string) (Wallet, error) {
+	dbFilePath, walletName string) (*wallet, error) {
 	// TODO: add prompts for dbDirPath, walletDBname
 	// Create a new db at specified path
 	dbDirPath := filepath.Join(dbFilePath, params.Name)
@@ -111,7 +112,7 @@ func Create(db walletdb.DB, params *chaincfg.Params, seed, pubPass,
 
 // Open loads a wallet from the passed db and public pass phrase.
 func Open(db walletdb.DB, pubPass []byte,
-	params *chaincfg.Params) (Wallet, error) {
+	params *chaincfg.Params) (*wallet, error) {
 	err := walletdb.View(db, func(tx walletdb.ReadTx) error {
 		waddrmgrBucket := tx.ReadBucket(waddrmgrNamespaceKey)
 		if waddrmgrBucket == nil {
@@ -196,6 +197,33 @@ func (w *wallet) CreateAccount(scope waddrmgr.KeyScope, name string,
 	}
 
 	return account, nil
+}
+
+func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
+	var results []*btcjson.ListUnspentResult
+	err = walletdb.View(w.db, func(tx walletdb.ReadTx) error {
+		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
+		txmgrNs := tx.ReadBucket(wtxmgrNamespaceKey)
+
+		syncBlock := w.manager.SyncedTo()
+		// filter := len(addresses) != 0
+
+		unspent, e := w.txStore.UnspentOutputs(txmgrNs)
+		if e != nil {
+			return e
+		}
+
+		// utxos = make([]*btcjson.ListUnspentResult, 0, len(unspent))
+		for i := range unspent {
+			output := unspent[i]
+			result := w.credit2ListUnspentResult(output, syncBlock, addrmgrNs)
+			// TODO: result might return nil... catch that nil?
+			results = append(results, result)
+		}
+		return nil
+	})
+	utxos = results
+	return utxos, err
 }
 
 // Helper function, TODO: move somewhere else?
