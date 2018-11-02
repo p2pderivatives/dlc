@@ -42,20 +42,12 @@
 
 [[projects]]
   branch = "master"
-<<<<<<< HEAD
   digest = "1:83aa3de05caeb9faec1b32476a35418897a023543036eadb0bfc48db64664eb0"
-=======
-  digest = "1:546eccde2b4056c2106e2a3dcf27736b2f1f7882db25fda9a3ddf4a33ace90d0"
->>>>>>> added Open func, added txstore to wallet
   name = "github.com/btcsuite/btcwallet"
   packages = [
-    "internal/helpers",
     "internal/zero",
     "snacl",
     "waddrmgr",
-    "wallet/internal/txsizes",
-    "wallet/txauthor",
-    "wallet/txrules",
     "walletdb",
     "walletdb/bdb",
     "wtxmgr",
@@ -155,7 +147,6 @@
     "github.com/btcsuite/btcutil",
     "github.com/btcsuite/btcutil/hdkeychain",
     "github.com/btcsuite/btcwallet/waddrmgr",
-    "github.com/btcsuite/btcwallet/wallet/txauthor",
     "github.com/btcsuite/btcwallet/walletdb",
     "github.com/btcsuite/btcwallet/walletdb/bdb",
     "github.com/btcsuite/btcwallet/wtxmgr",
