@@ -2,9 +2,12 @@ package wallet
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -144,4 +147,54 @@ func confirms(txHeight, curHeight int32) int32 {
 // confirmations for a blockchain at height curHeight.
 func confirmed(minconf, txHeight, curHeight int32) bool {
 	return confirms(txHeight, curHeight) >= minconf
+}
+
+// SelectUnspent is an implementaion of Wallet.SelectUnspent
+func (w *wallet) SelectUnspent(
+	amt, feePerTxIn, feePerTxOut btcutil.Amount,
+) (utxos []Utxo, change btcutil.Amount, err error) {
+	var utxosAll []Utxo
+	utxosAll, err = w.ListUnspent()
+	if err != nil {
+		return
+	}
+
+	var total btcutil.Amount
+	var fee btcutil.Amount
+	var utxoAmt btcutil.Amount
+	for _, utxo := range utxosAll {
+		utxoAmt, err = btcutil.NewAmount(utxo.Amount)
+		if err != nil {
+			return
+		}
+		total += utxoAmt
+		fee += feePerTxIn
+		utxos = append(utxos, utxo)
+		if amt+fee == total {
+			return
+		} else if amt+fee < total {
+			change = total - (amt + fee)
+			fee += feePerTxOut
+			if amt+fee <= total {
+				return
+			}
+		}
+	}
+
+	err = fmt.Errorf("Not enough utxos")
+	return utxos, change, err
+}
+
+// UtxosToTxIns converts utxos to txins
+func UtxosToTxIns(utxos []Utxo) ([]*wire.TxIn, error) {
+	var txins []*wire.TxIn
+	for _, utxo := range utxos {
+		txid, err := chainhash.NewHashFromStr(utxo.TxID)
+		if err != nil {
+			return txins, err
+		}
+		op := wire.NewOutPoint(txid, utxo.Vout)
+		txins = append(txins, wire.NewTxIn(op, nil, nil))
+	}
+	return txins, nil
 }

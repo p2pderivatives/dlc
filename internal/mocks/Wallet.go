@@ -3,6 +3,7 @@
 package mocks
 
 import btcec "github.com/btcsuite/btcd/btcec"
+import btcutil "github.com/btcsuite/btcutil"
 import mock "github.com/stretchr/testify/mock"
 import waddrmgr "github.com/btcsuite/btcwallet/waddrmgr"
 import wallet "github.com/dgarage/dlc/internal/wallet"
@@ -114,4 +115,34 @@ func (_m *Wallet) NewWitnessPubkeyScript() ([]byte, error) {
 	}
 
 	return r0, r1
+}
+
+// SelectUnspent provides a mock function with given fields: amt, feePerTxIn, feePerTxOut
+func (_m *Wallet) SelectUnspent(amt btcutil.Amount, feePerTxIn btcutil.Amount, feePerTxOut btcutil.Amount) ([]wallet.Utxo, btcutil.Amount, error) {
+	ret := _m.Called(amt, feePerTxIn, feePerTxOut)
+
+	var r0 []wallet.Utxo
+	if rf, ok := ret.Get(0).(func(btcutil.Amount, btcutil.Amount, btcutil.Amount) []wallet.Utxo); ok {
+		r0 = rf(amt, feePerTxIn, feePerTxOut)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]wallet.Utxo)
+		}
+	}
+
+	var r1 btcutil.Amount
+	if rf, ok := ret.Get(1).(func(btcutil.Amount, btcutil.Amount, btcutil.Amount) btcutil.Amount); ok {
+		r1 = rf(amt, feePerTxIn, feePerTxOut)
+	} else {
+		r1 = ret.Get(1).(btcutil.Amount)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(btcutil.Amount, btcutil.Amount, btcutil.Amount) error); ok {
+		r2 = rf(amt, feePerTxIn, feePerTxOut)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
