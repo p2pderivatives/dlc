@@ -9,10 +9,7 @@ import (
 )
 
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
-	// TODO: remove later, only addded this line so tests would pass
-	testPrivPass := []byte("81lUHXnOMZ@?XXd7O9xyDIWIbXX-lj")
-
-	mAddrs, err := w.newAddress(waddrmgr.KeyScopeBIP0084, testPrivPass, uint32(1), uint32(1))
+	mAddrs, err := w.newAddress(waddrmgr.KeyScopeBIP0084, w.privatePassphrase, uint32(1), uint32(1))
 	if err != nil {
 		return nil, err
 	}
