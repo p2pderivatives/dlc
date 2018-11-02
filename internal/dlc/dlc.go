@@ -8,8 +8,9 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	fundAmts   map[Contractor]btcutil.Amount
-	fundTxReqs *FundTxRequirements
+	fundAmts    map[Contractor]btcutil.Amount
+	fundFeerate btcutil.Amount // fund fee per byte in satohi
+	fundTxReqs  *FundTxRequirements
 }
 
 func newDLC() *DLC {
@@ -31,24 +32,17 @@ const (
 
 // Builder builds DLC by interacting with wallet
 type Builder struct {
-	party   Contractor
-	wallet  wallet.Wallet
-	dlc     *DLC
-	feeCalc FeeCalculator
+	party  Contractor
+	wallet wallet.Wallet
+	dlc    *DLC
 }
 
-// FeeCalculator calculates fee in sathoshi based on bytes
-type FeeCalculator func(bytes int64) btcutil.Amount
-
 // NewBuilder creates a new Builder for a contractor
-func NewBuilder(
-	party Contractor, w wallet.Wallet, feeCalc FeeCalculator,
-) *Builder {
+func NewBuilder(party Contractor, w wallet.Wallet) *Builder {
 	return &Builder{
-		dlc:     newDLC(),
-		party:   party,
-		wallet:  w,
-		feeCalc: feeCalc,
+		dlc:    newDLC(),
+		party:  party,
+		wallet: w,
 	}
 }
 

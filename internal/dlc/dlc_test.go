@@ -7,13 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var testFeePerByte btcutil.Amount = 1
-var testFeeCalc = func(size int64) btcutil.Amount {
-	return testFeePerByte.MulF64(float64(size))
-}
+var testFeerate btcutil.Amount = 1
 
 func TestNewBuilder(t *testing.T) {
-	builder := NewBuilder(FirstParty, nil, testFeeCalc)
+	builder := NewBuilder(FirstParty, nil)
 
 	assert := assert.New(t)
 	assert.NotNil(builder)

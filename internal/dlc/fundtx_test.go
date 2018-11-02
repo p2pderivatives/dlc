@@ -26,9 +26,9 @@ func setupTestWallet(balance btcutil.Amount) wallet.Wallet {
 
 // PrepareFundTx should fail if fund amounts aren't set
 func TestPrepareFundTxNoFundAmounts(t *testing.T) {
-	builder := NewBuilder(FirstParty, nil, testFeeCalc)
+	builder := NewBuilder(FirstParty, nil)
 
-	err := builder.PrepareFundTx()
+	err := builder.PrepareFundTxIns()
 	assert.NotNil(t, err)
 }
 
@@ -37,10 +37,10 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 	var famt btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin // 1 BTC
 	var balance btcutil.Amount = famt
 	testWallet := setupTestWallet(balance)
-	builder := NewBuilder(FirstParty, testWallet, testFeeCalc)
+	builder := NewBuilder(FirstParty, testWallet)
 	builder.SetFundAmounts(famt, famt)
 
-	err := builder.PrepareFundTx()
+	err := builder.PrepareFundTxIns()
 	assert.NotNil(t, err) // not enough balance for fee
 }
 
@@ -48,11 +48,11 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 func TestPrepareFundTx(t *testing.T) {
 	var balance btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin // 1 BTC
 	testWallet := setupTestWallet(balance)
-	builder := NewBuilder(FirstParty, testWallet, testFeeCalc)
+	builder := NewBuilder(FirstParty, testWallet)
 
 	var famt btcutil.Amount = 1 // 1 satoshi
 	builder.SetFundAmounts(famt, 0)
-	err := builder.PrepareFundTx()
+	err := builder.PrepareFundTxIns()
 	tx := builder.DLC().FundTx()
 
 	assert := assert.New(t)
@@ -64,13 +64,13 @@ func TestPrepareFundTx(t *testing.T) {
 // PrepareFundTx shouldn't have txouts if no changes
 func TestPrepareFundTxNoChange(t *testing.T) {
 	var famt btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin // 1 BTC
-	var fee btcutil.Amount = testFeeCalc(fundTxBaseSize + fundTxInSize)
+	fee, _ := btcutil.NewAmount(float64(fundTxBaseSize + fundTxInSize))
 	var balance btcutil.Amount = famt + fee
 	testWallet := setupTestWallet(balance)
-	builder := NewBuilder(FirstParty, testWallet, testFeeCalc)
+	builder := NewBuilder(FirstParty, testWallet)
 	builder.SetFundAmounts(famt, 0)
 
-	err := builder.PrepareFundTx()
+	err := builder.PrepareFundTxIns()
 	tx := builder.DLC().FundTx()
 
 	assert := assert.New(t)

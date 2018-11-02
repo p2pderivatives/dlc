@@ -147,21 +147,6 @@ func confirms(txHeight, curHeight int32) int32 {
 // confirmations for a blockchain at height curHeight.
 func confirmed(minconf, txHeight, curHeight int32) bool {
 	return confirms(txHeight, curHeight) >= minconf
-	return
-}
-
-// UtxosToTxIns converts utxos to txins
-func UtxosToTxIns(utxos []Utxo) ([]*wire.TxIn, error) {
-	var txins []*wire.TxIn
-	for _, utxo := range utxos {
-		txid, err := chainhash.NewHashFromStr(utxo.TxID)
-		if err != nil {
-			return txins, err
-		}
-		op := wire.NewOutPoint(txid, utxo.Vout)
-		txins = append(txins, wire.NewTxIn(op, nil, nil))
-	}
-	return txins, nil
 }
 
 // SelectUnspent is an implementation of Wallet.SelectUnspent
