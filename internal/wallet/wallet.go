@@ -6,12 +6,27 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/adiabat/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
 	"github.com/btcsuite/btcwallet/wtxmgr"
 )
+
+// Wallet is an interface that provides access to manage pubkey addresses and
+// sign scripts of managed addressesc using private key. It also manags utxos.
+type Wallet interface {
+	CreateAccount(
+		scope waddrmgr.KeyScope, name string, privPass []byte,
+	) (account uint32, err error)
+
+	NewPubkey() (*btcec.PublicKey, error)
+	NewWitnessPubkeyScript() (pkScript []byte, err error)
+	ListUnspent() (utxos []Utxo, err error)
+
+	Close() error
+}
 
 // Namespace bucket keys.
 var (
@@ -20,21 +35,21 @@ var (
 )
 
 // Wallet is hierarchical deterministic wallet
-type Wallet struct {
+type wallet struct {
 	params           *chaincfg.Params
 	publicPassphrase []byte // I'm thinking this should removed...
 	// rpc    *rpc.BtcRPC
 
 	db      walletdb.DB
-	Manager *waddrmgr.Manager
-	TxStore *wtxmgr.Store
+	manager *waddrmgr.Manager
+	txStore *wtxmgr.Store
 }
 
 // CreateWallet returns a new Wallet, also creates db where wallet resides
 // TODO: separate db creation and Manager creation
 // TODO: create loader script for wallet init
 func CreateWallet(params *chaincfg.Params, seed, pubPass, privPass []byte,
-	dbFilePath, walletName string) (*Wallet, error) {
+	dbFilePath, walletName string) (Wallet, error) {
 	// TODO: add prompts for dbDirPath, walletDBname
 	// Create a new db at specified path
 	dbDirPath := filepath.Join(dbFilePath, params.Name)
@@ -63,9 +78,7 @@ func CreateWallet(params *chaincfg.Params, seed, pubPass, privPass []byte,
 	}
 
 	// Open the wallet
-	wallet, err := Open(db, pubPass, params)
-
-	return wallet, err
+	return Open(db, pubPass, params)
 }
 
 // Create creates an new wallet, writing it to the passed in db.
@@ -87,9 +100,6 @@ func Create(db walletdb.DB, params *chaincfg.Params, seed, pubPass,
 			birthday,
 		)
 		if e != nil {
-			// TODO: figure out how to gracefully close db
-			//   possibly defer db.Close() ?
-			db.Close()
 			return e
 		}
 		e = wtxmgr.Create(txmgrNs)
@@ -101,7 +111,7 @@ func Create(db walletdb.DB, params *chaincfg.Params, seed, pubPass,
 
 // Open loads a wallet from the passed db and public pass phrase.
 func Open(db walletdb.DB, pubPass []byte,
-	params *chaincfg.Params) (*Wallet, error) {
+	params *chaincfg.Params) (Wallet, error) {
 	err := walletdb.View(db, func(tx walletdb.ReadTx) error {
 		waddrmgrBucket := tx.ReadBucket(waddrmgrNamespaceKey)
 		if waddrmgrBucket == nil {
@@ -139,33 +149,37 @@ func Open(db walletdb.DB, pubPass []byte,
 		return nil, err
 	}
 
-	w := &Wallet{
+	w := &wallet{
 		params:           params,
 		publicPassphrase: pubPass,
 		db:               db,
-		Manager:          addrMgr,
-		TxStore:          txMgr,
+		manager:          addrMgr,
+		txStore:          txMgr,
 	}
 
 	return w, nil
 }
 
-// TODO: add Close wallet function that will gracefully close db, Manager...
+// Close closes managers
+func (w *wallet) Close() error {
+	w.manager.Close()
+	return nil
+}
 
 // CreateAccount creates a new account in ScopedKeyManagar of scope
-func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string,
+func (w *wallet) CreateAccount(scope waddrmgr.KeyScope, name string,
 	privPass []byte) (uint32, error) {
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		e := w.Manager.Unlock(ns, privPass)
+		e := w.manager.Unlock(ns, privPass)
 		return e
 	})
 	if err != nil {
 		return 0, err
 	}
 
-	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
+	scopedMgr, err := w.manager.FetchScopedKeyManager(scope)
 	if err != nil {
 		return 0, err
 	}
@@ -182,40 +196,6 @@ func (w *Wallet) CreateAccount(scope waddrmgr.KeyScope, name string,
 	}
 
 	return account, nil
-}
-
-// NewAddress returns a new ManagedAddress for a given scope and account number.
-// NOTE: this function callsNextExternalAddresses to generate a ManagadAdddress.
-func (w *Wallet) NewAddress(scope waddrmgr.KeyScope, privPass []byte,
-	account uint32, numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
-	// unlock Manager
-	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
-		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		e := w.Manager.Unlock(ns, privPass)
-		return e
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// get ScopedKeyManager
-	scopedMgr, err := w.Manager.FetchScopedKeyManager(scope)
-	if err != nil {
-		return nil, err
-	}
-
-	var addrs []waddrmgr.ManagedAddress
-	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
-		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		var e error
-		addrs, e = scopedMgr.NextExternalAddresses(ns, account, numAddresses)
-		return e
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return addrs, nil
 }
 
 // Helper function, TODO: move somewhere else?

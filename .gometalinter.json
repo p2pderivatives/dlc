@@ -1,0 +1,8 @@
+{
+  "Vendor": true,
+  "Exclude": [
+    ".*/test_util.go"
+  ],
+  "EnableAll": true,
+  "LineLength": 120
+}
