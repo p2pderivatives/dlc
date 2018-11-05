@@ -1,6 +1,7 @@
 {
   "Vendor": true,
   "Exclude": [
+    "internal/test/.*",
     ".*/test_util.go"
   ],
   "EnableAll": true,

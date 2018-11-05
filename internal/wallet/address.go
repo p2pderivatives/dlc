@@ -2,10 +2,9 @@ package wallet
 
 import (
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/dgarage/dlc/internal/script"
 )
 
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
@@ -23,15 +22,7 @@ func (w *wallet) NewWitnessPubkeyScript() (pkScript []byte, err error) {
 	if err != nil {
 		return
 	}
-	return P2WPKHpkScript(pub)
-}
-
-// P2WPKHpkScript creates a withenss script for given pubkey
-func P2WPKHpkScript(pub *btcec.PublicKey) ([]byte, error) {
-	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_0)
-	builder.AddData(btcutil.Hash160(pub.SerializeCompressed()))
-	return builder.Script()
+	return script.P2WPKHpkScript(pub)
 }
 
 // NewAddress returns a new ManagedAddress for a given scope and account number.
