@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
@@ -18,8 +19,17 @@ import (
 // sign scripts of managed addressesc using private key. It also manags utxos.
 type Wallet interface {
 	NewPubkey() (*btcec.PublicKey, error)
+
 	NewWitnessPubkeyScript() (pkScript []byte, err error)
+
 	ListUnspent() (utxos []Utxo, err error)
+
+	// SelectUtxos selects utxos for requested amount
+	// by considering additional fee per txin and txout
+	SelectUnspent(
+		amt, feePerTxIn, feePerTxOut btcutil.Amount,
+	) (utxos []Utxo, change btcutil.Amount, err error)
+
 	Close() error
 }
 
