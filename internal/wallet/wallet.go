@@ -23,8 +23,10 @@ type Wallet interface {
 
 	NewPubkey() (*btcec.PublicKey, error)
 	NewWitnessPubkeyScript() (pkScript []byte, err error)
-	ListUnspent() (utxos []Utxo, err error)
+	ListUnspent() (utxos []*Utxo, err error)
 
+	Manager() *waddrmgr.Manager
+	TxStore() *wtxmgr.Store
 	Close() error
 }
 
@@ -50,7 +52,7 @@ type wallet struct {
 // TODO: separate db creation and Manager creation
 // TODO: create loader script for wallet init
 func CreateWallet(params *chaincfg.Params, seed, pubPass, privPass []byte,
-	dbFilePath, walletName string) (*wallet, error) {
+	dbFilePath, walletName string) (Wallet, error) {
 	// TODO: add prompts for dbDirPath, walletDBname
 	// Create a new db at specified path
 	dbDirPath := filepath.Join(dbFilePath, params.Name)
@@ -112,7 +114,7 @@ func Create(db walletdb.DB, params *chaincfg.Params, seed, pubPass,
 
 // Open loads a wallet from the passed db and public pass phrase.
 func Open(db walletdb.DB, pubPass, privPass []byte,
-	params *chaincfg.Params) (*wallet, error) {
+	params *chaincfg.Params) (Wallet, error) {
 	err := walletdb.View(db, func(tx walletdb.ReadTx) error {
 		waddrmgrBucket := tx.ReadBucket(waddrmgrNamespaceKey)
 		if waddrmgrBucket == nil {
@@ -198,6 +200,14 @@ func (w *wallet) CreateAccount(scope waddrmgr.KeyScope, name string,
 	}
 
 	return account, nil
+}
+
+func (w *wallet) Manager() *waddrmgr.Manager {
+	return w.manager
+}
+
+func (w *wallet) TxStore() *wtxmgr.Store {
+	return w.txStore
 }
 
 // Helper function, TODO: move somewhere else?

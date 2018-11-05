@@ -24,7 +24,7 @@ func TestCreateWallet(t *testing.T) {
 // TODO: add tests for Create(...) and Open(...)
 
 func TestCreateAccount(t *testing.T) {
-	tearDownFunc, wallet := setupWallet(t)
+	tearDownFunc, wallet, _ := setupWallet(t)
 	defer tearDownFunc()
 
 	expectedAccountNumber := uint32(1)
