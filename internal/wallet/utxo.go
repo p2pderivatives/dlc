@@ -25,10 +25,10 @@ func (w *wallet) ListUnspent() (utxos []*Utxo, err error) {
 		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
 		txmgrNs := tx.ReadBucket(wtxmgrNamespaceKey)
 
-		syncBlock := w.Manager().SyncedTo()
+		syncBlock := w.manager.SyncedTo()
 		// filter := len(addresses) != 0
 
-		unspent, e := w.TxStore().UnspentOutputs(txmgrNs)
+		unspent, e := w.txStore.UnspentOutputs(txmgrNs)
 		if e != nil {
 			return e
 		}
@@ -88,7 +88,7 @@ func (w *wallet) credit2ListUnspentResult(
 		return nil // maybe?
 	}
 	if len(addrs) > 0 {
-		smgr, acct, err := w.Manager().AddrAccount(addrmgrNs, addrs[0])
+		smgr, acct, err := w.manager.AddrAccount(addrmgrNs, addrs[0])
 		if err == nil {
 			s, err := smgr.AccountName(addrmgrNs, acct)
 			if err == nil {
@@ -158,7 +158,7 @@ scSwitch:
 		spendable = true
 	case txscript.MultiSigTy:
 		for _, a := range addrs {
-			_, err := w.Manager().Address(addrmgrNs, a)
+			_, err := w.manager.Address(addrmgrNs, a)
 			if err == nil {
 				continue
 			}

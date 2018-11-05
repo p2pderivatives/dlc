@@ -33,9 +33,10 @@ var (
 
 // TestListUnspent() will also need to check different types of scripts
 func TestListUnspent(t *testing.T) {
-	tearDownFunc, w, db := setupWallet(t)
+	w, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
 
+	db := w.db
 	_ = fakeUtxos(w, db)
 
 	err := walletdb.View(db, func(tx walletdb.ReadTx) error {
@@ -57,7 +58,7 @@ func TestListUnspent(t *testing.T) {
 }
 
 // fakeUtxos creates fake transactions, and inserts them into the provided wallet's db
-func fakeUtxos(w Wallet, db walletdb.DB) []wtxmgr.Credit {
+func fakeUtxos(w *wallet, db walletdb.DB) []wtxmgr.Credit {
 	tx := spendOutput(&chainhash.Hash{}, 0, 10e8)
 	rec, err := wtxmgr.NewTxRecordFromMsgTx(tx, timeNow())
 	if err != nil {
@@ -79,23 +80,23 @@ func fakeUtxos(w Wallet, db walletdb.DB) []wtxmgr.Credit {
 			return errors.New("missing transaction manager namespace")
 		}
 
-		_ = w.TxStore().InsertTx(wtxmgrBucket, fakeTxRecordA, nil)
-		_ = w.TxStore().AddCredit(wtxmgrBucket, fakeTxRecordA, nil, 0, false)
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordA, nil)
+		_ = w.txStore.AddCredit(wtxmgrBucket, fakeTxRecordA, nil, 0, false)
 		fmt.Printf("created fake credit A\n")
 
 		// Insert a second transaction which spends the output, and creates two
 		// outputs.  Mark the second one (5 BTC) as wallet change.
-		_ = w.TxStore().InsertTx(wtxmgrBucket, fakeTxRecordB, nil)
-		_ = w.TxStore().AddCredit(wtxmgrBucket, fakeTxRecordB, nil, 1, true)
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordB, nil)
+		_ = w.txStore.AddCredit(wtxmgrBucket, fakeTxRecordB, nil, 1, true)
 		fmt.Printf("created fake credit B\n")
 
 		// // Mine each transaction in a block at height 100.
-		_ = w.TxStore().InsertTx(wtxmgrBucket, fakeTxRecordA, &exampleBlock100)
-		_ = w.TxStore().InsertTx(wtxmgrBucket, fakeTxRecordB, &exampleBlock100)
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordA, &exampleBlock100)
+		_ = w.txStore.InsertTx(wtxmgrBucket, fakeTxRecordB, &exampleBlock100)
 		fmt.Printf("mined each transaction\n")
 
 		// Print the one confirmation balance.
-		bal, e := w.TxStore().Balance(wtxmgrBucket, 1, 100)
+		bal, e := w.txStore.Balance(wtxmgrBucket, 1, 100)
 		if e != nil {
 			fmt.Println(e)
 			return nil
@@ -103,7 +104,7 @@ func fakeUtxos(w Wallet, db walletdb.DB) []wtxmgr.Credit {
 		fmt.Println(bal)
 
 		// Fetch unspent outputs.
-		utxos, e = w.TxStore().UnspentOutputs(wtxmgrBucket)
+		utxos, e = w.txStore.UnspentOutputs(wtxmgrBucket)
 		if e != nil {
 			fmt.Println(e)
 		}

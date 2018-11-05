@@ -9,7 +9,7 @@ import (
 )
 
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
-	mAddrs, err := w.newAddress(waddrmgr.KeyScopeBIP0084, w.privatePassphrase, uint32(1), uint32(1))
+	mAddrs, err := w.newAddress(uint32(1))
 	if err != nil {
 		return nil, err
 	}
@@ -34,22 +34,11 @@ func P2WPKHpkScript(pub *btcec.PublicKey) ([]byte, error) {
 	return builder.Script()
 }
 
-// NewAddress returns a new ManagedAddress for a given scope and account number.
-// NOTE: this function callsNextExternalAddresses to generate a ManagadAdddress.
-func (w *wallet) newAddress(scope waddrmgr.KeyScope, privPass []byte,
-	account uint32, numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
-	// unlock Manager
-	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
-		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		e := w.Manager().Unlock(ns, privPass)
-		return e
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// get ScopedKeyManager
-	scopedMgr, err := w.Manager().FetchScopedKeyManager(scope)
+// NewAddress returns a new ManagedAddress
+// NOTE: this function calls NextExternalAddresses to generate a ManagadAdddress.
+func (w *wallet) newAddress(
+	numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
+	scopedMgr, err := w.manager.FetchScopedKeyManager(waddrmgrKeyScope)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +47,7 @@ func (w *wallet) newAddress(scope waddrmgr.KeyScope, privPass []byte,
 	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
 		var e error
-		addrs, e = scopedMgr.NextExternalAddresses(ns, account, numAddresses)
+		addrs, e = scopedMgr.NextExternalAddresses(ns, w.account, numAddresses)
 		return e
 	})
 	if err != nil {
