@@ -34,9 +34,8 @@ const accountName = "dlc"
 
 // Wallet is hierarchical deterministic wallet
 type wallet struct {
-	params            *chaincfg.Params
-	publicPassphrase  []byte
-	privatePassphrase []byte
+	params           *chaincfg.Params
+	publicPassphrase []byte
 	// rpc    *rpc.BtcRPC
 	db      walletdb.DB
 	manager *waddrmgr.Manager
@@ -96,7 +95,7 @@ func create(
 		return nil, err
 	}
 
-	_, err = createAccount(db, privPass, pubPass, params)
+	err = createAccount(db, privPass, pubPass, params)
 	if err != nil {
 		return nil, err
 	}
@@ -140,9 +139,8 @@ func createManagers(
 
 // createAccount creates a new account in ScopedKeyManagar of scope
 func createAccount(
-	db walletdb.DB, privPass, pubPass []byte, params *chaincfg.Params,
-) (account uint32, err error) {
-	err = walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
+	db walletdb.DB, privPass, pubPass []byte, params *chaincfg.Params) error {
+	return walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
 		addrMgr, e := waddrmgr.Open(ns, pubPass, params)
 		if e != nil {
@@ -159,10 +157,9 @@ func createAccount(
 			return e
 		}
 
-		account, e = scopedMgr.NewAccount(ns, accountName)
+		_, e = scopedMgr.NewAccount(ns, accountName)
 		return e
 	})
-	return account, err
 }
 
 // Open loads a wallet from the passed db and public pass phrase.
@@ -208,11 +205,8 @@ func open(
 			return e
 		}
 		txMgr, e = wtxmgr.Open(txmgrNs, params)
-		if e != nil {
-			return e
-		}
 
-		return nil
+		return e
 	})
 	if err != nil {
 		return nil, err

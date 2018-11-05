@@ -8,11 +8,11 @@ import (
 )
 
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
-	mAddrs, err := w.newAddress(uint32(1))
+	mAddr, err := w.newAddress()
 	if err != nil {
 		return nil, err
 	}
-	pub = (mAddrs[0].(waddrmgr.ManagedPubKeyAddress)).PubKey()
+	pub = (mAddr.(waddrmgr.ManagedPubKeyAddress)).PubKey()
 	return pub, err
 }
 
@@ -27,13 +27,13 @@ func (w *wallet) NewWitnessPubkeyScript() (pkScript []byte, err error) {
 
 // NewAddress returns a new ManagedAddress
 // NOTE: this function calls NextExternalAddresses to generate a ManagadAdddress.
-func (w *wallet) newAddress(
-	numAddresses uint32) ([]waddrmgr.ManagedAddress, error) {
+func (w *wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 	scopedMgr, err := w.manager.FetchScopedKeyManager(waddrmgrKeyScope)
 	if err != nil {
 		return nil, err
 	}
 
+	var numAddresses uint32 = 1
 	var addrs []waddrmgr.ManagedAddress
 	err = walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
@@ -45,5 +45,5 @@ func (w *wallet) newAddress(
 		return nil, err
 	}
 
-	return addrs, nil
+	return addrs[0], nil
 }
