@@ -41,7 +41,7 @@ func (w *wallet) newAddress(scope waddrmgr.KeyScope, privPass []byte,
 	// unlock Manager
 	err := walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
-		e := w.manager.Unlock(ns, privPass)
+		e := w.Manager().Unlock(ns, privPass)
 		return e
 	})
 	if err != nil {
@@ -49,7 +49,7 @@ func (w *wallet) newAddress(scope waddrmgr.KeyScope, privPass []byte,
 	}
 
 	// get ScopedKeyManager
-	scopedMgr, err := w.manager.FetchScopedKeyManager(scope)
+	scopedMgr, err := w.Manager().FetchScopedKeyManager(scope)
 	if err != nil {
 		return nil, err
 	}

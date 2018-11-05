@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewPubkey(t *testing.T) {
-	tearDownFunc, wallet := setupWallet(t)
+	tearDownFunc, wallet, _ := setupWallet(t)
 	defer tearDownFunc()
 
 	wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, testPrivPass)
