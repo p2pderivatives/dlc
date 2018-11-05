@@ -25,7 +25,6 @@ func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
 		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
 		txmgrNs := tx.ReadBucket(wtxmgrNamespaceKey)
 
-		syncBlock := w.manager.SyncedTo()
 		// filter := len(addresses) != 0
 
 		unspent, e := w.txStore.UnspentOutputs(txmgrNs)
@@ -36,7 +35,7 @@ func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
 		// utxos = make([]*btcjson.ListUnspentResult, 0, len(unspent))
 		for i := range unspent {
 			output := unspent[i]
-			result := w.credit2ListUnspentResult(output, syncBlock, addrmgrNs)
+			result := w.credit2ListUnspentResult(output, addrmgrNs)
 			// TODO: result might return nil... catch that nil?
 			results = append(results, *result)
 		}
@@ -48,8 +47,9 @@ func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
 
 func (w *wallet) credit2ListUnspentResult(
 	c wtxmgr.Credit,
-	syncBlock waddrmgr.BlockStamp,
 	addrmgrNs walletdb.ReadBucket) *btcjson.ListUnspentResult {
+
+	syncBlock := w.manager.SyncedTo()
 
 	// TODO: add minconf, maxconf params
 	confs := confirms(c.Height, syncBlock.Height)
@@ -70,45 +70,7 @@ func (w *wallet) credit2ListUnspentResult(
 		}
 	}
 
-	// TODO: exclude locked outputs from result set.
-	// Exclude locked outputs from the result set.
-
-	// Lookup the associated account for the output.  Use the
-	// default account name in case there is no associated account
-	// for some reason, although this should never happen.
-	//
-	// This will be unnecessary once transactions and outputs are
-	// grouped under the associated account in the db.
-	defaultAccountName := "default"
-	acctName := defaultAccountName
-	sc, addrs, _, err := txscript.ExtractPkScriptAddrs(
-		c.PkScript, w.params)
-	if err != nil {
-		// continue
-		return nil // maybe?
-	}
-	if len(addrs) > 0 {
-		smgr, acct, err := w.manager.AddrAccount(addrmgrNs, addrs[0])
-		if err == nil {
-			s, err := smgr.AccountName(addrmgrNs, acct)
-			if err == nil {
-				acctName = s
-			}
-		}
-	}
-
-	// not including this part bc this func will assume there is no filter
-	// 	if filter {
-	// 		for _, addr := range addrs {
-	// 			_, ok := addresses[addr.EncodeAddress()]
-	// 			if ok {
-	// 				goto include
-	// 			}
-	// 		}
-	// 		// continue
-	// 		return nil // maybe?
-	// 	}
-	// include:
+	acctName := accountName
 
 	result := &btcjson.ListUnspentResult{
 		TxID:          c.OutPoint.Hash.String(),
@@ -117,14 +79,7 @@ func (w *wallet) credit2ListUnspentResult(
 		ScriptPubKey:  hex.EncodeToString(c.PkScript),
 		Amount:        c.Amount.ToBTC(),
 		Confirmations: int64(confs),
-		Spendable:     w.isSpendable(sc, addrs, addrmgrNs),
-	}
-
-	// BUG: this should be a JSON array so that all
-	// addresses can be included, or removed (and the
-	// caller extracts addresses from the pkScript).
-	if len(addrs) > 0 {
-		result.Address = addrs[0].EncodeAddress()
+		Spendable:     true,
 	}
 
 	return result
