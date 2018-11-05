@@ -19,7 +19,7 @@ import (
 type Wallet interface {
 	NewPubkey() (*btcec.PublicKey, error)
 	NewWitnessPubkeyScript() (pkScript []byte, err error)
-	ListUnspent() (utxos []*Utxo, err error)
+	ListUnspent() (utxos []Utxo, err error)
 	Close() error
 }
 
