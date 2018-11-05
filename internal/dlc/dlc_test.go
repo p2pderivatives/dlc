@@ -3,11 +3,8 @@ package dlc
 import (
 	"testing"
 
-	"github.com/btcsuite/btcutil"
 	"github.com/stretchr/testify/assert"
 )
-
-var testFeerate btcutil.Amount = 1
 
 func TestNewBuilder(t *testing.T) {
 	builder := NewBuilder(FirstParty, nil)
