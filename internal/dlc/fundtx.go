@@ -77,7 +77,10 @@ func (b *Builder) PrepareFundTxIns() error {
 		err := fmt.Errorf("fund amount isn't set yet")
 		return err
 	}
+
 	feeBase := b.dlc.fundTxFeeBase()
+
+	// TODO: add redeem tx fee
 
 	feePerIn := b.dlc.fundTxFeePerTxIn()
 	feePerOut := b.dlc.fundTxFeePerTxOut()
