@@ -3,19 +3,25 @@ package wallet
 import (
 	"testing"
 
-	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewPubkey(t *testing.T) {
-	tearDownFunc, wallet, _ := setupWallet(t)
+	wallet, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
 
-	wallet.CreateAccount(waddrmgr.KeyScopeBIP0084, testAccountName, testPrivPass)
-	pub, _ := wallet.NewPubkey()
+	pub, err := wallet.NewPubkey()
 
+	assert.Nil(t, err)
 	assert.NotNil(t, pub)
 }
 
-func TestWitnessNewPubkeyScript(t *testing.T) {
+func TestNewWitnessPubkeyScript(t *testing.T) {
+	wallet, tearDownFunc := setupWallet(t)
+	defer tearDownFunc()
+
+	pkScript, err := wallet.NewWitnessPubkeyScript()
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, pkScript)
 }

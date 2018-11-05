@@ -3,7 +3,6 @@ package wallet
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -19,10 +18,9 @@ var (
 		0xb6, 0xb8, 0x39, 0xbe, 0xd9, 0xfd, 0x21, 0x6a, 0x6c,
 		0x03, 0xce, 0xe2, 0x2c, 0x84,
 	}
-	testPubPass     = []byte("_DJr{fL4H0O}*-0\n:V1izc)(6BomK")
-	testPrivPass    = []byte("81lUHXnOMZ@?XXd7O9xyDIWIbXX-lj")
-	testWalletName  = "testwallet"
-	testAccountName = "testy"
+	testPubPass    = []byte("_DJr{fL4H0O}*-0\n:V1izc)(6BomK")
+	testPrivPass   = []byte("81lUHXnOMZ@?XXd7O9xyDIWIbXX-lj")
+	testWalletName = "testwallet.db"
 )
 
 func setupDB(t *testing.T) (db walletdb.DB, tearDownFunc func()) {
@@ -31,11 +29,7 @@ func setupDB(t *testing.T) (db walletdb.DB, tearDownFunc func()) {
 	dbDirPath, err := ioutil.TempDir("", "testdb")
 	assert.Nil(err)
 
-	dbPath := filepath.Join(dbDirPath, testWalletName+".db")
-	err = os.MkdirAll(dbDirPath, 0700)
-	assert.Nil(err)
-
-	db, err = walletdb.Create("bdb", dbPath)
+	db, err = createDB(dbDirPath, testWalletName)
 	assert.Nil(err)
 
 	tearDownFunc = func() {
@@ -48,21 +42,18 @@ func setupDB(t *testing.T) (db walletdb.DB, tearDownFunc func()) {
 	return
 }
 
-func setupWallet(t *testing.T) (tearDownFunc func(), w Wallet, db walletdb.DB) {
+func setupWallet(t *testing.T) (*wallet, func()) {
 	assert := assert.New(t)
 	db, deleteDB := setupDB(t)
 
-	err := Create(db, testNetParams, testSeed, testPubPass, testPrivPass)
+	w, err := create(db, testNetParams, testSeed, testPubPass, testPrivPass)
 	assert.Nil(err)
 
-	w, err = Open(db, testPubPass, testPrivPass, testNetParams)
-	assert.Nil(err)
-
-	tearDownFunc = func() {
+	tearDownFunc := func() {
 		err = w.Close()
 		assert.Nil(err)
 		deleteDB()
 	}
 
-	return
+	return w, tearDownFunc
 }
