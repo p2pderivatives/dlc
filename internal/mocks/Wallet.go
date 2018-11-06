@@ -74,29 +74,6 @@ func (_m *Wallet) NewPubkey() (*btcec.PublicKey, error) {
 	return r0, r1
 }
 
-// NewWitnessPubkeyScript provides a mock function with given fields:
-func (_m *Wallet) NewWitnessPubkeyScript() ([]byte, error) {
-	ret := _m.Called()
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func() []byte); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // SelectUnspent provides a mock function with given fields: amt, feePerTxIn, feePerTxOut
 func (_m *Wallet) SelectUnspent(amt btcutil.Amount, feePerTxIn btcutil.Amount, feePerTxOut btcutil.Amount) ([]btcjson.ListUnspentResult, btcutil.Amount, error) {
 	ret := _m.Called(amt, feePerTxIn, feePerTxOut)
@@ -127,12 +104,26 @@ func (_m *Wallet) SelectUnspent(amt btcutil.Amount, feePerTxIn btcutil.Amount, f
 	return r0, r1, r2
 }
 
+// Unlock provides a mock function with given fields: privPass
+func (_m *Wallet) Unlock(privPass []byte) error {
+	ret := _m.Called(privPass)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte) error); ok {
+		r0 = rf(privPass)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // WitnessSignature provides a mock function with given fields: tx, idx, amt, script, pub
-func (_m *Wallet) WitnessSignature(tx *wire.MsgTx, idx int, amt int64, script []byte, pub *btcec.PublicKey) ([]byte, error) {
+func (_m *Wallet) WitnessSignature(tx *wire.MsgTx, idx int, amt btcutil.Amount, script []byte, pub *btcec.PublicKey) ([]byte, error) {
 	ret := _m.Called(tx, idx, amt, script, pub)
 
 	var r0 []byte
-	if rf, ok := ret.Get(0).(func(*wire.MsgTx, int, int64, []byte, *btcec.PublicKey) []byte); ok {
+	if rf, ok := ret.Get(0).(func(*wire.MsgTx, int, btcutil.Amount, []byte, *btcec.PublicKey) []byte); ok {
 		r0 = rf(tx, idx, amt, script, pub)
 	} else {
 		if ret.Get(0) != nil {
@@ -141,7 +132,7 @@ func (_m *Wallet) WitnessSignature(tx *wire.MsgTx, idx int, amt int64, script []
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*wire.MsgTx, int, int64, []byte, *btcec.PublicKey) error); ok {
+	if rf, ok := ret.Get(1).(func(*wire.MsgTx, int, btcutil.Amount, []byte, *btcec.PublicKey) error); ok {
 		r1 = rf(tx, idx, amt, script, pub)
 	} else {
 		r1 = ret.Error(1)
