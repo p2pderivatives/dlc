@@ -10,14 +10,14 @@ import (
 
 // FundTxRequirements contains txins and txouts for fund tx
 type FundTxRequirements struct {
-	txIns  map[Contractor][]*wire.TxIn
-	txOuts map[Contractor][]*wire.TxOut
+	txIns map[Contractor][]*wire.TxIn
+	txOut map[Contractor]*wire.TxOut
 }
 
 func newFundTxRequirements() *FundTxRequirements {
 	return &FundTxRequirements{
-		txIns:  make(map[Contractor][]*wire.TxIn),
-		txOuts: make(map[Contractor][]*wire.TxOut),
+		txIns: make(map[Contractor][]*wire.TxIn),
+		txOut: make(map[Contractor]*wire.TxOut),
 	}
 }
 
@@ -33,8 +33,9 @@ func (d *DLC) FundTx() *wire.MsgTx {
 		for _, txin := range d.fundTxReqs.txIns[p] {
 			tx.AddTxIn(txin)
 		}
-		// txout for changes
-		for _, txout := range d.fundTxReqs.txOuts[p] {
+		// txout for change
+		txout := d.fundTxReqs.txOut[p]
+		if txout != nil {
 			tx.AddTxOut(txout)
 		}
 	}
@@ -101,7 +102,7 @@ func (b *Builder) PrepareFundTxIns() error {
 			return err
 		}
 		txout := wire.NewTxOut(int64(change), pkScript)
-		b.dlc.fundTxReqs.txOuts[b.party] = []*wire.TxOut{txout}
+		b.dlc.fundTxReqs.txOut[b.party] = txout
 	}
 
 	return nil
