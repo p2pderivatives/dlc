@@ -17,7 +17,7 @@ type DLC struct {
 func newDLC() *DLC {
 	return &DLC{
 		fundAmts:   make(map[Contractor]btcutil.Amount),
-		fundTxReqs: newFundTxRequirements(),
+		fundTxReqs: newFundTxReqs(),
 	}
 }
 
@@ -50,4 +50,15 @@ func NewBuilder(party Contractor, w wallet.Wallet) *Builder {
 // DLC returns the DLC constructed by builder
 func (b *Builder) DLC() *DLC {
 	return b.dlc
+}
+
+// counterparty returns the counterparty
+func (b *Builder) counterparty() (p Contractor) {
+	switch b.party {
+	case FirstParty:
+		p = SecondParty
+	case SecondParty:
+		p = FirstParty
+	}
+	return
 }

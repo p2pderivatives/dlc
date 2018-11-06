@@ -23,12 +23,17 @@ func setupTestWallet() *mocks.Wallet {
 	return w
 }
 
-func newTestUtxos(amt btcutil.Amount) []wallet.Utxo {
+func mockSelectUnspent(
+	w *mocks.Wallet, balance, change btcutil.Amount, err error) *mocks.Wallet {
 	utxo := wallet.Utxo{
 		TxID:   testTxID,
-		Amount: float64(amt) / btcutil.SatoshiPerBitcoin,
+		Amount: float64(balance) / btcutil.SatoshiPerBitcoin,
 	}
-	return []wallet.Utxo{utxo}
+	w.On("SelectUnspent",
+		mock.Anything, mock.Anything, mock.Anything,
+	).Return([]wallet.Utxo{utxo}, change, err)
+
+	return w
 }
 
 // PrepareFundTx should fail if fund amounts aren't set
@@ -58,12 +63,11 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 // PrepareFundTx should prepare the txins and txouts of fundtx
 func TestPrepareFundTx(t *testing.T) {
 	assert := assert.New(t)
-	testWallet := setupTestWallet()
 
-	var change btcutil.Amount = 1 // 1 satoshi
-	testWallet.On("SelectUnspent",
-		mock.Anything, mock.Anything, mock.Anything,
-	).Return(newTestUtxos(1), change, nil)
+	// prepare mock wallet
+	testWallet := setupTestWallet()
+	var balance, change btcutil.Amount = 1, 1
+	mockSelectUnspent(testWallet, balance, change, nil)
 
 	b := NewBuilder(FirstParty, testWallet)
 	b.SetFundAmounts(1, 1)
@@ -80,12 +84,11 @@ func TestPrepareFundTx(t *testing.T) {
 // PrepareFundTx shouldn't have txouts if no changes
 func TestPrepareFundTxNoChange(t *testing.T) {
 	assert := assert.New(t)
-	testWallet := setupTestWallet()
 
-	var change btcutil.Amount // no change
-	testWallet.On("SelectUnspent",
-		mock.Anything, mock.Anything, mock.Anything,
-	).Return(newTestUtxos(1), change, nil)
+	// prepare mock wallet
+	testWallet := setupTestWallet()
+	var balance, change btcutil.Amount = 1, 0
+	mockSelectUnspent(testWallet, balance, change, nil)
 
 	b := NewBuilder(FirstParty, testWallet)
 	b.SetFundAmounts(1, 1)
@@ -97,4 +100,29 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	assert.NotEmpty(txins, "txins")
 	txout := b.dlc.fundTxReqs.txOut[b.party]
 	assert.Nil(txout, "txout")
+}
+
+func TestFundTx(t *testing.T) {
+	// first party
+	w1 := setupTestWallet()
+	b1 := NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
+	b1.SetFundAmounts(1, 1)
+	b1.PrepareFundTxIns()
+	b1.PrepareFundPubkey()
+
+	w2 := setupTestWallet()
+	b2 := NewBuilder(SecondParty, mockSelectUnspent(w2, 1, 1, nil))
+	b2.SetFundAmounts(1, 1)
+	b2.PrepareFundTxIns()
+	b2.PrepareFundPubkey()
+
+	b1.CopyFundTxReqsFromCounterparty(b2.DLC())
+	d := b1.DLC()
+
+	tx, err := d.FundTx()
+
+	assert := assert.New(t)
+	assert.Nil(err)
+	assert.Len(tx.TxIn, 2)  // funds from both parties
+	assert.Len(tx.TxOut, 3) // 1 for reddemtx and 2 for changes
 }

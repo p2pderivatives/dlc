@@ -19,11 +19,24 @@ type FundTxRequirements struct {
 	signs map[Contractor][]byte
 }
 
-func newFundTxRequirements() *FundTxRequirements {
+func newFundTxReqs() *FundTxRequirements {
 	return &FundTxRequirements{
 		txIns: make(map[Contractor][]*wire.TxIn),
 		txOut: make(map[Contractor]*wire.TxOut),
+		pubs:  make(map[Contractor]*btcec.PublicKey),
+		signs: make(map[Contractor][]byte),
 	}
+}
+
+// CopyFundTxReqsFromCounterparty copes requirements of counterparty from their DLC
+func (b *Builder) CopyFundTxReqsFromCounterparty(d *DLC) {
+	p := b.counterparty()
+	reqs := d.fundTxReqs
+
+	b.dlc.fundTxReqs.txIns[p] = reqs.txIns[p]
+	b.dlc.fundTxReqs.txOut[p] = reqs.txOut[p]
+	b.dlc.fundTxReqs.pubs[p] = reqs.pubs[p]
+	b.dlc.fundTxReqs.signs[p] = reqs.signs[p]
 }
 
 const fundTxVersion = 2
