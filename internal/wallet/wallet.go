@@ -21,11 +21,13 @@ import (
 type Wallet interface {
 	NewPubkey() (*btcec.PublicKey, error)
 
-	NewWitnessPubkeyScript() (pkScript []byte, err error)
-
 	// WitnessSignature returns witness signature for a given txin and pubkey
 	WitnessSignature(
-		tx *wire.MsgTx, idx int, amt int64, script []byte, pub *btcec.PublicKey,
+		tx *wire.MsgTx,
+		idx int,
+		amt btcutil.Amount,
+		script []byte,
+		pub *btcec.PublicKey,
 	) (sign []byte, err error)
 
 	ListUnspent() (utxos []Utxo, err error)
@@ -35,6 +37,9 @@ type Wallet interface {
 	SelectUnspent(
 		amt, feePerTxIn, feePerTxOut btcutil.Amount,
 	) (utxos []Utxo, change btcutil.Amount, err error)
+
+	// Unlock unlocks address manager
+	Unlock(privPass []byte) error
 
 	Close() error
 }
@@ -58,6 +63,9 @@ type wallet struct {
 	txStore *wtxmgr.Store
 	account uint32
 }
+
+// wallet should satisfy Wallet interface
+var _ Wallet = (*wallet)(nil)
 
 // CreateWallet returns a new Wallet, also creates db where wallet resides
 // TODO: separate db creation and Manager creation
@@ -238,6 +246,14 @@ func open(
 	}
 
 	return w, nil
+}
+
+// Unlock unlocks address manager with a given private pass phrase
+func (w *wallet) Unlock(privPass []byte) error {
+	return walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
+		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
+		return w.manager.Unlock(ns, privPass)
+	})
 }
 
 // Close closes managers

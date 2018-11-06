@@ -15,13 +15,3 @@ func TestNewPubkey(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, pub)
 }
-
-func TestNewWitnessPubkeyScript(t *testing.T) {
-	wallet, tearDownFunc := setupWallet(t)
-	defer tearDownFunc()
-
-	pkScript, err := wallet.NewWitnessPubkeyScript()
-
-	assert.Nil(t, err)
-	assert.NotEmpty(t, pkScript)
-}

@@ -1,10 +1,11 @@
 package wallet
 
 import (
+	"errors"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
-	"github.com/dgarage/dlc/internal/script"
 )
 
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
@@ -14,15 +15,6 @@ func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 	}
 	pub = (mAddr.(waddrmgr.ManagedPubKeyAddress)).PubKey()
 	return pub, err
-}
-
-func (w *wallet) NewWitnessPubkeyScript() (pkScript []byte, err error) {
-	var pub *btcec.PublicKey
-	pub, err = w.NewPubkey()
-	if err != nil {
-		return
-	}
-	return script.P2WPKHpkScript(pub)
 }
 
 // NewAddress returns a new ManagedAddress
@@ -46,4 +38,33 @@ func (w *wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 	}
 
 	return addrs[0], nil
+}
+
+func (w *wallet) managedPubKeyAddressFromPubkey(
+	pub *btcec.PublicKey,
+) (rmpaddr waddrmgr.ManagedPubKeyAddress, err error) {
+	err = walletdb.View(w.db, func(tx walletdb.ReadTx) error {
+		ns := tx.ReadBucket(waddrmgrNamespaceKey)
+		if ns == nil {
+			return errors.New("missing address manager namespace")
+		}
+		e := w.manager.ForEachActiveAccountAddress(ns, w.account,
+			func(maddr waddrmgr.ManagedAddress) error {
+				mpaddr, ok := maddr.(waddrmgr.ManagedPubKeyAddress)
+				if !ok {
+					return nil
+				}
+				if !mpaddr.PubKey().IsEqual(pub) {
+					return nil
+				}
+				rmpaddr = mpaddr
+				return nil
+			})
+		return e
+	})
+	if rmpaddr == nil {
+		msg := "No pubkey address is found associated with the given pubkey"
+		return nil, errors.New(msg)
+	}
+	return rmpaddr, err
 }
