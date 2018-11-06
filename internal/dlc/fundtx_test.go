@@ -6,6 +6,7 @@ import (
 
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/mocks"
+	"github.com/dgarage/dlc/internal/test"
 	"github.com/dgarage/dlc/internal/wallet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,7 +18,8 @@ var testTxID = "14a0810ac680a3eb3f82edc878cea25ec41d6b790744e5daeef"
 // setup mocke wallet
 func setupTestWallet() *mocks.Wallet {
 	w := &mocks.Wallet{}
-	w.On("NewWitnessPubkeyScript").Return([]byte{0x01}, nil)
+	_, pub := test.RandKeys()
+	w.On("NewPubkey").Return(pub, nil)
 	return w
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	"github.com/dgarage/dlc/internal/script"
 	"github.com/dgarage/dlc/internal/wallet"
 )
 
@@ -97,10 +98,18 @@ func (b *Builder) PrepareFundTxIns() error {
 	b.dlc.fundTxReqs.txIns[b.party] = txins
 
 	if change > 0 {
-		pkScript, err := b.wallet.NewWitnessPubkeyScript()
+		pub, err := b.wallet.NewPubkey()
 		if err != nil {
 			return err
 		}
+
+		// TODO: manager pubkey address for change
+
+		pkScript, err := script.P2WPKHpkScript(pub)
+		if err != nil {
+			return err
+		}
+
 		txout := wire.NewTxOut(int64(change), pkScript)
 		b.dlc.fundTxReqs.txOut[b.party] = txout
 	}
