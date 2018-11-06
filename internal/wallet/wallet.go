@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
@@ -21,6 +22,11 @@ type Wallet interface {
 	NewPubkey() (*btcec.PublicKey, error)
 
 	NewWitnessPubkeyScript() (pkScript []byte, err error)
+
+	// WitnessSignature returns witness signature for a given txin and pubkey
+	WitnessSignature(
+		tx *wire.MsgTx, idx int, amt int64, script []byte, pub *btcec.PublicKey,
+	) (sign []byte, err error)
 
 	ListUnspent() (utxos []Utxo, err error)
 
