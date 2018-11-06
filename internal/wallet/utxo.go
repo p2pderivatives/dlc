@@ -48,6 +48,10 @@ func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
 	return utxos, err
 }
 
+func (w *wallet) ListUnspent2() (utxos []Utxo, err error) {
+	return w.rpc.ListUnspent()
+}
+
 func (w *wallet) credit2ListUnspentResult(
 	c wtxmgr.Credit,
 	addrmgrNs walletdb.ReadBucket) *btcjson.ListUnspentResult {

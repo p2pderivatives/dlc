@@ -8,12 +8,14 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
 	"github.com/btcsuite/btcwallet/wtxmgr"
+	"github.com/dgarage/dlc/internal/rpc"
 )
 
 // Wallet is an interface that provides access to manage pubkey addresses and
@@ -49,6 +51,10 @@ var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
 	waddrmgrKeyScope     = waddrmgr.KeyScopeBIP0084
 	wtxmgrNamespaceKey   = []byte("wtxmgr")
+
+	rpcport     = "localhost:18332" // TODO: have rpc params be read from conf file?
+	rpcusername = "akek"
+	rpcpassword = "akek"
 )
 
 const accountName = "dlc"
@@ -57,11 +63,11 @@ const accountName = "dlc"
 type wallet struct {
 	params           *chaincfg.Params
 	publicPassphrase []byte
-	// rpc    *rpc.BtcRPC
-	db      walletdb.DB
-	manager *waddrmgr.Manager
-	txStore *wtxmgr.Store
-	account uint32
+	rpc              *rpcclient.Client
+	db               walletdb.DB
+	manager          *waddrmgr.Manager
+	txStore          *wtxmgr.Store
+	account          uint32
 }
 
 // wallet should satisfy Wallet interface
@@ -236,9 +242,18 @@ func open(
 		return nil, err
 	}
 
+	url := rpcport
+	user := rpcusername
+	pass := rpcpassword
+	rpc, err := rpc.NewBtcdRPC(url, user, pass)
+	if err != nil {
+		return nil, err
+	}
+
 	w := &wallet{
 		params:           params,
 		publicPassphrase: pubPass,
+		rpc:              rpc,
 		db:               db,
 		manager:          addrMgr,
 		txStore:          txMgr,
