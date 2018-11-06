@@ -57,6 +57,7 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 
 // PrepareFundTx should prepare the txins and txouts of fundtx
 func TestPrepareFundTx(t *testing.T) {
+	assert := assert.New(t)
 	testWallet := setupTestWallet()
 
 	var change btcutil.Amount = 1 // 1 satoshi
@@ -64,20 +65,21 @@ func TestPrepareFundTx(t *testing.T) {
 		mock.Anything, mock.Anything, mock.Anything,
 	).Return(newTestUtxos(1), change, nil)
 
-	builder := NewBuilder(FirstParty, testWallet)
-	builder.SetFundAmounts(1, 1)
+	b := NewBuilder(FirstParty, testWallet)
+	b.SetFundAmounts(1, 1)
 
-	err := builder.PrepareFundTxIns()
-	tx := builder.DLC().FundTx()
-
-	assert := assert.New(t)
+	err := b.PrepareFundTxIns()
 	assert.Nil(err)
-	assert.NotEmpty(tx.TxIn, "tx.TxIn")
-	assert.NotEmpty(tx.TxOut, "tx.TxOut")
+
+	txins := b.dlc.fundTxReqs.txIns[b.party]
+	assert.NotEmpty(txins, "txins")
+	txout := b.dlc.fundTxReqs.txOut[b.party]
+	assert.NotNil(txout, "txout")
 }
 
 // PrepareFundTx shouldn't have txouts if no changes
 func TestPrepareFundTxNoChange(t *testing.T) {
+	assert := assert.New(t)
 	testWallet := setupTestWallet()
 
 	var change btcutil.Amount // no change
@@ -85,14 +87,14 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 		mock.Anything, mock.Anything, mock.Anything,
 	).Return(newTestUtxos(1), change, nil)
 
-	builder := NewBuilder(FirstParty, testWallet)
-	builder.SetFundAmounts(1, 1)
+	b := NewBuilder(FirstParty, testWallet)
+	b.SetFundAmounts(1, 1)
 
-	err := builder.PrepareFundTxIns()
-	tx := builder.DLC().FundTx()
-
-	assert := assert.New(t)
+	err := b.PrepareFundTxIns()
 	assert.Nil(err)
-	assert.NotEmpty(tx.TxIn, "tx.TxIn")
-	assert.Empty(tx.TxOut, "tx.TxOut")
+
+	txins := b.dlc.fundTxReqs.txIns[b.party]
+	assert.NotEmpty(txins, "txins")
+	txout := b.dlc.fundTxReqs.txOut[b.party]
+	assert.Nil(txout, "txout")
 }

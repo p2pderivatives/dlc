@@ -8,9 +8,10 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	fundAmts    map[Contractor]btcutil.Amount
-	fundFeerate btcutil.Amount // fund fee per byte in satohi
-	fundTxReqs  *FundTxRequirements
+	fundAmts      map[Contractor]btcutil.Amount
+	fundFeerate   btcutil.Amount // fund fee per byte in satohi
+	redeemFeerate btcutil.Amount // redeem fee per byte in satohi
+	fundTxReqs    *FundTxRequirements
 }
 
 func newDLC() *DLC {
