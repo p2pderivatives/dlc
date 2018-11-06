@@ -3,25 +3,24 @@ package wallet
 import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/script"
 )
 
 // WitnessSignature returns witness signature
-// by getting privkey from a given pubkey
+// by creating a new keyset and signing tx with its privkey
 func (w *wallet) WitnessSignature(
-	tx *wire.MsgTx, idx int, amt int64, sc []byte, pub *btcec.PublicKey,
-) (sign []byte, err error) {
-	priv, err := w.privkeyFromPubkey(pub)
+	tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
+) ([]byte, error) {
+	mpaddr, err := w.managedPubKeyAddressFromPubkey(pub)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return script.WitnessSignature(tx, idx, amt, sc, priv)
-}
-
-// privkeyFromPubkey retrieves a privkey for a given pubkey
-func (w *wallet) privkeyFromPubkey(
-	pub *btcec.PublicKey) (priv *btcec.PrivateKey, err error) {
-	// TODO implement this function
-	return
+	priv, err := mpaddr.PrivKey()
+	if err != nil {
+		return nil, err
+	}
+	sign, err := script.WitnessSignature(tx, idx, int64(amt), sc, priv)
+	return sign, err
 }
