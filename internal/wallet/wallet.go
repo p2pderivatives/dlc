@@ -23,7 +23,11 @@ type Wallet interface {
 
 	// WitnessSignature returns witness signature for a given txin and pubkey
 	WitnessSignature(
-		tx *wire.MsgTx, idx int, amt btcutil.Amount, script []byte, pub *btcec.PublicKey
+		tx *wire.MsgTx,
+		idx int,
+		amt btcutil.Amount,
+		script []byte,
+		pub *btcec.PublicKey,
 	) (sign []byte, err error)
 
 	ListUnspent() (utxos []Utxo, err error)
