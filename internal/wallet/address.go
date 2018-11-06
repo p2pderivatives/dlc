@@ -62,5 +62,9 @@ func (w *wallet) managedPubKeyAddressFromPubkey(
 			})
 		return e
 	})
+	if rmpaddr == nil {
+		msg := "No pubkey address is found associated with the given pubkey"
+		return nil, errors.New(msg)
+	}
 	return rmpaddr, err
 }
