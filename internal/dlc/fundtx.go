@@ -36,12 +36,12 @@ func (b *Builder) CopyFundTxReqsFromCounterparty(d *DLC) {
 	b.dlc.fundTxReqs.pubs[p] = reqs.pubs[p]
 }
 
-const fundTxVersion = 2
-const fundTxInAt = 0 // fund txin is always at 0
+const fundTxOutAt = 0 // fund txout is always at 0 in fund tx
+const fundTxInAt = 0  // fund txin is always at 0 in redeem tx
 
 // FundTx constructs fund tx using prepared fund tx requirements
 func (d *DLC) FundTx() (*wire.MsgTx, error) {
-	tx := wire.NewMsgTx(fundTxVersion)
+	tx := wire.NewMsgTx(txVersion)
 
 	txout, err := d.fundTxOutForRedeemTx()
 	if err != nil {
@@ -210,6 +210,27 @@ func (b *Builder) PrepareFundPubkey() error {
 	}
 	b.dlc.fundTxReqs.pubs[b.party] = pub
 	return nil
+}
+
+// newRedeemTx creates a new tx to redeem fundtx
+// redeem tx
+//  inputs:
+//   [0]: fund transaction output[0]
+func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
+	fundtx, err := d.FundTx()
+	if err != nil {
+		return nil, err
+	}
+
+	tx := wire.NewMsgTx(txVersion)
+
+	// txin
+	txid := fundtx.TxHash()
+	fout := wire.NewOutPoint(&txid, fundTxOutAt)
+	txin := wire.NewTxIn(fout, nil, nil)
+	tx.AddTxIn(txin)
+
+	return tx, nil
 }
 
 // witsigForRedeemTx returns sign for a given redeem tx

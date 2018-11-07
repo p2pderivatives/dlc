@@ -21,6 +21,8 @@ func newDLC() *DLC {
 	}
 }
 
+const txVersion = 2
+
 // Contractor represents a contractor type
 type Contractor int
 

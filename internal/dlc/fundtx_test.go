@@ -185,10 +185,9 @@ func TestRedeemFundTx(t *testing.T) {
 	b2.CopyFundTxReqsFromCounterparty(b1.DLC())
 	d := b1.DLC()
 
-	fundtx, _ := d.FundTx()
-
 	// prepare redeem tx for testing. this will be a settlement tx or refund tx
-	redeemtx := test.NewRedeemTx(fundtx, 0)
+	redeemtx, err := d.newRedeemTx()
+	assert.Nil(err)
 
 	// both parties signs redeem tx
 	sign1, err := b1.witsigForRedeemTx(redeemtx)
