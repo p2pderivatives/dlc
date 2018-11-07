@@ -179,33 +179,24 @@ func TestRedeemFundTx(t *testing.T) {
 	b2.CopyFundTxReqsFromCounterparty(b1.DLC())
 	d := b1.DLC()
 
-	// both parties prepare signs
+	// create redeem tx
 	fundtx, _ := d.FundTx()
 	redeemtx := test.NewRedeemTx(fundtx, 0)
 
-	var err error
-	err = b1.PrepareFundScriptSignature(redeemtx)
+	// both parties signs redeem tx
+	sign1, err := b1.witsigForRedeemTx(redeemtx)
 	assert.Nil(err)
-	err = b2.PrepareFundScriptSignature(redeemtx)
+	sign2, err := b2.witsigForRedeemTx(redeemtx)
 	assert.Nil(err)
-
-	// exhange signs
-	b1.CopyFundTxReqsFromCounterparty(b2.DLC())
-	b2.CopyFundTxReqsFromCounterparty(b1.DLC())
-	d = b1.DLC()
 
 	// create witness
-	wt, err := d.fundScriptWitness()
-	assert.Nil(err)
+	fsc, _ := d.fundScript()
+	wt := wire.TxWitness{[]byte{}, sign1, sign2, fsc}
 	redeemtx.TxIn[0].Witness = wt
 
-	err = runFundScript(d, redeemtx)
-	assert.Nil(err)
-}
-
-func runFundScript(d *DLC, redeemtx *wire.MsgTx) error {
-	famt, _ := d.fundAmount()
-	fsc, _ := d.fundScript()
+	// run script
 	pkScript, _ := script.P2WSHpkScript(fsc)
-	return test.ExecuteScript(pkScript, redeemtx, int64(famt))
+	famt, _ := d.fundAmount()
+	err = test.ExecuteScript(pkScript, redeemtx, int64(famt))
+	assert.Nil(err)
 }

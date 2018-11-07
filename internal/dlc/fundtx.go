@@ -16,7 +16,6 @@ type FundTxRequirements struct {
 	txIns map[Contractor][]*wire.TxIn
 	txOut map[Contractor]*wire.TxOut
 	pubs  map[Contractor]*btcec.PublicKey
-	signs map[Contractor][]byte
 }
 
 func newFundTxReqs() *FundTxRequirements {
@@ -24,7 +23,6 @@ func newFundTxReqs() *FundTxRequirements {
 		txIns: make(map[Contractor][]*wire.TxIn),
 		txOut: make(map[Contractor]*wire.TxOut),
 		pubs:  make(map[Contractor]*btcec.PublicKey),
-		signs: make(map[Contractor][]byte),
 	}
 }
 
@@ -36,7 +34,6 @@ func (b *Builder) CopyFundTxReqsFromCounterparty(d *DLC) {
 	b.dlc.fundTxReqs.txIns[p] = reqs.txIns[p]
 	b.dlc.fundTxReqs.txOut[p] = reqs.txOut[p]
 	b.dlc.fundTxReqs.pubs[p] = reqs.pubs[p]
-	b.dlc.fundTxReqs.signs[p] = reqs.signs[p]
 }
 
 const fundTxVersion = 2
@@ -69,17 +66,18 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 func (d *DLC) fundScript() ([]byte, error) {
 	pub1, ok := d.fundTxReqs.pubs[FirstParty]
 	if !ok {
-		return nil, errors.New("First party's pub key must be set")
+		return nil, errors.New("First party must provide a pubkey for fund script")
 	}
 	pub2, ok := d.fundTxReqs.pubs[SecondParty]
 	if !ok {
-		return nil, errors.New("First party's pub key must be set")
+		return nil, errors.New("Second party must provide a pubkey for fund script")
 	}
 
 	return script.MultiSigScript2of2(pub1, pub2)
 }
 
-// fundTxOutForRedeemTx creates a txout for the txin of redeem tx
+// fundTxOutForRedeemTx creates a txout for the txin of redeem tx.
+// The value of the txout is calculated by `fund amount + redeem tx fee`
 func (d *DLC) fundTxOutForRedeemTx() (*wire.TxOut, error) {
 	fs, err := d.fundScript()
 	if err != nil {
@@ -95,6 +93,7 @@ func (d *DLC) fundTxOutForRedeemTx() (*wire.TxOut, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	amt += d.redeemTxFee()
 
 	txout := wire.NewTxOut(int64(amt), pkScript)
@@ -178,7 +177,7 @@ func (b *Builder) PrepareFundTxIns() error {
 		return err
 	}
 
-	// set txins to fund tx requirements
+	// set txins to DLC
 	b.dlc.fundTxReqs.txIns[b.party] = txins
 
 	if change > 0 {
@@ -196,7 +195,7 @@ func (b *Builder) PrepareFundTxIns() error {
 
 		txout := wire.NewTxOut(int64(change), pkScript)
 
-		// set change txout to fund tx requirements
+		// set change txout to DLC
 		b.dlc.fundTxReqs.txOut[b.party] = txout
 	}
 
@@ -213,47 +212,20 @@ func (b *Builder) PrepareFundPubkey() error {
 	return nil
 }
 
-// PrepareFundScriptSignature sets witness for fund script
-func (b *Builder) PrepareFundScriptSignature(tx *wire.MsgTx) error {
+// witsigForRedeemTx returns sign for a given redeem tx
+// TODO: this method will be used to create settlement txs and refund tx
+func (b *Builder) witsigForRedeemTx(tx *wire.MsgTx) ([]byte, error) {
 	amt, err := b.dlc.fundAmount()
-	if err != nil {
-		return err
-	}
-
-	fc, err := b.dlc.fundScript()
-	if err != nil {
-		return err
-	}
-
-	pub, ok := b.dlc.fundTxReqs.pubs[b.party]
-	if !ok {
-		return errors.New("fund pubkey is not found")
-	}
-
-	sign, err := b.wallet.WitnessSignature(tx, fundTxInAt, amt, fc, pub)
-	if err != nil {
-		return err
-	}
-
-	b.dlc.fundTxReqs.signs[b.party] = sign
-	return nil
-}
-
-func (d *DLC) fundScriptWitness() (wire.TxWitness, error) {
-	fsc, err := d.fundScript()
 	if err != nil {
 		return nil, err
 	}
 
-	sign1 := d.fundTxReqs.signs[FirstParty]
-	if sign1 == nil {
-		return nil, errors.New("First party must set fund script signeture")
-	}
-	sign2 := d.fundTxReqs.signs[SecondParty]
-	if sign2 == nil {
-		return nil, errors.New("Second party must set fund script signeture")
+	fc, err := b.dlc.fundScript()
+	if err != nil {
+		return nil, err
 	}
 
-	wt := wire.TxWitness{[]byte{}, sign1, sign2, fsc}
-	return wt, nil
+	pub := b.dlc.fundTxReqs.pubs[b.party]
+
+	return b.wallet.WitnessSignature(tx, fundTxInAt, amt, fc, pub)
 }
