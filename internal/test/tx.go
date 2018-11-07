@@ -18,10 +18,10 @@ func NewSourceTx() *wire.MsgTx {
 	return tx
 }
 
-// NewRedeemTx creates a redeem tx using a given sourct tx
-func NewRedeemTx(sourceTx *wire.MsgTx) *wire.MsgTx {
+// NewRedeemTx creates a redeem tx using a given source tx
+func NewRedeemTx(sourceTx *wire.MsgTx, index uint32) *wire.MsgTx {
 	txHash := sourceTx.TxHash()
-	outPt := wire.NewOutPoint(&txHash, 0)
+	outPt := wire.NewOutPoint(&txHash, index)
 	tx := wire.NewMsgTx(TxVersion)
 	tx.AddTxIn(wire.NewTxIn(outPt, nil, nil))
 	return tx

@@ -203,7 +203,7 @@ func (b *Builder) PrepareFundTxIns() error {
 	return nil
 }
 
-// PrepareFundPubkey prepares fund pubkey
+// PrepareFundPubkey sets fund pubkey
 func (b *Builder) PrepareFundPubkey() error {
 	pub, err := b.wallet.NewPubkey()
 	if err != nil {
@@ -213,16 +213,47 @@ func (b *Builder) PrepareFundPubkey() error {
 	return nil
 }
 
-func (b *Builder) witsigForRedeemTx(tx *wire.MsgTx, sc []byte) ([]byte, error) {
+// PrepareFundScriptSignature sets witness for fund script
+func (b *Builder) PrepareFundScriptSignature(tx *wire.MsgTx) error {
 	amt, err := b.dlc.fundAmount()
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	fc, err := b.dlc.fundScript()
+	if err != nil {
+		return err
 	}
 
 	pub, ok := b.dlc.fundTxReqs.pubs[b.party]
 	if !ok {
-		return nil, errors.New("fund pubkey is not found")
+		return errors.New("fund pubkey is not found")
 	}
 
-	return b.wallet.WitnessSignature(tx, fundTxInAt, amt, sc, pub)
+	sign, err := b.wallet.WitnessSignature(tx, fundTxInAt, amt, fc, pub)
+	if err != nil {
+		return err
+	}
+
+	b.dlc.fundTxReqs.signs[b.party] = sign
+	return nil
+}
+
+func (d *DLC) fundScriptWitness() (wire.TxWitness, error) {
+	fsc, err := d.fundScript()
+	if err != nil {
+		return nil, err
+	}
+
+	sign1 := d.fundTxReqs.signs[FirstParty]
+	if sign1 == nil {
+		return nil, errors.New("First party must set fund script signeture")
+	}
+	sign2 := d.fundTxReqs.signs[SecondParty]
+	if sign2 == nil {
+		return nil, errors.New("Second party must set fund script signeture")
+	}
+
+	wt := wire.TxWitness{[]byte{}, sign1, sign2, fsc}
+	return wt, nil
 }

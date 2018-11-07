@@ -25,7 +25,7 @@ func TestWitnessSignature(t *testing.T) {
 	sourceTx := test.NewSourceTx()
 	sourceTx.AddTxOut(wire.NewTxOut(int64(amt), pkScript))
 
-	redeemTx := test.NewRedeemTx(sourceTx)
+	redeemTx := test.NewRedeemTx(sourceTx, 0)
 
 	// should fail if it's not unlocked
 	_, err := w.WitnessSignature(redeemTx, 0, amt, pkScript, pub)
