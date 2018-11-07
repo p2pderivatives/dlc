@@ -60,5 +60,5 @@ func (b *Builder) counterparty() (p Contractor) {
 	case SecondParty:
 		p = FirstParty
 	}
-	return
+	return p
 }
