@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,8 +15,7 @@ var (
 func TestNewClient(t *testing.T) {
 	client, err := NewClient(testport, testuser, testpass)
 	//defer client.Shutdown()
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	assert.Nil(err)
 	assert.NotNil(t, client)
 }

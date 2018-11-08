@@ -13,6 +13,7 @@ type Client interface {
 	ListUnspent() ([]btcjson.ListUnspentResult, error)
 	ImportAddress(address string) error
 	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
+	// TODO: add Shutdown func?
 }
 
 // NewClient returns Client interface object
