@@ -49,6 +49,10 @@ func MultiSigScript2of2(pub1, pub2 *btcec.PublicKey) (script []byte, err error) 
 }
 
 // WitnessSignature returns a witness signature for given script
+//
+// TODO: Note that txscript.RawTxInWitnessSignature converts a script from p2wkh to p2pkh implicitly.
+// https://github.com/btcsuite/btcd/blob/master/txscript/script.go#L488
+// It's better to convert it on ourside explicitly.
 func WitnessSignature(
 	tx *wire.MsgTx, idx int, amt int64, script []byte, priv *btcec.PrivateKey,
 ) ([]byte, error) {
