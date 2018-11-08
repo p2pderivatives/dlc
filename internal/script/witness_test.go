@@ -23,7 +23,7 @@ func TestP2WPKHpkScript(t *testing.T) {
 	sourceTx.AddTxOut(wire.NewTxOut(amt, pkScript))
 
 	// create redeem tx
-	redeemTx := test.NewRedeemTx(sourceTx)
+	redeemTx := test.NewRedeemTx(sourceTx, 0)
 
 	// witness signature
 	sign, err := WitnessSignature(redeemTx, 0, amt, pkScript, priv)
@@ -55,7 +55,7 @@ func TestMultiSigScript2of2(t *testing.T) {
 	sourceTx.AddTxOut(wire.NewTxOut(amt, pkScript))
 
 	// create redeem tx
-	redeemTx := test.NewRedeemTx(sourceTx)
+	redeemTx := test.NewRedeemTx(sourceTx, 0)
 
 	// witness signatures
 	sign1, err := WitnessSignature(redeemTx, 0, amt, script, priv1)

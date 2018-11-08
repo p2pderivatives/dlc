@@ -8,17 +8,20 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	fundAmts    map[Contractor]btcutil.Amount
-	fundFeerate btcutil.Amount // fund fee per byte in satohi
-	fundTxReqs  *FundTxRequirements
+	fundAmts      map[Contractor]btcutil.Amount
+	fundFeerate   btcutil.Amount // fund fee per byte in satohi
+	redeemFeerate btcutil.Amount // redeem fee per byte in satohi
+	fundTxReqs    *FundTxRequirements
 }
 
 func newDLC() *DLC {
 	return &DLC{
 		fundAmts:   make(map[Contractor]btcutil.Amount),
-		fundTxReqs: newFundTxRequirements(),
+		fundTxReqs: newFundTxReqs(),
 	}
 }
+
+const txVersion = 2
 
 // Contractor represents a contractor type
 type Contractor int
@@ -49,4 +52,15 @@ func NewBuilder(party Contractor, w wallet.Wallet) *Builder {
 // DLC returns the DLC constructed by builder
 func (b *Builder) DLC() *DLC {
 	return b.dlc
+}
+
+// counterparty returns the counterparty
+func (b *Builder) counterparty() (p Contractor) {
+	switch b.party {
+	case FirstParty:
+		p = SecondParty
+	case SecondParty:
+		p = FirstParty
+	}
+	return p
 }
