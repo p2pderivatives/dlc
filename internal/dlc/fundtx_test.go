@@ -188,11 +188,10 @@ func TestRedeemFundTx(t *testing.T) {
 	// prepare redeem tx for testing. this will be a settlement tx or refund tx
 	redeemtx, err := d.newRedeemTx()
 	assert.Nil(err)
-
 	// both parties signs redeem tx
-	sign1, err := b1.witsigForRedeemTx(redeemtx)
+	sign1, err := b1.witsigForFundTxIn(redeemtx)
 	assert.Nil(err)
-	sign2, err := b2.witsigForRedeemTx(redeemtx)
+	sign2, err := b2.witsigForFundTxIn(redeemtx)
 	assert.Nil(err)
 
 	// create witness
@@ -201,8 +200,8 @@ func TestRedeemFundTx(t *testing.T) {
 	redeemtx.TxIn[0].Witness = wt
 
 	// run script
-	pkScript, _ := script.P2WSHpkScript(fsc)
-	famt, _ := d.fundAmount()
-	err = test.ExecuteScript(pkScript, redeemtx, int64(famt))
+	fundtx, _ := d.FundTx()
+	fout := fundtx.TxOut[fundTxOutAt]
+	err = test.ExecuteScript(fout.PkScript, redeemtx, fout.Value)
 	assert.Nil(err)
 }

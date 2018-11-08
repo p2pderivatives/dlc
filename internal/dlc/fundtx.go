@@ -233,9 +233,9 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-// witsigForRedeemTx returns sign for a given redeem tx
+// witsigForFundScript returns sign for a given tx that redeems fund out
 // TODO: this method will be used to create settlement txs and refund tx
-func (b *Builder) witsigForRedeemTx(tx *wire.MsgTx) ([]byte, error) {
+func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
 	amt, err := b.dlc.fundAmount()
 	if err != nil {
 		return nil, err
