@@ -5,6 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	"github.com/dgarage/dlc/internal/mocks"
 	"github.com/dgarage/dlc/internal/script"
 	"github.com/dgarage/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,10 @@ func TestWitnessSignature(t *testing.T) {
 
 	w, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
+
+	rpcc := &mocks.Client{}
+	rpcc = mockImportAddress(rpcc, nil)
+	w.rpc = rpcc
 
 	// pubkey and pk script
 	pub, _ := w.NewPubkey()

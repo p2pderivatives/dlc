@@ -37,6 +37,13 @@ func (w *wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 		return nil, err
 	}
 
+	// register address to bitcoind
+	mpka := addrs[0].(waddrmgr.ManagedPubKeyAddress)
+	err = w.rpc.ImportAddress(mpka.ExportPubKey())
+	if err != nil {
+		return nil, err
+	}
+
 	return addrs[0], nil
 }
 
