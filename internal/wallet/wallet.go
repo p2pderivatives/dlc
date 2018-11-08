@@ -8,7 +8,6 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
@@ -52,7 +51,7 @@ var (
 	waddrmgrKeyScope     = waddrmgr.KeyScopeBIP0084
 	wtxmgrNamespaceKey   = []byte("wtxmgr")
 
-	rpcport     = "localhost:18332" // TODO: have rpc params be read from conf file?
+	rpcport     = "localhost:18443" // TODO: have rpc params be read from conf file? //
 	rpcusername = "akek"
 	rpcpassword = "akek"
 )
@@ -63,7 +62,7 @@ const accountName = "dlc"
 type wallet struct {
 	params           *chaincfg.Params
 	publicPassphrase []byte
-	rpc              *rpcclient.Client
+	rpc              rpc.Client
 	db               walletdb.DB
 	manager          *waddrmgr.Manager
 	txStore          *wtxmgr.Store
@@ -242,10 +241,7 @@ func open(
 		return nil, err
 	}
 
-	url := rpcport
-	user := rpcusername
-	pass := rpcpassword
-	rpc, err := rpc.NewBtcdRPC(url, user, pass)
+	rpc, err := rpc.NewClient(rpcport, rpcusername, rpcpassword)
 	if err != nil {
 		return nil, err
 	}
