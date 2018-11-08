@@ -18,11 +18,17 @@ import (
 type Utxo = btcjson.ListUnspentResult
 
 // ListUnspent returns unspent transactions.
+// It asks the running bitcoind instance to return all known utxos for addresses it knows about
+func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
+	return w.rpc.ListUnspent()
+}
+
+// ListUnspent2 also returns unspent transactions except it returns utxos from its own db.
 // TODO: add filter
 //   Only utxos with address contained the param addresses will be considered.
 //   If param addresses is empty, all addresses are considered and there is no
 //   filter
-func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
+func (w *wallet) ListUnspent2() (utxos []Utxo, err error) {
 	var results []btcjson.ListUnspentResult
 	err = walletdb.View(w.db, func(tx walletdb.ReadTx) error {
 		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
@@ -46,10 +52,6 @@ func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
 	})
 	utxos = results
 	return utxos, err
-}
-
-func (w *wallet) ListUnspent2() (utxos []Utxo, err error) {
-	return w.rpc.ListUnspent()
 }
 
 func (w *wallet) credit2ListUnspentResult(
