@@ -13,7 +13,6 @@ import (
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
-	"github.com/btcsuite/btcwallet/wtxmgr"
 	"github.com/dgarage/dlc/internal/rpc"
 )
 
@@ -51,7 +50,8 @@ var (
 	waddrmgrKeyScope     = waddrmgr.KeyScopeBIP0084
 	wtxmgrNamespaceKey   = []byte("wtxmgr")
 
-	rpcport     = "localhost:18443" // TODO: have rpc params be read from conf file? //
+	// TODO: have rpc params be read from conf file?
+	rpcport     = "localhost:18443"
 	rpcusername = "akek"
 	rpcpassword = "akek"
 )
@@ -65,7 +65,6 @@ type wallet struct {
 	rpc              rpc.Client
 	db               walletdb.DB
 	manager          *waddrmgr.Manager
-	txStore          *wtxmgr.Store
 	account          uint32
 }
 
@@ -148,10 +147,6 @@ func createManagers(
 		if e != nil {
 			return e
 		}
-		txmgrNs, e := tx.CreateTopLevelBucket(wtxmgrNamespaceKey)
-		if e != nil {
-			return e
-		}
 
 		birthday := time.Now()
 		e = waddrmgr.Create(
@@ -161,7 +156,6 @@ func createManagers(
 		if e != nil {
 			return e
 		}
-		e = wtxmgr.Create(txmgrNs)
 		return e
 	})
 }
@@ -207,17 +201,12 @@ func open(
 	// Open database abstraction instances
 	var (
 		addrMgr *waddrmgr.Manager
-		txMgr   *wtxmgr.Store
 		account uint32
 	)
 	err := walletdb.View(db, func(tx walletdb.ReadTx) error {
 		addrmgrNs := tx.ReadBucket(waddrmgrNamespaceKey)
 		if addrmgrNs == nil {
 			return errors.New("missing address manager namespace")
-		}
-		txmgrNs := tx.ReadBucket(wtxmgrNamespaceKey)
-		if txmgrNs == nil {
-			return errors.New("missing transaction manager namespace")
 		}
 
 		var e error
@@ -233,7 +222,6 @@ func open(
 		if e != nil {
 			return e
 		}
-		txMgr, e = wtxmgr.Open(txmgrNs, params)
 
 		return e
 	})
@@ -252,7 +240,6 @@ func open(
 		rpc:              rpc,
 		db:               db,
 		manager:          addrMgr,
-		txStore:          txMgr,
 		account:          account,
 	}
 
