@@ -26,7 +26,7 @@ func newFundTxReqs() *FundTxRequirements {
 	}
 }
 
-// CopyFundTxReqsFromCounterparty copes requirements of counterparty from their DLC
+// CopyFundTxReqsFromCounterparty copies requirements of counterparty from their DLC
 func (b *Builder) CopyFundTxReqsFromCounterparty(d *DLC) {
 	p := b.counterparty()
 	reqs := d.fundTxReqs
@@ -233,7 +233,7 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-// witsigForFundScript returns sign for a given tx that redeems fund out
+// witsigForFundTxIn returns sign for a given tx that redeems fund out
 // TODO: this method will be used to create settlement txs and refund tx
 func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
 	amt, err := b.dlc.fundAmount()
