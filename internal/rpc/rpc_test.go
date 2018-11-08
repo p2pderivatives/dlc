@@ -16,6 +16,6 @@ func TestNewClient(t *testing.T) {
 	client, err := NewClient(testport, testuser, testpass)
 	//defer client.Shutdown()
 
-	assert.Nil(err)
+	assert.Nil(t, err)
 	assert.NotNil(t, client)
 }
