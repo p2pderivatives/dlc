@@ -31,4 +31,3 @@ func newClient(url, user, pass string) (*rpcclient.Client, error) {
 
 	return rpcclient.New(connCfg, nil)
 }
-s
