@@ -8,17 +8,14 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+// Client is an interface that provides access to certain methods of type rpcclient.Client
 type Client interface {
 	ListUnspent() ([]btcjson.ListUnspentResult, error)
-	//ImportManagedAddress(waddrmgr.ManagedAddress) error
 	ImportAddress(address string) error
 	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
 }
 
-// type client struct {
-// 	client *rpcclient.Client
-// }
-
+// NewClient returns Client interface object
 func NewClient(url, user, pass string) (Client, error) {
 	return newClient(url, user, pass)
 }
@@ -32,20 +29,6 @@ func newClient(url, user, pass string) (*rpcclient.Client, error) {
 		DisableTLS:   true, // Bitcoin core does not provide TLS by default
 	}
 
-	// client, err := rpcclient.New(connCfg, nil)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// c := &client{
-	// 	client: client,
-	// }
-
 	return rpcclient.New(connCfg, nil)
-	// return c, err
 }
-
-// ImportAddress get the public address from the passed ManagedAddress and imports it
-// func (c *client) ImportManagedAddress(maddr waddrmgr.ManagedAddress) error {
-// 	return c.client.ImportAddress(maddr.(waddrmgr.ManagedPubKeyAddress).ExportPubKey())
-// }
+s
