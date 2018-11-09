@@ -2,7 +2,10 @@ package dlc
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/dgarage/dlc/internal/script"
 )
@@ -48,9 +51,12 @@ func (d *DLC) refundTxOut(p Contractor) (*wire.TxOut, error) {
 	}
 
 	txout := wire.NewTxOut(int64(famt), pkScript)
+
+	//return d.ClosingTxOut(p, d.fundAmts[p])
 	return txout, nil
 }
 
+// SignRefundTx returns a signature for a refund tx
 func (b *Builder) SignRefundTx() error {
 	tx, err := b.dlc.RefundTx()
 	if err != nil {
@@ -66,13 +72,14 @@ func (b *Builder) SignRefundTx() error {
 	return nil
 }
 
+// SignedRefundTx returns a refund tx with its witness signature
 func (d *DLC) SignedRefundTx() (*wire.MsgTx, error) {
 	tx, err := d.RefundTx()
 	if err != nil {
 		return nil, err
 	}
 
-	wt, err := d.witessForRefundTx()
+	wt, err := d.witnessForRefundTx()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +88,7 @@ func (d *DLC) SignedRefundTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-func (d *DLC) witessForRefundTx() (wire.TxWitness, error) {
+func (d *DLC) witnessForRefundTx() (wire.TxWitness, error) {
 	sc, err := d.fundScript()
 	if err != nil {
 		return nil, err
@@ -99,4 +106,42 @@ func (d *DLC) witessForRefundTx() (wire.TxWitness, error) {
 
 	wt := wire.TxWitness{[]byte{}, sign1, sign2, sc}
 	return wt, nil
+}
+
+// VerifyRefundTx verifies the refund transaction.
+func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) error {
+	// parse signature
+	s, err := btcec.ParseDERSignature(sign, btcec.S256())
+	if err != nil {
+		return err
+	}
+
+	// verify
+	script := d.fundScript()
+	if script == nil {
+		return fmt.Errorf("not found fund script")
+	}
+	tx, err := d.RefundTx()
+	if err != nil {
+		return err
+	}
+	sighashes := txscript.NewTxSigHashes(tx)
+
+	fundAmount, err := d.fundAmount()
+	if err != nil {
+		return err
+	}
+	amt := fundAmount + d.redeemFeerate
+
+	hash, err := txscript.CalcWitnessSigHash(script, sighashes, txscript.SigHashAll,
+		tx, 0, amt)
+	if err != nil {
+		return err
+	}
+	verify := s.Verify(hash, pub)
+	if !verify {
+		return fmt.Errorf("verify fail : %v", verify)
+	}
+
+	return nil
 }
