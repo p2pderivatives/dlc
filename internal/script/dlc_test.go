@@ -41,7 +41,7 @@ func TestCEScript(t *testing.T) {
 	assert.Nil(err)
 
 	// unlock after delay
-	// redeemTx.TxIn[0].Sequence = 144
+	redeemTx.TxIn[0].Sequence = ContractExecutionDelay
 	signb, err := WitnessSignature(redeemTx, 0, amt, script, privb)
 	assert.Nil(err)
 	redeemTx.TxIn[0].Witness = WitnessForCEScriptAfterDelay(signb, script)

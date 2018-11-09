@@ -6,6 +6,9 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+// ContractExecutionDelay is a delay used in ContractExecutionScript
+const ContractExecutionDelay = 144
+
 // ContractExecutionScript returns a contract execution script.
 //
 // Script Code:
@@ -29,7 +32,7 @@ func ContractExecutionScript(puba, pubb, pubm *btcec.PublicKey) ([]byte, error) 
 	pubam := &btcec.PublicKey{}
 	pubam.X, pubam.Y = btcec.S256().Add(puba.X, puba.Y, pubm.X, pubm.Y)
 
-	delay := uint16(144)
+	delay := uint16(ContractExecutionDelay)
 	csvflg := uint32(0x00000000)
 	builder := txscript.NewScriptBuilder()
 	builder.AddOp(txscript.OP_IF)
