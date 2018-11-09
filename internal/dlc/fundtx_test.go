@@ -139,14 +139,14 @@ func TestFundTx(t *testing.T) {
 	b1 := NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
 	b1.SetFundAmounts(1, 1)
 	b1.PrepareFundTxIns()
-	b1.PrepareFundPubkey()
+	b1.PreparePubkey()
 
 	// second party
 	w2 := setupTestWallet()
 	b2 := NewBuilder(SecondParty, mockSelectUnspent(w2, 1, 1, nil))
 	b2.SetFundAmounts(1, 1)
 	b2.PrepareFundTxIns()
-	b2.PrepareFundPubkey()
+	b2.PreparePubkey()
 
 	// fail if it hasn't received a pubkey from the counterparty
 	d := b1.DLC()
@@ -154,7 +154,7 @@ func TestFundTx(t *testing.T) {
 	assert.NotNil(err)
 
 	// receive pubkey from the counterparty
-	b1.CopyFundTxReqsFromCounterparty(b2.DLC())
+	b1.CopyReqsFromCounterparty(b2.DLC())
 
 	d = b1.DLC()
 	tx, err := d.FundTx()
@@ -170,19 +170,19 @@ func TestRedeemFundTx(t *testing.T) {
 	w1 := setupTestWallet()
 	b1 := NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
 	b1.SetFundAmounts(1, 1)
+	b1.PreparePubkey()
 	b1.PrepareFundTxIns()
-	b1.PrepareFundPubkey()
 
 	// init second party
 	w2 := setupTestWallet()
 	b2 := NewBuilder(SecondParty, mockSelectUnspent(w2, 1, 1, nil))
 	b2.SetFundAmounts(1, 1)
+	b2.PreparePubkey()
 	b2.PrepareFundTxIns()
-	b2.PrepareFundPubkey()
 
 	// exchange pubkeys
-	b1.CopyFundTxReqsFromCounterparty(b2.DLC())
-	b2.CopyFundTxReqsFromCounterparty(b1.DLC())
+	b1.CopyReqsFromCounterparty(b2.DLC())
+	b2.CopyReqsFromCounterparty(b1.DLC())
 	d := b1.DLC()
 
 	// prepare redeem tx for testing. this will be a settlement tx or refund tx

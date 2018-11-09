@@ -1,24 +1,51 @@
 package dlc
 
 import (
+	"errors"
+
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	"github.com/dgarage/dlc/internal/script"
 	"github.com/dgarage/dlc/internal/wallet"
 )
 
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
+	// conditions of contract
 	fundAmts      map[Contractor]btcutil.Amount
 	fundFeerate   btcutil.Amount // fund fee per byte in satohi
 	redeemFeerate btcutil.Amount // redeem fee per byte in satohi
-	fundTxReqs    *FundTxRequirements
+
+	// requirements to execute DLC
+	pubs       map[Contractor]*btcec.PublicKey
+	fundTxReqs *FundTxRequirements
 }
 
 func newDLC() *DLC {
 	return &DLC{
+		pubs:       make(map[Contractor]*btcec.PublicKey),
 		fundAmts:   make(map[Contractor]btcutil.Amount),
 		fundTxReqs: newFundTxReqs(),
 	}
+}
+
+// ClosingTxOut returns a final txout owned only by a given party
+func (d *DLC) ClosingTxOut(
+	p Contractor, amt btcutil.Amount) (*wire.TxOut, error) {
+	pub := d.pubs[p]
+	if pub == nil {
+		return nil, errors.New("missing pubkey")
+	}
+
+	pkScript, err := script.P2WPKHpkScript(pub)
+	if err != nil {
+		return nil, err
+	}
+
+	txout := wire.NewTxOut(int64(amt), pkScript)
+	return txout, nil
 }
 
 const txVersion = 2
@@ -32,6 +59,17 @@ const (
 	// SecondParty is a contractor who accepts offer
 	SecondParty Contractor = 1
 )
+
+// counterparty returns the counterparty
+func (d *DLC) counterparty(p Contractor) (cp Contractor) {
+	switch p {
+	case FirstParty:
+		cp = SecondParty
+	case SecondParty:
+		cp = FirstParty
+	}
+	return cp
+}
 
 // Builder builds DLC by interacting with wallet
 type Builder struct {
@@ -54,13 +92,25 @@ func (b *Builder) DLC() *DLC {
 	return b.dlc
 }
 
-// counterparty returns the counterparty
-func (b *Builder) counterparty() (p Contractor) {
-	switch b.party {
-	case FirstParty:
-		p = SecondParty
-	case SecondParty:
-		p = FirstParty
+// PreparePubkey sets fund pubkey
+func (b *Builder) PreparePubkey() error {
+	pub, err := b.wallet.NewPubkey()
+	if err != nil {
+		return err
 	}
-	return p
+	b.dlc.pubs[b.party] = pub
+	return nil
+}
+
+// CopyReqsFromCounterparty copies requirements from counterparty
+func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
+	p := b.dlc.counterparty(b.party)
+
+	// pubkey
+	b.dlc.pubs[p] = d.pubs[p]
+
+	// fund requirements
+	fundReqs := d.fundTxReqs
+	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
+	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
 }
