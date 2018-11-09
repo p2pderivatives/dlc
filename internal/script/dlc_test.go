@@ -32,7 +32,7 @@ func TestCEScript(t *testing.T) {
 
 	// unlock with message sign
 	// TODO: should encapsulate this logic
-	n := utils.AddInts(priva.D, privm.D)
+	n := utils.AddBigInts(priva.D, privm.D)
 	privam, _ := btcec.PrivKeyFromBytes(btcec.S256(), n.Bytes())
 	signam, err := WitnessSignature(redeemTx, 0, amt, script, privam)
 	assert.Nil(err)

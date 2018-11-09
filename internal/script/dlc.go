@@ -23,7 +23,8 @@ const ContractExecutionDelay = 144
 //  OP_CHECKSIG
 //
 // The if block can be passed when the contractor A has a valid oracle's sign to the message.
-// But if the contractor sends this transaction without the oracle's valid sign, the else block will be used by the other party B after the delay time (1 day approximately).
+// But if the contractor sends this transaction without the oracle's valid sign,
+// the else block will be used by the other party B after the delay time (1 day approximately).
 // Please check the original paper for more details.
 //
 // https://adiabat.github.io/dlc.pdf
@@ -47,14 +48,14 @@ func ContractExecutionScript(puba, pubb, pubm *btcec.PublicKey) ([]byte, error) 
 	return builder.Script()
 }
 
-// WitnessForCEScript constracts a witness that unlocks a contract execution script.
+// WitnessForCEScript constructs a witness that unlocks a contract execution script.
 // This function use the OP_IF block
 func WitnessForCEScript(
 	sign []byte, script []byte) wire.TxWitness {
 	return wire.TxWitness{sign, []byte{1}, script}
 }
 
-// WitnessForCEScriptAfterDelay constracts a witness that unlocks a contract execution script.
+// WitnessForCEScriptAfterDelay constructs a witness that unlocks a contract execution script.
 // This function use the OP_ELSE block that can be valid after the delay
 func WitnessForCEScriptAfterDelay(
 	sign []byte, script []byte) wire.TxWitness {
