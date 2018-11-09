@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/script"
@@ -15,25 +14,13 @@ import (
 type FundTxRequirements struct {
 	txIns map[Contractor][]*wire.TxIn
 	txOut map[Contractor]*wire.TxOut
-	pubs  map[Contractor]*btcec.PublicKey
 }
 
 func newFundTxReqs() *FundTxRequirements {
 	return &FundTxRequirements{
 		txIns: make(map[Contractor][]*wire.TxIn),
 		txOut: make(map[Contractor]*wire.TxOut),
-		pubs:  make(map[Contractor]*btcec.PublicKey),
 	}
-}
-
-// CopyFundTxReqsFromCounterparty copies requirements of counterparty from their DLC
-func (b *Builder) CopyFundTxReqsFromCounterparty(d *DLC) {
-	p := b.counterparty()
-	reqs := d.fundTxReqs
-
-	b.dlc.fundTxReqs.txIns[p] = reqs.txIns[p]
-	b.dlc.fundTxReqs.txOut[p] = reqs.txOut[p]
-	b.dlc.fundTxReqs.pubs[p] = reqs.pubs[p]
 }
 
 const fundTxOutAt = 0 // fund txout is always at 0 in fund tx
@@ -64,11 +51,11 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 }
 
 func (d *DLC) fundScript() ([]byte, error) {
-	pub1, ok := d.fundTxReqs.pubs[FirstParty]
+	pub1, ok := d.pubs[FirstParty]
 	if !ok {
 		return nil, errors.New("First party must provide a pubkey for fund script")
 	}
-	pub2, ok := d.fundTxReqs.pubs[SecondParty]
+	pub2, ok := d.pubs[SecondParty]
 	if !ok {
 		return nil, errors.New("Second party must provide a pubkey for fund script")
 	}
@@ -202,16 +189,6 @@ func (b *Builder) PrepareFundTxIns() error {
 	return nil
 }
 
-// PrepareFundPubkey sets fund pubkey
-func (b *Builder) PrepareFundPubkey() error {
-	pub, err := b.wallet.NewPubkey()
-	if err != nil {
-		return err
-	}
-	b.dlc.fundTxReqs.pubs[b.party] = pub
-	return nil
-}
-
 // newRedeemTx creates a new tx to redeem fundtx
 // redeem tx
 //  inputs:
@@ -246,7 +223,7 @@ func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
 		return nil, err
 	}
 
-	pub := b.dlc.fundTxReqs.pubs[b.party]
+	pub := b.dlc.pubs[b.party]
 
 	return b.wallet.WitnessSignature(tx, fundTxInAt, amt, fc, pub)
 }
