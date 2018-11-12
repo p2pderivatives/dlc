@@ -17,9 +17,7 @@ func TestContractExecutionTx(t *testing.T) {
 	// A deal that has both amounts are > 0
 	var amt1, amt2 btcutil.Amount
 	amt1, amt2 = 1, 1
-	deal := NewDeal(amt1, amt2, [][]byte{{1}, {1}})
-
-	dID1 := b.AddDeal(deal)
+	dID1 := setupDeal(b, amt1, amt2)
 
 	// fail without oracle's message commitment
 	_, err := b.dlc.ContractExecutionTx(b.party, dID1)
@@ -37,6 +35,8 @@ func TestContractExecutionTx(t *testing.T) {
 	// A deal that destibutes to only one party
 	amt1, amt2 = 2, 0
 	dID2 := setupDeal(b, amt1, amt2)
+	_, msgCommit2 := test.RandKeys()
+	b.SetMsgCommitmentToDeal(dID2, msgCommit2)
 
 	// txout should have only 1 entry
 	tx2, err := b.dlc.ContractExecutionTx(b.party, dID2)
@@ -47,9 +47,13 @@ func TestContractExecutionTx(t *testing.T) {
 func TestSignedContractExecutionTx(t *testing.T) {
 	assert := assert.New(t)
 
+	// setup
 	b1, b2 := setupContractors()
+	_, msgCommit := test.RandKeys()
 	dID := setupDeal(b1, 1, 1)
+	b1.SetMsgCommitmentToDeal(dID, msgCommit)
 	_ = setupDeal(b2, 1, 1)
+	b2.SetMsgCommitmentToDeal(dID, msgCommit)
 
 	// fail without the counterparty's sign
 	var err error
@@ -116,14 +120,7 @@ func setupContractors() (b1, b2 *Builder) {
 func setupDeal(b *Builder, amt1, amt2 btcutil.Amount) int {
 	msgs := [][]byte{{1}, {1}}
 	deal := NewDeal(amt1, amt2, msgs)
-
-	dID := b.AddDeal(deal)
-
-	// set message commitment
-	_, msgCommit := test.RandKeys()
-	_ = b.SetMsgCommitmentToDeal(dID, msgCommit)
-
-	return dID
+	return b.AddDeal(deal)
 }
 
 func runFundScript(b *Builder, tx *wire.MsgTx) error {
