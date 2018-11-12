@@ -81,7 +81,10 @@ func TestRefundTx(t *testing.T) {
 	assert.Equal(refundtx.LockTime, testLockTime) // check lockTime is same as set by DLC
 	assert.Len(refundtx.TxIn, 1)                  // fund from fundtx?
 	assert.Len(refundtx.TxOut, 2)                 // 1 for party and 1 for counterparty
-	// TODO: check if output amount is equal to fundtx input amount?
+
+	// TODO: verify TxOut[0] == d.fundAmts[0] - redeemfee?
+	assert.Equal(refundtx.TxOut[0].Value, int64(d.fundAmts[0]))
+	assert.Equal(refundtx.TxOut[1].Value, int64(d.fundAmts[1]))
 }
 
 // TestRedeemRefundTx? Test redeem before lock out time, test after?

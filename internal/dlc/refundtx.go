@@ -31,7 +31,6 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 
 	// txouts
 	for _, p := range []Contractor{FirstParty, SecondParty} {
-		// txout, err := d.refundTxOut(p)
 		txout, err := d.ClosingTxOut(p, d.fundAmts[p])
 
 		if err != nil {
@@ -56,7 +55,6 @@ func (b *Builder) SignRefundTx() ([]byte, error) {
 		return nil, err
 	}
 
-	// TODO: figure out if the below is needed here
 	b.dlc.refundSigns[b.party] = sign
 
 	return sign, nil
@@ -98,14 +96,9 @@ func (d *DLC) witnessForRefundTx() (wire.TxWitness, error) {
 	return wt, nil
 }
 
-// VerifyRefundTx verifies the refund transaction. Returns true if RefundTx is
-// valid, and false if it isnt and error message why. This function checks ...
-// input:
-//   [0]: signature
-//        someone's public key?
-// output:
-//   bool
-//   err
+// VerifyRefundTx verifies the refund transaction signature.
+// Returns nil if the passed in sign is valid and corresponds to the passed
+// in public key, and an error if it isnt.
 func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) error {
 	// parse signature
 	s, err := btcec.ParseDERSignature(sign, btcec.S256())
