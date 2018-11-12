@@ -28,7 +28,8 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	b2.PrepareFundTxIns()
 
 	// set locktime
-	b2.SetLockTime(testLockTime) // below locktime threshold 5e8
+	b1.SetLockTime(testLockTime)
+	b2.SetLockTime(testLockTime)
 	// b1.SetLockTime(uint32(8e8)) // below locktime threshold
 
 	// exchange pubkeys
@@ -36,12 +37,12 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	b2.CopyReqsFromCounterparty(b1.DLC())
 
 	// sign refundtx
-	b2.SignRefundTx()
-	b1.SignRefundTx()
+	rs1, _ := b1.SignRefundTx()
+	rs2, _ := b2.SignRefundTx()
 
 	// exchange refund signs
-	b1.CopyReqsFromCounterparty(b2.DLC())
-	b2.CopyReqsFromCounterparty(b1.DLC())
+	b1.AcceptCounterpartySign(rs2)
+	b2.AcceptCounterpartySign(rs1)
 
 	d = b1.DLC()
 
@@ -54,10 +55,10 @@ func TestVerifyRefundTxBadRefund(t *testing.T) {
 
 	_, _, d := setupDLCRefund()
 
-	// VerifyRefundTX should return false bc the given signature and pubkey dont't match
-	valid, err := d.VerifyRefundTx(d.refundSigns[SecondParty], d.pubs[FirstParty])
+	// VerifyRefundTX should return false bc the given signature and pubkey don't match
+	testBadSign := []byte{'b', 'a', 'd'}
+	err := d.VerifyRefundTx(testBadSign, d.pubs[FirstParty])
 	assert.NotNil(err)
-	assert.False(valid)
 }
 
 // VerifyRefundTx should return true if given RefundTx is valid
@@ -66,9 +67,8 @@ func TestVerifyRefundTx(t *testing.T) {
 
 	_, _, d := setupDLCRefund()
 
-	valid, err := d.VerifyRefundTx(d.refundSigns[FirstParty], d.pubs[FirstParty])
+	err := d.VerifyRefundTx(d.refundSigns[FirstParty], d.pubs[FirstParty])
 	assert.Nil(err)
-	assert.True(valid)
 }
 
 func TestRefundTx(t *testing.T) {
@@ -85,7 +85,7 @@ func TestRefundTx(t *testing.T) {
 }
 
 // TestRedeemRefundTx? Test redeem before lock out time, test after?
-func TestRedeemRefundTx(t *testing.T) {
+func TestRefundTxOutput(t *testing.T) {
 	assert := assert.New(t)
 	_, _, d := setupDLCRefund()
 
@@ -97,5 +97,4 @@ func TestRedeemRefundTx(t *testing.T) {
 	fout := fundtx.TxOut[fundTxOutAt]
 	err = test.ExecuteScript(fout.PkScript, refundtx, fout.Value)
 	assert.Nil(err)
-
 }

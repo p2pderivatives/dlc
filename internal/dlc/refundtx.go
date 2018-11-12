@@ -22,7 +22,6 @@ import (
 func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 	tx, err := d.newRedeemTx()
 	if err != nil {
-		fmt.Printf("ERR IN redeemtx 0:   %+v\n", err)
 		return nil, err
 	}
 
@@ -45,49 +44,22 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-// func (d *DLC) refundTxOut(p Contractor) (*wire.TxOut, error) {
-// 	famt := d.fundAmts[p]
-// 	pub := d.fundTxReqs.pubs[p]
-// 	pkScript, err := script.P2WPKHpkScript(pub)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	txout := wire.NewTxOut(int64(famt), pkScript)
-
-// 	//return d.ClosingTxOut(p, d.fundAmts[p])
-// 	return txout, nil
-// }
-
-// SignRefundTx creates signature for a refund tx and sets it
-func (b *Builder) SignRefundTx() error {
+// SignRefundTx creates signature for a refund tx, sets it, and returns it
+func (b *Builder) SignRefundTx() ([]byte, error) {
 	tx, err := b.dlc.RefundTx()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	amt, err := b.dlc.fundAmount()
+	sign, err := b.witsigForFundTxIn(tx)
 	if err != nil {
-		return err
-	}
-
-	script, err := b.dlc.fundScript()
-	if err != nil {
-		return err
-	}
-
-	pubkey := b.dlc.pubs[b.party]
-
-	// TODO: need to do  b.witsigForRedeemTx(tx) instead?
-	sign, err := b.wallet.WitnessSignature(tx, 0, amt, script, pubkey)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// TODO: figure out if the below is needed here
 	b.dlc.refundSigns[b.party] = sign
 
-	return nil
+	return sign, nil
 }
 
 // SignedRefundTx returns a refund tx with its witness signature
@@ -134,43 +106,44 @@ func (d *DLC) witnessForRefundTx() (wire.TxWitness, error) {
 // output:
 //   bool
 //   err
-func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) (bool, error) {
+func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) error {
 	// parse signature
 	s, err := btcec.ParseDERSignature(sign, btcec.S256())
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	// verify
 	script, err := d.fundScript()
 	if err != nil {
-		return false, err
+		return err
 	}
 	if script == nil {
-		return false, fmt.Errorf("fund script not found ")
+		return fmt.Errorf("fund script not found ")
 	}
 	tx, err := d.RefundTx()
 	if err != nil {
-		return false, err
+		return err
 	}
 	sighashes := txscript.NewTxSigHashes(tx)
 
-	fundAmount, err := d.fundAmount()
+	fundtx, err := d.FundTx()
 	if err != nil {
-		return false, err
+		return err
 	}
-	amt := fundAmount + d.redeemFeerate
+	fout := fundtx.TxOut[0]
+	amt := fout.Value
 
 	hash, err := txscript.CalcWitnessSigHash(script, sighashes, txscript.SigHashAll,
 		tx, 0, int64(amt))
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	verify := s.Verify(hash, pub)
 	if !verify {
-		return false, fmt.Errorf("verify fail : %v", verify)
+		return fmt.Errorf("verify fail : %v", verify)
 	}
 
-	return true, nil
+	return nil
 }

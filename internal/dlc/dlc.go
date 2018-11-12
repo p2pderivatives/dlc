@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
@@ -117,13 +118,20 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 	fundReqs := d.fundTxReqs
 	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
 	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
+}
 
-	// TODO: is needed?
-	// locktime
-	b.dlc.lockTime = d.lockTime
+// AcceptCounterpartySign verifies couterparty's given sign is valid and then
+func (b *Builder) AcceptCounterpartySign(sign []byte) error {
+	p := b.dlc.counterparty(b.party)
 
-	// refund signs
-	b.dlc.refundSigns[p] = d.refundSigns[p]
+	err := b.dlc.VerifyRefundTx(sign, b.dlc.pubs[p])
+	if err != nil {
+		return fmt.Errorf("counterparty's signature didn't pass verification, had error: %v", err)
+	}
+
+	// sign passed verification, accept it
+	b.dlc.refundSigns[p] = sign
+	return nil
 }
 
 //SetLockTime sets the locktime of DLC
