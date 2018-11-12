@@ -131,11 +131,10 @@ func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) error {
 	if err != nil {
 		return err
 	}
-	fout := fundtx.TxOut[0]
-	amt := fout.Value
+	amt := fundtx.TxOut[0].Value
 
 	hash, err := txscript.CalcWitnessSigHash(script, sighashes, txscript.SigHashAll,
-		tx, 0, int64(amt))
+		tx, 0, amt)
 	if err != nil {
 		return err
 	}
