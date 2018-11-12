@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/btcsuite/btcd/wire"
 	"github.com/dgarage/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,6 +55,7 @@ func TestVerifyRefundTxBadRefund(t *testing.T) {
 
 	_, _, d := setupDLCRefund()
 
+	// VerifyRefundTX should return false bc the given signature and pubkey dont't match
 	valid, err := d.VerifyRefundTx(d.refundSigns[SecondParty], d.pubs[FirstParty])
 	assert.NotNil(err)
 	assert.False(valid)
@@ -82,33 +82,37 @@ func TestRefundTx(t *testing.T) {
 	assert.Equal(refundtx.LockTime, testLockTime) // check lockTime is same as set by DLC
 	assert.Len(refundtx.TxIn, 1)                  // fund from fundtx?
 	assert.Len(refundtx.TxOut, 2)                 // 1 for party and 1 for counterparty
+	// TODO: check if output amount is equal to fundtx input amount?
 }
 
 // TestRedeemRefundTx? Test redeem before lock out time, test after?
 func TestRedeemRefundTx(t *testing.T) {
 	assert := assert.New(t)
-	b1, b2, d := setupDLCRefund()
+	_, _, d := setupDLCRefund()
 
-	// prepare redeem tx for testing. this will be a settlement tx or refund tx
-	redeemtx, err := d.newRedeemTx() // CHANGE THIS
-	assert.Nil(err)
-	// both parties signs redeem tx
-	sign1, err := b1.witsigForFundTxIn(redeemtx)
-	assert.Nil(err)
-	sign2, err := b2.witsigForFundTxIn(redeemtx)
-	assert.Nil(err)
+	// // prepare redeem tx for testing. this will be a settlement tx or refund tx
+	// redeemtx, err := d.newRedeemTx() // CHANGE THIS
+	// assert.Nil(err)
+	// // both parties signs redeem tx
+	// sign1, err := b1.witsigForFundTxIn(redeemtx)
+	// assert.Nil(err)
+	// sign2, err := b2.witsigForFundTxIn(redeemtx)
+	// assert.Nil(err)
 
-	// create witness
-	fsc, _ := d.fundScript()
-	wt := wire.TxWitness{[]byte{}, sign1, sign2, fsc}
-	redeemtx.TxIn[0].Witness = wt
+	// // create witness
+	// fsc, _ := d.fundScript()
+	// wt := wire.TxWitness{[]byte{}, sign1, sign2, fsc}
+	// redeemtx.TxIn[0].Witness = wt
 
 	// run script
-	refundtx, _ := d.RefundTx()
+	refundtx, _ := d.SignedRefundTx()
+	fmt.Printf("REFUNDTXIN:    %+v\n", len(refundtx.TxIn[0].Witness))
+
 	fmt.Printf("REFUNDTX OUT:    %+v\n", refundtx.TxOut)
 
-	fout := refundtx.TxOut[1]
-	err = test.ExecuteScript(fout.PkScript, redeemtx, fout.Value)
+	fout := refundtx.TxOut[0]
+	fs, _ := d.fundScript()
+	err := test.ExecuteScript(fs, refundtx, fout.Value)
 	assert.Nil(err)
 
 }
