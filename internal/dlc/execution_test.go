@@ -17,15 +17,16 @@ func TestCotractExecutionTx(t *testing.T) {
 	// prepare a deal
 	var amt1, amt2 btcutil.Amount = 1, 1
 	msgs := [][]byte{[]byte{1}, []byte{1}}
-	deal := NewDeal(amt1, amt2, msgs)
+	deal1 := NewDeal(amt1, amt2, msgs)
+	deal2 := NewDeal(amt1, amt2, msgs)
 
-	dID := b1.AddDeal(deal)
-	_ = b2.AddDeal(deal)
+	dID := b1.AddDeal(deal1)
+	_ = b2.AddDeal(deal2)
 
 	// fail without oracle's message commitment
-	_, err := b1.SignContractExecutionTx(SecondParty, dID)
+	_, err := b1.SignContractExecutionTx(dID)
 	assert.NotNil(err)
-	_, err = b2.SignContractExecutionTx(FirstParty, dID)
+	_, err = b2.SignContractExecutionTx(dID)
 	assert.NotNil(err)
 
 	// oracle's message commitment/sign
@@ -44,9 +45,9 @@ func TestCotractExecutionTx(t *testing.T) {
 	assert.NotNil(err)
 
 	// exchange signs
-	sign1, err := b1.SignContractExecutionTx(SecondParty, dID)
+	sign1, err := b1.SignContractExecutionTx(dID)
 	assert.Nil(err)
-	sign2, err := b2.SignContractExecutionTx(FirstParty, dID)
+	sign2, err := b2.SignContractExecutionTx(dID)
 	assert.Nil(err)
 
 	err = b1.SetContextExecutionSign(dID, sign2)
@@ -54,6 +55,7 @@ func TestCotractExecutionTx(t *testing.T) {
 	err = b2.SetContextExecutionSign(dID, sign1)
 	assert.Nil(err)
 
+	// no errors with the counterparty's sign
 	tx1, err := b1.SignedContractExecutionTx(dID)
 	assert.Nil(err)
 	tx2, err := b2.SignedContractExecutionTx(dID)

@@ -3,6 +3,8 @@ package dlc
 import (
 	"errors"
 
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/dgarage/dlc/internal/script"
 )
@@ -16,7 +18,13 @@ import (
 //   [0]:settlement script
 //   [1]:p2wpkh (option)
 func (d *DLC) ContractExecutionTx(
-	party Contractor, deal *Deal) (*wire.MsgTx, error) {
+	party Contractor, idx int) (*wire.MsgTx, error) {
+
+	deal, err := d.Deal(idx)
+	if err != nil {
+		return nil, err
+	}
+
 	cparty := counterparty(party)
 
 	tx, err := d.newRedeemTx()
@@ -64,17 +72,10 @@ func (d *DLC) ContractExecutionTx(
 }
 
 // SignContractExecutionTx signs a contract exection tx for a given party
-func (b *Builder) SignContractExecutionTx(
-	party Contractor, idx int) ([]byte, error) {
-
+func (b *Builder) SignContractExecutionTx(idx int) ([]byte, error) {
 	cparty := counterparty(b.party)
 
-	deal, err := b.dlc.Deal(idx)
-	if err != nil {
-		return nil, err
-	}
-
-	tx, err := b.dlc.ContractExecutionTx(cparty, deal)
+	tx, err := b.dlc.ContractExecutionTx(cparty, idx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,25 +85,86 @@ func (b *Builder) SignContractExecutionTx(
 	return b.witsigForFundTxIn(tx)
 }
 
+// SetContextExecutionSign sets a sign received from the counterparty
+func (b *Builder) SetContextExecutionSign(
+	idx int, sign []byte) error {
+
+	// verify
+	ok, err := b.dlc.verifyContractExecutionSign(b.party, idx, sign)
+	if !ok {
+		return err
+	}
+
+	d, err := b.dlc.Deal(idx)
+	if err != nil {
+		return err
+	}
+
+	d.cpSign = sign
+	return nil
+}
+
+func (d *DLC) verifyContractExecutionSign(
+	p Contractor, idx int, sign []byte) (bool, error) {
+
+	tx, err := d.ContractExecutionTx(p, idx)
+	if err != nil {
+		return false, err
+	}
+
+	cparty := counterparty(p)
+
+	fsc, err := d.fundScript()
+	if err != nil {
+		return false, err
+	}
+
+	sighashes := txscript.NewTxSigHashes(tx)
+
+	ftx, err := d.FundTx()
+	if err != nil {
+		return false, err
+	}
+
+	fout := ftx.TxOut[fundTxOutAt]
+
+	hash, err := txscript.CalcWitnessSigHash(
+		fsc, sighashes, txscript.SigHashAll, tx, fundTxInAt, fout.Value)
+	if err != nil {
+		return false, err
+	}
+
+	s, err := btcec.ParseDERSignature(sign, btcec.S256())
+	if err != nil {
+		return false, err
+	}
+
+	if !s.Verify(hash, d.pubs[cparty]) {
+		return false, errors.New("failed to verify")
+	}
+
+	return true, nil
+}
+
 // SignedContractExecutionTx returns a contract execution tx signed by both parties
 func (b *Builder) SignedContractExecutionTx(idx int) (*wire.MsgTx, error) {
+	tx, err := b.dlc.ContractExecutionTx(b.party, idx)
+	if err != nil {
+		return nil, err
+	}
+
 	deal, err := b.dlc.Deal(idx)
-	if err != nil {
-		return nil, err
-	}
-
-	tx, err := b.dlc.ContractExecutionTx(b.party, deal)
-	if err != nil {
-		return nil, err
-	}
-
-	sign, err := b.witsigForFundTxIn(tx)
 	if err != nil {
 		return nil, err
 	}
 
 	if deal.cpSign == nil {
 		return nil, errors.New("missing counterparty's sign")
+	}
+
+	sign, err := b.witsigForFundTxIn(tx)
+	if err != nil {
+		return nil, err
 	}
 
 	var sign1, sign2 []byte

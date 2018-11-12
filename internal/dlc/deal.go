@@ -57,16 +57,3 @@ func (b *Builder) SetMsgCommitmentToDeal(
 	d.msgCommitment = mc
 	return nil
 }
-
-// SetContextExecutionSign sets a sign received from the counterparty
-func (b *Builder) SetContextExecutionSign(
-	idx int, sign []byte) error {
-
-	d, err := b.dlc.Deal(idx)
-	if err != nil {
-		return err
-	}
-
-	d.cpSign = sign
-	return nil
-}
