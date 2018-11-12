@@ -12,9 +12,9 @@ import (
 // ContractExecutionTx constructs a contract execution tx (CET) using pubkeys and given condition.
 // Both parties have different transactions signed by the other side.
 //
-// input:
+// txins:
 //   [0]:fund transaction output[0]
-// output:
+// txouts:
 //   [0]:settlement script
 //   [1]:p2wpkh (option)
 func (d *DLC) ContractExecutionTx(
