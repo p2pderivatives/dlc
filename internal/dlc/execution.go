@@ -18,13 +18,7 @@ import (
 //   [0]:settlement script
 //   [1]:p2wpkh (option)
 func (d *DLC) ContractExecutionTx(
-	party Contractor, idx int) (*wire.MsgTx, error) {
-
-	deal, err := d.Deal(idx)
-	if err != nil {
-		return nil, err
-	}
-
+	party Contractor, deal *Deal) (*wire.MsgTx, error) {
 	cparty := counterparty(party)
 
 	tx, err := d.newRedeemTx()
@@ -72,10 +66,10 @@ func (d *DLC) ContractExecutionTx(
 }
 
 // SignContractExecutionTx signs a contract execution tx for a given party
-func (b *Builder) SignContractExecutionTx(idx int) ([]byte, error) {
+func (b *Builder) SignContractExecutionTx(deal *Deal) ([]byte, error) {
 	cparty := counterparty(b.party)
 
-	tx, err := b.dlc.ContractExecutionTx(cparty, idx)
+	tx, err := b.dlc.ContractExecutionTx(cparty, deal)
 	if err != nil {
 		return nil, err
 	}
@@ -87,14 +81,14 @@ func (b *Builder) SignContractExecutionTx(idx int) ([]byte, error) {
 func (b *Builder) AcceptCETxSign(
 	idx int, sign []byte) error {
 
-	// verify
-	ok, err := b.dlc.verifyContractExecutionSign(b.party, idx, sign)
-	if !ok {
+	d, err := b.dlc.Deal(idx)
+	if err != nil {
 		return err
 	}
 
-	d, err := b.dlc.Deal(idx)
-	if err != nil {
+	// verify
+	ok, err := b.dlc.verifyContractExecutionSign(b.party, d, sign)
+	if !ok {
 		return err
 	}
 
@@ -103,9 +97,9 @@ func (b *Builder) AcceptCETxSign(
 }
 
 func (d *DLC) verifyContractExecutionSign(
-	p Contractor, idx int, sign []byte) (bool, error) {
+	p Contractor, deal *Deal, sign []byte) (bool, error) {
 
-	tx, err := d.ContractExecutionTx(p, idx)
+	tx, err := d.ContractExecutionTx(p, deal)
 	if err != nil {
 		return false, err
 	}
@@ -145,13 +139,13 @@ func (d *DLC) verifyContractExecutionSign(
 }
 
 // SignedContractExecutionTx returns a contract execution tx signed by both parties
-func (b *Builder) SignedContractExecutionTx(idx int) (*wire.MsgTx, error) {
-	tx, err := b.dlc.ContractExecutionTx(b.party, idx)
+func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
+	deal, err := b.dlc.FixedDeal()
 	if err != nil {
 		return nil, err
 	}
 
-	deal, err := b.dlc.Deal(idx)
+	tx, err := b.dlc.ContractExecutionTx(b.party, deal)
 	if err != nil {
 		return nil, err
 	}
@@ -182,3 +176,7 @@ func (b *Builder) SignedContractExecutionTx(idx int) (*wire.MsgTx, error) {
 
 	return tx, nil
 }
+
+// func (b *Builder) ClosingTx(idx) (*wire.MsgTx, error) {
+//
+// }

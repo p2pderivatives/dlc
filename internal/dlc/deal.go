@@ -13,8 +13,8 @@ type Deal struct {
 	amts          map[Contractor]btcutil.Amount
 	msgs          [][]byte
 	msgCommitment *btcec.PublicKey
-	// msgSign       []byte // oracle's message sign
-	cpSign []byte // conterparty's sign
+	msgSign       []byte // oracle's message sign
+	cpSign        []byte // conterparty's sign
 }
 
 // NewDeal creates a new deal
@@ -45,6 +45,16 @@ func (d *DLC) Deal(idx int) (*Deal, error) {
 	return deal, nil
 }
 
+// FixedDeal returns a fixed deal
+func (d *DLC) FixedDeal() (*Deal, error) {
+	for _, deal := range d.deals {
+		if deal.msgSign != nil {
+			return deal, nil
+		}
+	}
+	return nil, errors.New("no fixed deal found")
+}
+
 // SetMsgCommitmentToDeal sets a message commitment received from oracle
 func (b *Builder) SetMsgCommitmentToDeal(
 	idx int, mc *btcec.PublicKey) error {
@@ -55,5 +65,18 @@ func (b *Builder) SetMsgCommitmentToDeal(
 	}
 
 	d.msgCommitment = mc
+	return nil
+}
+
+// FixDeal fixes a deal by setting the signature provided by oracle
+func (b *Builder) FixDeal(idx int, sign []byte) error {
+	d, err := b.dlc.Deal(idx)
+	if err != nil {
+		return err
+	}
+
+	// TODO: verify the given sign
+
+	d.msgSign = sign
 	return nil
 }
