@@ -9,7 +9,7 @@ import (
 	"github.com/dgarage/dlc/internal/script"
 )
 
-// ContractExecutionTx constracts a contract execution tx (CET) using pubkeys and given condition.
+// ContractExecutionTx constructs a contract execution tx (CET) using pubkeys and given condition.
 // Both parties have different transactions signed by the other side.
 //
 // input:
@@ -71,7 +71,7 @@ func (d *DLC) ContractExecutionTx(
 	return tx, nil
 }
 
-// SignContractExecutionTx signs a contract exection tx for a given party
+// SignContractExecutionTx signs a contract execution tx for a given party
 func (b *Builder) SignContractExecutionTx(idx int) ([]byte, error) {
 	cparty := counterparty(b.party)
 

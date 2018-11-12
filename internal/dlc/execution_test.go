@@ -16,7 +16,7 @@ func TestCotractExecutionTx(t *testing.T) {
 
 	// prepare a deal
 	var amt1, amt2 btcutil.Amount = 1, 1
-	msgs := [][]byte{[]byte{1}, []byte{1}}
+	msgs := [][]byte{{1}, {1}}
 	deal1 := NewDeal(amt1, amt2, msgs)
 	deal2 := NewDeal(amt1, amt2, msgs)
 

@@ -8,13 +8,13 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
-// Deal contains destributing amounts and commited messages and signs of messages
+// Deal contains destributing amounts and committed messages and signs of messages
 type Deal struct {
 	amts          map[Contractor]btcutil.Amount
 	msgs          [][]byte
 	msgCommitment *btcec.PublicKey
-	msgSign       []byte // oracle's message sign
-	cpSign        []byte // conterparty's sign
+	// msgSign       []byte // oracle's message sign
+	cpSign []byte // conterparty's sign
 }
 
 // NewDeal creates a new deal
