@@ -8,7 +8,7 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
-// Deal contains destributing amounts and committed messages and signs of messages
+// Deal contains information about the distributed amounts, commitment messages, and signatures of fixed messages
 type Deal struct {
 	amts          map[Contractor]btcutil.Amount
 	msgs          [][]byte
