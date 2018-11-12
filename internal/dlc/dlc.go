@@ -27,6 +27,7 @@ type DLC struct {
 	refundSigns map[Contractor][]byte
 }
 
+// TODO: initialize DLC with locktime, fundFeerate, redeemFeerate later?
 func newDLC() *DLC {
 	return &DLC{
 		pubs:        make(map[Contractor]*btcec.PublicKey),
@@ -134,7 +135,8 @@ func (b *Builder) AcceptCounterpartySign(sign []byte) error {
 	return nil
 }
 
-//SetLockTime sets the locktime of DLC
+// SetLockTime sets the locktime of DLC
+// TODO: remove function once lockTime is set at DLC init
 func (b *Builder) SetLockTime(locktime uint32) {
 	b.dlc.lockTime = locktime
 }
