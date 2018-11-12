@@ -1,7 +1,6 @@
 package dlc
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/dgarage/dlc/internal/test"
@@ -90,29 +89,13 @@ func TestRedeemRefundTx(t *testing.T) {
 	assert := assert.New(t)
 	_, _, d := setupDLCRefund()
 
-	// // prepare redeem tx for testing. this will be a settlement tx or refund tx
-	// redeemtx, err := d.newRedeemTx() // CHANGE THIS
-	// assert.Nil(err)
-	// // both parties signs redeem tx
-	// sign1, err := b1.witsigForFundTxIn(redeemtx)
-	// assert.Nil(err)
-	// sign2, err := b2.witsigForFundTxIn(redeemtx)
-	// assert.Nil(err)
-
-	// // create witness
-	// fsc, _ := d.fundScript()
-	// wt := wire.TxWitness{[]byte{}, sign1, sign2, fsc}
-	// redeemtx.TxIn[0].Witness = wt
-
 	// run script
-	refundtx, _ := d.SignedRefundTx()
-	fmt.Printf("REFUNDTXIN:    %+v\n", len(refundtx.TxIn[0].Witness))
+	refundtx, err := d.SignedRefundTx()
+	assert.Nil(err)
 
-	fmt.Printf("REFUNDTX OUT:    %+v\n", refundtx.TxOut)
-
-	fout := refundtx.TxOut[0]
-	fs, _ := d.fundScript()
-	err := test.ExecuteScript(fs, refundtx, fout.Value)
+	fundtx, _ := d.FundTx()
+	fout := fundtx.TxOut[fundTxOutAt]
+	err = test.ExecuteScript(fout.PkScript, refundtx, fout.Value)
 	assert.Nil(err)
 
 }
