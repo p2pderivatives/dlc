@@ -7,7 +7,6 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/dgarage/dlc/internal/script"
 )
 
 // RefundTx creates refund tx
@@ -23,17 +22,21 @@ import (
 func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 	tx, err := d.newRedeemTx()
 	if err != nil {
+		fmt.Printf("ERR IN redeemtx 0:   %+v\n", err)
 		return nil, err
 	}
 
 	// use locktime
 	tx.TxIn[fundTxInAt].Sequence-- // max(0xffffffff-0x01)
-	tx.LockTime = d.locktime
+	tx.LockTime = d.lockTime
 
 	// txouts
 	for _, p := range []Contractor{FirstParty, SecondParty} {
-		txout, err := d.refundTxOut(p)
+		// txout, err := d.refundTxOut(p)
+		txout, err := d.ClosingTxOut(p, d.fundAmts[p])
+
 		if err != nil {
+			fmt.Printf("err in closing tx out:   %+v\n", err)
 			return nil, err
 		}
 		tx.AddTxOut(txout)
@@ -42,33 +45,52 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-func (d *DLC) refundTxOut(p Contractor) (*wire.TxOut, error) {
-	famt := d.fundAmts[p]
-	pub := d.fundTxReqs.pubs[p]
-	pkScript, err := script.P2WPKHpkScript(pub)
-	if err != nil {
-		return nil, err
-	}
+// func (d *DLC) refundTxOut(p Contractor) (*wire.TxOut, error) {
+// 	famt := d.fundAmts[p]
+// 	pub := d.fundTxReqs.pubs[p]
+// 	pkScript, err := script.P2WPKHpkScript(pub)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	txout := wire.NewTxOut(int64(famt), pkScript)
+// 	txout := wire.NewTxOut(int64(famt), pkScript)
 
-	//return d.ClosingTxOut(p, d.fundAmts[p])
-	return txout, nil
-}
+// 	//return d.ClosingTxOut(p, d.fundAmts[p])
+// 	return txout, nil
+// }
 
-// SignRefundTx returns a signature for a refund tx
+// SignRefundTx creates signature for a refund tx and sets it
 func (b *Builder) SignRefundTx() error {
 	tx, err := b.dlc.RefundTx()
 	if err != nil {
+		fmt.Printf("ERR IN SIGNREFUNDTX 1:   %+v\n", err)
 		return err
 	}
 
-	sign, err := b.witsigForRedeemTx(tx)
+	amt, err := b.dlc.fundAmount()
 	if err != nil {
+		fmt.Printf("ERR IN SIGNREFUNDTX 2:   %+v\n", err)
 		return err
 	}
 
+	script, err := b.dlc.fundScript()
+	if err != nil {
+		fmt.Printf("ERR IN SIGNREFUNDTX 3:   %+v\n", err)
+		return err
+	}
+
+	pubkey := b.dlc.pubs[b.party]
+
+	// TODO: need to do  b.witsigForRedeemTx(tx) instead?
+	sign, err := b.wallet.WitnessSignature(tx, 0, amt, script, pubkey)
+	if err != nil {
+		fmt.Printf("ERR IN SIGNREFUNDTX 4:   %+v\n", err)
+		return err
+	}
+
+	// TODO: figure out if the below is needed here
 	b.dlc.refundSigns[b.party] = sign
+
 	return nil
 }
 
@@ -108,40 +130,51 @@ func (d *DLC) witnessForRefundTx() (wire.TxWitness, error) {
 	return wt, nil
 }
 
-// VerifyRefundTx verifies the refund transaction.
-func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) error {
+// VerifyRefundTx verifies the refund transaction. Returns true if RefundTx is
+// valid, and false if it isnt and error message why. This function checks ...
+// input:
+//   [0]: signature
+//        someone's public key?
+// output:
+//   bool
+//   err
+func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) (bool, error) {
 	// parse signature
 	s, err := btcec.ParseDERSignature(sign, btcec.S256())
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// verify
-	script := d.fundScript()
+	script, err := d.fundScript()
+	if err != nil {
+		return false, err
+	}
 	if script == nil {
-		return fmt.Errorf("not found fund script")
+		return false, fmt.Errorf("fund script not found ")
 	}
 	tx, err := d.RefundTx()
 	if err != nil {
-		return err
+		return false, err
 	}
 	sighashes := txscript.NewTxSigHashes(tx)
 
 	fundAmount, err := d.fundAmount()
 	if err != nil {
-		return err
+		return false, err
 	}
 	amt := fundAmount + d.redeemFeerate
 
 	hash, err := txscript.CalcWitnessSigHash(script, sighashes, txscript.SigHashAll,
-		tx, 0, amt)
+		tx, 0, int64(amt))
 	if err != nil {
-		return err
-	}
-	verify := s.Verify(hash, pub)
-	if !verify {
-		return fmt.Errorf("verify fail : %v", verify)
+		return false, err
 	}
 
-	return nil
+	verify := s.Verify(hash, pub)
+	if !verify {
+		return false, fmt.Errorf("verify fail : %v", verify)
+	}
+
+	return true, nil
 }

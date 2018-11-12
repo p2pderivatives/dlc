@@ -15,19 +15,23 @@ import (
 type DLC struct {
 	// conditions of contract
 	fundAmts      map[Contractor]btcutil.Amount
-	fundFeerate   btcutil.Amount // fund fee per byte in satohi
-	redeemFeerate btcutil.Amount // redeem fee per byte in satohi
+	fundFeerate   btcutil.Amount // fund fee per byte in satoshi
+	redeemFeerate btcutil.Amount // redeem fee per byte in satoshi
+
+	lockTime uint32
 
 	// requirements to execute DLC
-	pubs       map[Contractor]*btcec.PublicKey
-	fundTxReqs *FundTxRequirements
+	pubs        map[Contractor]*btcec.PublicKey
+	fundTxReqs  *FundTxRequirements
+	refundSigns map[Contractor][]byte
 }
 
 func newDLC() *DLC {
 	return &DLC{
-		pubs:       make(map[Contractor]*btcec.PublicKey),
-		fundAmts:   make(map[Contractor]btcutil.Amount),
-		fundTxReqs: newFundTxReqs(),
+		pubs:        make(map[Contractor]*btcec.PublicKey),
+		fundAmts:    make(map[Contractor]btcutil.Amount),
+		fundTxReqs:  newFundTxReqs(),
+		refundSigns: make(map[Contractor][]byte),
 	}
 }
 
@@ -113,4 +117,16 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 	fundReqs := d.fundTxReqs
 	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
 	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
+
+	// TODO: is needed?
+	// locktime
+	b.dlc.lockTime = d.lockTime
+
+	// refund signs
+	b.dlc.refundSigns[p] = d.refundSigns[p]
+}
+
+//SetLockTime sets the locktime of DLC
+func (b *Builder) SetLockTime(locktime uint32) {
+	b.dlc.lockTime = locktime
 }
