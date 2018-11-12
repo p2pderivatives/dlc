@@ -59,7 +59,7 @@ func (d *DLC) fundScript() ([]byte, error) {
 		return nil, errors.New("Second party must provide a pubkey for fund script")
 	}
 
-	return script.MultiSigScript2of2(pub1, pub2)
+	return script.FundScript(pub1, pub2)
 }
 
 // fundTxOutForRedeemTx creates a txout for the txin of redeem tx.
@@ -85,6 +85,24 @@ func (d *DLC) fundTxOutForRedeemTx() (*wire.TxOut, error) {
 	txout := wire.NewTxOut(int64(amt), pkScript)
 
 	return txout, nil
+}
+
+func (d *DLC) witnessForFundScript(
+	sign1, sign2 []byte) (wire.TxWitness, error) {
+
+	sc, err := d.fundScript()
+	if err != nil {
+		return nil, err
+	}
+
+	wit := script.WitnessForFundScript(sign1, sign2, sc)
+	return wit, nil
+}
+
+// SetFundAmounts sets fund amounts to DLC
+func (b *Builder) SetFundAmounts(amt1, amt2 btcutil.Amount) {
+	b.dlc.fundAmts[FirstParty] = amt1
+	b.dlc.fundAmts[SecondParty] = amt2
 }
 
 // fundAmount calculates total fund amount

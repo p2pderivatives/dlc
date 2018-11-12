@@ -45,7 +45,7 @@ func TestMultiSigScript2of2(t *testing.T) {
 	priv2, pub2 := test.RandKeys()
 	amt := int64(10000)
 
-	script, err := MultiSigScript2of2(pub1, pub2)
+	script, err := FundScript(pub1, pub2)
 	assert.Nil(err)
 	pkScript, err := P2WSHpkScript(script)
 	assert.Nil(err)

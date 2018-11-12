@@ -6,6 +6,29 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+// FundScript is a 2-of-2 multisig script
+//
+// ScriptCode:
+//  OP_2
+//    <public key first party>
+//    <public key second party>
+//  OP_2
+//  OP_CHECKMULTISIG
+func FundScript(pub1, pub2 *btcec.PublicKey) (script []byte, err error) {
+	builder := txscript.NewScriptBuilder()
+	builder.AddOp(txscript.OP_2)
+	builder.AddData(pub1.SerializeCompressed())
+	builder.AddData(pub2.SerializeCompressed())
+	builder.AddOp(txscript.OP_2)
+	builder.AddOp(txscript.OP_CHECKMULTISIG)
+	return builder.Script()
+}
+
+// WitnessForFundScript constructs a witness for fund script
+func WitnessForFundScript(sign1, sign2, sc []byte) wire.TxWitness {
+	return wire.TxWitness{[]byte{}, sign1, sign2, sc}
+}
+
 // ContractExecutionDelay is a delay used in ContractExecutionScript
 const ContractExecutionDelay = 144
 

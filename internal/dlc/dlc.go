@@ -16,6 +16,7 @@ import (
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
 	conds Conditions
+	deals []*Deal // TODO: move to Conditions
 
 	// requirements to execute DLC
 	pubs        map[Contractor]*btcec.PublicKey
@@ -93,7 +94,7 @@ const (
 )
 
 // counterparty returns the counterparty
-func (d *DLC) counterparty(p Contractor) (cp Contractor) {
+func counterparty(p Contractor) (cp Contractor) {
 	switch p {
 	case FirstParty:
 		cp = SecondParty
@@ -137,7 +138,7 @@ func (b *Builder) PreparePubkey() error {
 
 // CopyReqsFromCounterparty copies requirements from counterparty
 func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
-	p := b.dlc.counterparty(b.party)
+	p := counterparty(b.party)
 
 	// pubkey
 	b.dlc.pubs[p] = d.pubs[p]

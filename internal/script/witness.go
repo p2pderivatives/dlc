@@ -30,24 +30,6 @@ func P2WSHpkScript(script []byte) ([]byte, error) {
 	return builder.Script()
 }
 
-// MultiSigScript2of2 is a 2-of-2 multisig script
-//
-// ScriptCode:
-//  OP_2
-//    <public key first party>
-//    <public key second party>
-//  OP_2
-//  OP_CHECKMULTISIG
-func MultiSigScript2of2(pub1, pub2 *btcec.PublicKey) (script []byte, err error) {
-	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_2)
-	builder.AddData(pub1.SerializeCompressed())
-	builder.AddData(pub2.SerializeCompressed())
-	builder.AddOp(txscript.OP_2)
-	builder.AddOp(txscript.OP_CHECKMULTISIG)
-	return builder.Script()
-}
-
 // WitnessSignature returns a witness signature for given script
 //
 // TODO: Note that txscript.RawTxInWitnessSignature converts a script from p2wkh to p2pkh implicitly.
