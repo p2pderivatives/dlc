@@ -9,36 +9,50 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCotractExecutionTx(t *testing.T) {
+func TestContractExecutionTx(t *testing.T) {
 	assert := assert.New(t)
 
-	b1, b2 := setupCountractors()
+	b, _ := setupContractors()
 
-	// prepare a deal
-	var amt1, amt2 btcutil.Amount = 1, 1
-	msgs := [][]byte{{1}, {1}}
-	deal1 := NewDeal(amt1, amt2, msgs)
-	deal2 := NewDeal(amt1, amt2, msgs)
+	// A deal that has both amounts are > 0
+	var amt1, amt2 btcutil.Amount
+	amt1, amt2 = 1, 1
+	deal := NewDeal(amt1, amt2, [][]byte{{1}, {1}})
 
-	dID := b1.AddDeal(deal1)
-	_ = b2.AddDeal(deal2)
+	dID1 := b.AddDeal(deal)
 
 	// fail without oracle's message commitment
-	_, err := b1.SignContractExecutionTx(dID)
+	_, err := b.dlc.ContractExecutionTx(b.party, dID1)
 	assert.NotNil(err)
-	_, err = b2.SignContractExecutionTx(dID)
-	assert.NotNil(err)
-
-	// oracle's message commitment/sign
-	_, msgCommit := test.RandKeys()
 
 	// set message commitment
-	err = b1.SetMsgCommitmentToDeal(dID, msgCommit)
+	_, msgCommit1 := test.RandKeys()
+	b.SetMsgCommitmentToDeal(dID1, msgCommit1)
+
+	// txout should have 2 entries
+	tx1, err := b.dlc.ContractExecutionTx(b.party, dID1)
 	assert.Nil(err)
-	err = b2.SetMsgCommitmentToDeal(dID, msgCommit)
+	assert.Len(tx1.TxOut, 2)
+
+	// A deal that destibutes to only one party
+	amt1, amt2 = 2, 0
+	dID2 := setupDeal(b, amt1, amt2)
+
+	// txout should have only 1 entry
+	tx2, err := b.dlc.ContractExecutionTx(b.party, dID2)
 	assert.Nil(err)
+	assert.Len(tx2.TxOut, 1)
+}
+
+func TestSignedContractExecutionTx(t *testing.T) {
+	assert := assert.New(t)
+
+	b1, b2 := setupContractors()
+	dID := setupDeal(b1, 1, 1)
+	_ = setupDeal(b2, 1, 1)
 
 	// fail without the counterparty's sign
+	var err error
 	_, err = b1.SignedContractExecutionTx(dID)
 	assert.NotNil(err)
 	_, err = b2.SignedContractExecutionTx(dID)
@@ -77,7 +91,7 @@ func TestCotractExecutionTx(t *testing.T) {
 	assert.Nil(err)
 }
 
-func setupCountractors() (b1, b2 *Builder) {
+func setupContractors() (b1, b2 *Builder) {
 	// init first party
 	w1 := setupTestWallet()
 	b1 = NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
@@ -97,6 +111,19 @@ func setupCountractors() (b1, b2 *Builder) {
 	b2.CopyReqsFromCounterparty(b1.DLC())
 
 	return b1, b2
+}
+
+func setupDeal(b *Builder, amt1, amt2 btcutil.Amount) int {
+	msgs := [][]byte{{1}, {1}}
+	deal := NewDeal(amt1, amt2, msgs)
+
+	dID := b.AddDeal(deal)
+
+	// set message commitment
+	_, msgCommit := test.RandKeys()
+	_ = b.SetMsgCommitmentToDeal(dID, msgCommit)
+
+	return dID
 }
 
 func runFundScript(b *Builder, tx *wire.MsgTx) error {

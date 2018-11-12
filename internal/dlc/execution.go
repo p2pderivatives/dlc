@@ -61,7 +61,7 @@ func (d *DLC) ContractExecutionTx(
 	tx.AddTxOut(txout1)
 
 	// txout2: counterparty's p2wpkh
-	if amt1 > 0 {
+	if amt2 > 0 {
 		txout2, err := d.ClosingTxOut(cparty, amt2)
 		if err != nil {
 			return nil, err
@@ -79,8 +79,6 @@ func (b *Builder) SignContractExecutionTx(idx int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: verify contract execution tx
 
 	return b.witsigForFundTxIn(tx)
 }
