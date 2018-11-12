@@ -63,19 +63,16 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 func (b *Builder) SignRefundTx() error {
 	tx, err := b.dlc.RefundTx()
 	if err != nil {
-		fmt.Printf("ERR IN SIGNREFUNDTX 1:   %+v\n", err)
 		return err
 	}
 
 	amt, err := b.dlc.fundAmount()
 	if err != nil {
-		fmt.Printf("ERR IN SIGNREFUNDTX 2:   %+v\n", err)
 		return err
 	}
 
 	script, err := b.dlc.fundScript()
 	if err != nil {
-		fmt.Printf("ERR IN SIGNREFUNDTX 3:   %+v\n", err)
 		return err
 	}
 
@@ -84,7 +81,6 @@ func (b *Builder) SignRefundTx() error {
 	// TODO: need to do  b.witsigForRedeemTx(tx) instead?
 	sign, err := b.wallet.WitnessSignature(tx, 0, amt, script, pubkey)
 	if err != nil {
-		fmt.Printf("ERR IN SIGNREFUNDTX 4:   %+v\n", err)
 		return err
 	}
 
