@@ -60,9 +60,17 @@ func TestCotractExecutionTx(t *testing.T) {
 	assert.Nil(err)
 	tx2, err := b2.SignedContractExecutionTx(dID)
 	assert.Nil(err)
-	assert.NotEqual(tx1, tx2)
 
-	// run script
+	// each party has a tx that has the same txin but has different txouts
+	assert.Len(tx1.TxOut, 2)
+	assert.Len(tx2.TxOut, 2)
+	assert.Equal(
+		tx1.TxIn[fundTxInAt].PreviousOutPoint,
+		tx2.TxIn[fundTxInAt].PreviousOutPoint)
+	assert.Equal(tx1.TxOut[0].Value, tx2.TxOut[1].Value)
+	assert.Equal(tx1.TxOut[1].Value, tx2.TxOut[0].Value)
+
+	// Both parties are able to send the CET
 	err = runFundScript(b1, tx1)
 	assert.Nil(err)
 	err = runFundScript(b2, tx2)
