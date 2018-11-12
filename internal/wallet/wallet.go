@@ -30,6 +30,17 @@ type Wallet interface {
 		pub *btcec.PublicKey,
 	) (sign []byte, err error)
 
+	// WitnessSignature does the same with WitnessSignature do
+	// applying a given func to private key before calculating signature
+	WitnessSignatureWithCallback(
+		tx *wire.MsgTx,
+		idx int,
+		amt btcutil.Amount,
+		script []byte,
+		pub *btcec.PublicKey,
+		privkeyConverter func(*btcec.PrivateKey) (*btcec.PrivateKey, error),
+	) (sign []byte, err error)
+
 	ListUnspent() (utxos []Utxo, err error)
 
 	// SelectUtxos selects utxos for requested amount
