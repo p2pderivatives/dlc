@@ -14,7 +14,7 @@ type Deal struct {
 	msgs          [][]byte
 	msgCommitment *btcec.PublicKey
 	msgSign       []byte // oracle's message sign
-	cpSign        []byte // conterparty's sign
+	cpSign        []byte // counterparty's sign
 }
 
 // NewDeal creates a new deal
