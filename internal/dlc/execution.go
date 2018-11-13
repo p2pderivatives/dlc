@@ -83,8 +83,8 @@ func (b *Builder) SignContractExecutionTx(idx int) ([]byte, error) {
 	return b.witsigForFundTxIn(tx)
 }
 
-// SetContextExecutionSign sets a sign received from the counterparty
-func (b *Builder) SetContextExecutionSign(
+// AcceptCETxSign sets a sign received from the counterparty
+func (b *Builder) AcceptCETxSign(
 	idx int, sign []byte) error {
 
 	// verify

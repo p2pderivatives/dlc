@@ -68,9 +68,9 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	sign2, err := b2.SignContractExecutionTx(dID)
 	assert.Nil(err)
 
-	err = b1.SetContextExecutionSign(dID, sign2)
+	err = b1.AcceptCETxSign(dID, sign2)
 	assert.Nil(err)
-	err = b2.SetContextExecutionSign(dID, sign1)
+	err = b2.AcceptCETxSign(dID, sign1)
 	assert.Nil(err)
 
 	// no errors with the counterparty's sign
