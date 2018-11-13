@@ -30,6 +30,11 @@ func (d *DLC) ContractExecutionTx(
 	amt1 := deal.amts[party]
 	amt2 := deal.amts[cparty]
 
+	if amt1 == 0 {
+		errmsg := "Amount for a multisig script address shouldn't be zero"
+		return nil, newCETTakeNothingError(errmsg)
+	}
+
 	// txout1: contract execution script
 	pub1 := d.pubs[party]
 	if pub1 == nil {

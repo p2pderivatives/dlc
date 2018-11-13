@@ -15,33 +15,59 @@ func TestContractExecutionTx(t *testing.T) {
 	b, _ := setupContractors()
 
 	// A deal that has both amounts are > 0
-	var amt1, amt2 btcutil.Amount
-	amt1, amt2 = 1, 1
-	dID1, deal1 := setupDeal(b, amt1, amt2)
+	var amt1, amt2 btcutil.Amount = 1, 1
+	dID, deal := setupDeal(b, amt1, amt2)
 
 	// fail without oracle's message commitment
-	_, err := b.dlc.ContractExecutionTx(b.party, deal1)
+	_, err := b.dlc.ContractExecutionTx(b.party, deal)
 	assert.NotNil(err)
 
 	// set message commitment
-	_, msgCommit1 := test.RandKeys()
-	b.SetMsgCommitmentToDeal(dID1, msgCommit1)
+	_, msgCommit := test.RandKeys()
+	b.SetMsgCommitmentToDeal(dID, msgCommit)
 
 	// txout should have 2 entries
-	tx1, err := b.dlc.ContractExecutionTx(b.party, deal1)
+	tx, err := b.dlc.ContractExecutionTx(b.party, deal)
 	assert.Nil(err)
-	assert.Len(tx1.TxOut, 2)
+	assert.Len(tx.TxOut, 2)
+	assert.Equal(int64(amt1), tx.TxOut[0].Value)
+	assert.Equal(int64(amt2), tx.TxOut[1].Value)
+}
 
-	// A deal that destibutes to only one party
-	amt1, amt2 = 2, 0
-	dID2, deal2 := setupDeal(b, amt1, amt2)
-	_, msgCommit2 := test.RandKeys()
-	b.SetMsgCommitmentToDeal(dID2, msgCommit2)
+// An edge case that a executing party tx takes all funds
+func TestContractExecutionTxTakeAll(t *testing.T) {
+	b, _ := setupContractors()
 
-	// txout should have only 1 entry
-	tx2, err := b.dlc.ContractExecutionTx(b.party, deal2)
+	var amt1, amt2 btcutil.Amount = 1, 0
+	dID, deal := setupDeal(b, amt1, amt2)
+	_, msgCommit := test.RandKeys()
+	b.SetMsgCommitmentToDeal(dID, msgCommit)
+
+	tx, err := b.dlc.ContractExecutionTx(b.party, deal)
+
+	// asserions
+	assert := assert.New(t)
 	assert.Nil(err)
-	assert.Len(tx2.TxOut, 1)
+	assert.Len(tx.TxOut, 1)
+	assert.Equal(int64(amt1), tx.TxOut[0].Value)
+}
+
+// An edge case that a executing party tx takes nothing
+func TestContractExecutionTxTakeNothing(t *testing.T) {
+	b, _ := setupContractors()
+
+	var amt1, amt2 btcutil.Amount = 0, 1
+	dID, deal := setupDeal(b, amt1, amt2)
+	_, msgCommit := test.RandKeys()
+	b.SetMsgCommitmentToDeal(dID, msgCommit)
+
+	tx, err := b.dlc.ContractExecutionTx(b.party, deal)
+
+	// asserions
+	assert := assert.New(t)
+	assert.Nil(tx)
+	assert.NotNil(err)
+	assert.IsType(&CETTakeNothingError{}, err)
 }
 
 func TestFixDeal(t *testing.T) {
