@@ -4,7 +4,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/mocks"
+	"github.com/dgarage/dlc/internal/mocks/walletmock"
 	"github.com/dgarage/dlc/internal/script"
 	"github.com/dgarage/dlc/internal/test"
 	"github.com/dgarage/dlc/internal/wallet"
@@ -12,8 +12,8 @@ import (
 )
 
 // setup mocke wallet
-func setupTestWallet() *mocks.Wallet {
-	w := &mocks.Wallet{}
+func setupTestWallet() *walletmock.Wallet {
+	w := &walletmock.Wallet{}
 	priv, pub := test.RandKeys()
 	w.On("NewPubkey").Return(pub, nil)
 	w = mockWitnessSignature(w, pub, priv)
@@ -21,7 +21,7 @@ func setupTestWallet() *mocks.Wallet {
 }
 
 func mockWitnessSignature(
-	w *mocks.Wallet, pub *btcec.PublicKey, priv *btcec.PrivateKey) *mocks.Wallet {
+	w *walletmock.Wallet, pub *btcec.PublicKey, priv *btcec.PrivateKey) *walletmock.Wallet {
 	call := w.On("WitnessSignature",
 		mock.AnythingOfType("*wire.MsgTx"),
 		mock.AnythingOfType("int"),
@@ -46,9 +46,9 @@ func mockWitnessSignature(
 }
 
 func mockWitnessSignatureWithCallback(
-	w *mocks.Wallet, pub *btcec.PublicKey, priv *btcec.PrivateKey,
+	w *walletmock.Wallet, pub *btcec.PublicKey, priv *btcec.PrivateKey,
 	privkeyConverter wallet.PrivateKeyConverter,
-) *mocks.Wallet {
+) *walletmock.Wallet {
 	call := w.On("WitnessSignatureWithCallback",
 		mock.AnythingOfType("*wire.MsgTx"),
 		mock.AnythingOfType("int"),
@@ -78,7 +78,7 @@ func mockWitnessSignatureWithCallback(
 var testTxID = "14a0810ac680a3eb3f82edc878cea25ec41d6b790744e5daeef"
 
 func mockSelectUnspent(
-	w *mocks.Wallet, balance, change btcutil.Amount, err error) *mocks.Wallet {
+	w *walletmock.Wallet, balance, change btcutil.Amount, err error) *walletmock.Wallet {
 	utxo := wallet.Utxo{
 		TxID:   testTxID,
 		Amount: float64(balance) / btcutil.SatoshiPerBitcoin,

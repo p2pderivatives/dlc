@@ -5,7 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/mocks"
+	"github.com/dgarage/dlc/internal/mocks/walletmock"
 	"github.com/dgarage/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -109,8 +109,8 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 }
 
 // setup mocke wallet
-func setupTestWalletForTestSignedClosingTx(msgSign []byte) *mocks.Wallet {
-	w := &mocks.Wallet{}
+func setupTestWalletForTestSignedClosingTx(msgSign []byte) *walletmock.Wallet {
+	w := &walletmock.Wallet{}
 	priv, pub := test.RandKeys()
 	w.On("NewPubkey").Return(pub, nil)
 	w = mockWitnessSignature(w, pub, priv)
