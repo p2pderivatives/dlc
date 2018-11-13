@@ -56,15 +56,34 @@ func TestClosingTx(t *testing.T) {
 }
 
 func TestSignedClosingTx(t *testing.T) {
+	assert := assert.New(t)
+
+	// setup
 	b1, b2 := setupContractorsUntilSignExchange()
 
-	assert := assert.New(t)
-	tx1, err := b1.SignedClosingTx()
+	// first party
+	deal1, _ := b1.dlc.FixedDeal()
+	cetx1, _ := b1.SignedContractExecutionTx()
+	tx1, err := b1.SignedClosingTx(deal1, cetx1)
 	assert.NoError(err)
-	assert.NotNil(tx1)
-	tx2, err := b2.SignedClosingTx()
+
+	// second party
+	deal2, _ := b2.dlc.FixedDeal()
+	cetx2, _ := b2.SignedContractExecutionTx()
+	tx2, err := b2.SignedClosingTx(deal2, cetx2)
 	assert.NoError(err)
-	assert.NotNil(tx2)
+
+	// first party can redeem only their tx
+	err = runCEScript(cetx1, tx1)
+	assert.NoError(err)
+	err = runCEScript(cetx2, tx1)
+	assert.Error(err)
+
+	// second party can redeem only their tx
+	err = runCEScript(cetx2, tx2)
+	assert.NoError(err)
+	err = runCEScript(cetx1, tx2)
+	assert.Error(err)
 }
 
 func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
@@ -118,4 +137,9 @@ func setupTestWalletForTestSignedClosingTx(msgSign []byte) *walletmock.Wallet {
 	w = mockWitnessSignatureWithCallback(
 		w, pub, priv, genAddSignToPrivkeyFunc(msgSign))
 	return w
+}
+
+func runCEScript(cetx *wire.MsgTx, tx *wire.MsgTx) error {
+	cetxout := cetx.TxOut[closingTxOutAt]
+	return test.ExecuteScript(cetxout.PkScript, tx, cetxout.Value)
 }
