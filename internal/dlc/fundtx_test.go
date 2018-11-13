@@ -65,14 +65,6 @@ func mockWitnessSignature(
 	return w
 }
 
-// PrepareFundTx should fail if fund amounts aren't set
-func TestPrepareFundTxNoFundAmounts(t *testing.T) {
-	builder := NewBuilder(FirstParty, nil)
-
-	err := builder.PrepareFundTxIns()
-	assert.NotNil(t, err)
-}
-
 // PrepareFundTx should fail if the party doesn't have enough balance
 func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 	testWallet := setupTestWallet()
@@ -81,9 +73,8 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 	).Return(
 		[]wallet.Utxo{}, btcutil.Amount(0), errors.New("not enough utxos"))
 
-	builder := NewBuilder(FirstParty, testWallet)
-	var famt btcutil.Amount = 1 // 1 satoshi
-	builder.SetFundAmounts(famt, famt)
+	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	builder := NewBuilder(FirstParty, testWallet, conds)
 
 	err := builder.PrepareFundTxIns()
 	assert.NotNil(t, err) // not enough balance for fee
@@ -98,8 +89,8 @@ func TestPrepareFundTx(t *testing.T) {
 	var balance, change btcutil.Amount = 1, 1
 	mockSelectUnspent(testWallet, balance, change, nil)
 
-	b := NewBuilder(FirstParty, testWallet)
-	b.SetFundAmounts(1, 1)
+	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	b := NewBuilder(FirstParty, testWallet, conds)
 
 	err := b.PrepareFundTxIns()
 	assert.Nil(err)
@@ -119,8 +110,8 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	var balance, change btcutil.Amount = 1, 0
 	mockSelectUnspent(testWallet, balance, change, nil)
 
-	b := NewBuilder(FirstParty, testWallet)
-	b.SetFundAmounts(1, 1)
+	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	b := NewBuilder(FirstParty, testWallet, conds)
 
 	err := b.PrepareFundTxIns()
 	assert.Nil(err)
@@ -133,18 +124,19 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 
 func TestFundTx(t *testing.T) {
 	assert := assert.New(t)
+	conds, _ := NewConditions(1, 1, 1, 1, 1)
 
 	// first party
 	w1 := setupTestWallet()
-	b1 := NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
-	b1.SetFundAmounts(1, 1)
+	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	b1 := NewBuilder(FirstParty, w1, conds)
 	b1.PrepareFundTxIns()
 	b1.PreparePubkey()
 
 	// second party
 	w2 := setupTestWallet()
-	b2 := NewBuilder(SecondParty, mockSelectUnspent(w2, 1, 1, nil))
-	b2.SetFundAmounts(1, 1)
+	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	b2 := NewBuilder(SecondParty, w2, conds)
 	b2.PrepareFundTxIns()
 	b2.PreparePubkey()
 
@@ -165,18 +157,19 @@ func TestFundTx(t *testing.T) {
 
 func TestRedeemFundTx(t *testing.T) {
 	assert := assert.New(t)
+	conds, _ := NewConditions(1, 1, 1, 1, 1)
 
 	// init first party
 	w1 := setupTestWallet()
-	b1 := NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
-	b1.SetFundAmounts(1, 1)
+	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	b1 := NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
 	b1.PrepareFundTxIns()
 
 	// init second party
 	w2 := setupTestWallet()
-	b2 := NewBuilder(SecondParty, mockSelectUnspent(w2, 1, 1, nil))
-	b2.SetFundAmounts(1, 1)
+	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	b2 := NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
 	b2.PrepareFundTxIns()
 
@@ -188,6 +181,7 @@ func TestRedeemFundTx(t *testing.T) {
 	// prepare redeem tx for testing. this will be a settlement tx or refund tx
 	redeemtx, err := d.newRedeemTx()
 	assert.Nil(err)
+
 	// both parties signs redeem tx
 	sign1, err := b1.witsigForFundTxIn(redeemtx)
 	assert.Nil(err)

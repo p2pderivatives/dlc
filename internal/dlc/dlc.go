@@ -9,17 +9,13 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/script"
 	"github.com/dgarage/dlc/internal/wallet"
+	validator "gopkg.in/go-playground/validator.v9"
 )
 
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	// conditions of contract
-	fundAmts      map[Contractor]btcutil.Amount
-	fundFeerate   btcutil.Amount // fund fee per byte in satoshi
-	redeemFeerate btcutil.Amount // redeem fee per byte in satoshi
-
-	lockTime uint32
+	conds Conditions
 
 	// requirements to execute DLC
 	pubs        map[Contractor]*btcec.PublicKey
@@ -27,14 +23,44 @@ type DLC struct {
 	refundSigns map[Contractor][]byte
 }
 
-// TODO: initialize DLC with locktime, fundFeerate, redeemFeerate later?
-func newDLC() *DLC {
+func newDLC(conds Conditions) *DLC {
 	return &DLC{
+		conds:       conds,
 		pubs:        make(map[Contractor]*btcec.PublicKey),
-		fundAmts:    make(map[Contractor]btcutil.Amount),
 		fundTxReqs:  newFundTxReqs(),
 		refundSigns: make(map[Contractor][]byte),
 	}
+}
+
+// Conditions contains conditions of a contract
+type Conditions struct {
+	FundAmts      map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
+	FundFeerate   btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
+	RedeemFeerate btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
+	LockTime      uint32                        `validate:"required,gt=0"` // refund locktime (block height)
+}
+
+// NewConditions creates a new DLC conditions
+func NewConditions(
+	famt1, famt2 btcutil.Amount,
+	ffeerate, rfeerate btcutil.Amount, // fund feerate and redeem feerate
+	lc uint32, // locktime
+) (Conditions, error) {
+	famts := make(map[Contractor]btcutil.Amount)
+	famts[FirstParty] = famt1
+	famts[SecondParty] = famt2
+
+	conds := Conditions{
+		FundAmts:      famts,
+		FundFeerate:   ffeerate,
+		RedeemFeerate: rfeerate,
+		LockTime:      lc,
+	}
+
+	// validate structure
+	err := validator.New().Struct(conds)
+
+	return conds, err
 }
 
 // ClosingTxOut returns a final txout owned only by a given party
@@ -85,10 +111,11 @@ type Builder struct {
 }
 
 // NewBuilder creates a new Builder for a contractor
-func NewBuilder(party Contractor, w wallet.Wallet) *Builder {
+func NewBuilder(
+	p Contractor, w wallet.Wallet, conds Conditions) *Builder {
 	return &Builder{
-		dlc:    newDLC(),
-		party:  party,
+		dlc:    newDLC(conds),
+		party:  p,
 		wallet: w,
 	}
 }
@@ -133,10 +160,4 @@ func (b *Builder) AcceptCounterpartySign(sign []byte) error {
 	// sign passed verification, accept it
 	b.dlc.refundSigns[p] = sign
 	return nil
-}
-
-// SetLockTime sets the locktime of DLC
-// TODO: remove function once lockTime is set at DLC init
-func (b *Builder) SetLockTime(locktime uint32) {
-	b.dlc.lockTime = locktime
 }

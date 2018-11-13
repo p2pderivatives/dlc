@@ -27,11 +27,11 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 
 	// use locktime
 	tx.TxIn[fundTxInAt].Sequence-- // max(0xffffffff-0x01)
-	tx.LockTime = d.lockTime
+	tx.LockTime = d.conds.LockTime
 
 	// txouts
 	for _, p := range []Contractor{FirstParty, SecondParty} {
-		txout, err := d.ClosingTxOut(p, d.fundAmts[p])
+		txout, err := d.ClosingTxOut(p, d.conds.FundAmts[p])
 
 		if err != nil {
 			fmt.Printf("err in closing tx out:   %+v\n", err)

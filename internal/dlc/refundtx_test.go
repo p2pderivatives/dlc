@@ -7,30 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	testLockTime = uint32(1541951794) // this is equivalent to 2018/11/11 3:46pm (UTC)
-	// TODO: add block # testlocktime?
-)
+const testLockTime = uint32(1541951794) // 2018/11/11 3:46pm (UTC)
 
 func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
+	conds, _ := NewConditions(1, 1, 1, 1, testLockTime)
+
 	// init first party
 	w1 := setupTestWallet()
-	b1 := NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
-	b1.SetFundAmounts(1, 1)
+	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	b1 := NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
 	b1.PrepareFundTxIns()
 
 	// init second party
 	w2 := setupTestWallet()
-	b2 := NewBuilder(SecondParty, mockSelectUnspent(w2, 1, 1, nil))
-	b2.SetFundAmounts(1, 1)
+	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	b2 := NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
 	b2.PrepareFundTxIns()
-
-	// set locktime
-	b1.SetLockTime(testLockTime)
-	b2.SetLockTime(testLockTime)
-	// b1.SetLockTime(uint32(8e8)) // below locktime threshold
 
 	// exchange pubkeys
 	b1.CopyReqsFromCounterparty(b2.DLC())
@@ -83,8 +77,8 @@ func TestRefundTx(t *testing.T) {
 	assert.Len(refundtx.TxOut, 2)                 // 1 for party and 1 for counterparty
 
 	// Both parties should be able to have their initial funds refunded.
-	assert.Equal(refundtx.TxOut[0].Value, int64(d.fundAmts[0]))
-	assert.Equal(refundtx.TxOut[1].Value, int64(d.fundAmts[1]))
+	assert.Equal(refundtx.TxOut[0].Value, int64(d.conds.FundAmts[FirstParty]))
+	assert.Equal(refundtx.TxOut[1].Value, int64(d.conds.FundAmts[SecondParty]))
 }
 
 // TODO: TestRedeemRefundTx? Test redeem before lock out time, test after?
