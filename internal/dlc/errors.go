@@ -1,6 +1,21 @@
 package dlc
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/btcsuite/btcutil"
+)
+
+// NotEnoughFeesError is an error that txins aren't enough for txouts
+type NotEnoughFeesError struct {
+	error
+}
+
+func newNotEnoughFeesError(in, fee btcutil.Amount) *NotEnoughFeesError {
+	msg := fmt.Sprintf("TxFee isn't enough. txins: %d, fee: %d", in, fee)
+	return &NotEnoughFeesError{error: errors.New(msg)}
+}
 
 // CETTakeNothingError is an error for invalid CET
 // Doesn't make sense to create a CTE that takes nothing

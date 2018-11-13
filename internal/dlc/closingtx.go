@@ -1,17 +1,20 @@
 package dlc
 
 import (
+	"math/big"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/script"
+	"github.com/dgarage/dlc/internal/wallet"
 )
 
-// ClosingTxSize is size of closing tx
-const ClosingTxSize = 216
+// closingTxSize is size of closing tx
+const closingTxSize = 216
 
-// ClosingTxOutAt is a txout index of contract execution tx
-const ClosingTxOutAt = 0
+// closingTxOutAt is a txout index of contract execution tx
+const closingTxOutAt = 0
 
 // ClosingTx constructs a tx that redeems a given CET
 func (d *DLC) ClosingTx(
@@ -22,24 +25,27 @@ func (d *DLC) ClosingTx(
 	// txin
 	txid := cetx.TxHash()
 	txin := wire.NewTxIn(
-		wire.NewOutPoint(&txid, ClosingTxOutAt), nil, nil)
+		wire.NewOutPoint(&txid, closingTxOutAt), nil, nil)
 
 	tx.AddTxIn(txin)
 
 	// TODO: the party who sends closing tx have to pay for this fee.
 	// Consider spliting it with the counterparty
-	amt := d.fundAmts[p] - d.closingTxFee()
-	txout, err := d.ClosingTxOut(p, amt)
+	in := btcutil.Amount(cetx.TxOut[closingTxOutAt].Value)
+	fee := d.redeemTxFee(closingTxSize)
+	out := in - fee
+
+	if out <= 0 {
+		return nil, newNotEnoughFeesError(in, fee)
+	}
+
+	txout, err := d.ClosingTxOut(p, out)
 	if err != nil {
 		return nil, err
 	}
 	tx.AddTxOut(txout)
 
 	return tx, nil
-}
-
-func (d *DLC) closingTxFee() btcutil.Amount {
-	return d.redeemFeerate.MulF64(ClosingTxSize)
 }
 
 // SignedClosingTx constructs a closing tx with witness
@@ -69,8 +75,8 @@ func (b *Builder) SignedClosingTx() (*wire.MsgTx, error) {
 }
 
 func (b *Builder) witnessForCEScript(tx, cetx *wire.MsgTx, deal *Deal) (wire.TxWitness, error) {
-	cetxout := cetx.TxOut[ClosingTxOutAt]
-	amt := cetxout.Value
+	cetxout := cetx.TxOut[closingTxOutAt]
+	amt := btcutil.Amount(cetxout.Value)
 
 	cparty := counterparty(b.party)
 	pub1, pub2 := b.dlc.pubs[b.party], b.dlc.pubs[cparty]
@@ -80,17 +86,25 @@ func (b *Builder) witnessForCEScript(tx, cetx *wire.MsgTx, deal *Deal) (wire.TxW
 		return nil, err
 	}
 
-	privkeyConverter := func(priv *btcec.PrivateKey) (*btcec.PrivateKey, error) {
-		// TODO: add msg sign
-		return priv, nil
-	}
+	// callback function that adds message sign to private key
+	privkeyConverter := genAddSignToPrivkeyFunc(deal.msgSign)
 
 	sign, err := b.wallet.WitnessSignatureWithCallback(
-		tx, ClosingTxOutAt, amt, sc, pub1, privkeyConverter)
+		tx, closingTxOutAt, amt, sc, pub1, privkeyConverter)
 	if err != nil {
 		return nil, err
 	}
 
 	wit := script.WitnessForCEScript(sign, sc)
 	return wit, nil
+}
+
+func genAddSignToPrivkeyFunc(
+	sign []byte) wallet.PrivateKeyConverter {
+	return func(priv *btcec.PrivateKey) (*btcec.PrivateKey, error) {
+		n := new(big.Int).Add(priv.D, new(big.Int).SetBytes(sign))
+		n = new(big.Int).Mod(n, btcec.S256().N)
+		p, _ := btcec.PrivKeyFromBytes(btcec.S256(), n.Bytes())
+		return p, nil
+	}
 }
