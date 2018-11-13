@@ -47,6 +47,7 @@ type Wallet interface {
 	Close() error
 }
 
+// PrivateKeyConverter is a callback func applied to private key before creating witness signature
 type PrivateKeyConverter func(*btcec.PrivateKey) (*btcec.PrivateKey, error)
 
 // Namespace bucket keys.

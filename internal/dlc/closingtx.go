@@ -49,17 +49,8 @@ func (d *DLC) ClosingTx(
 }
 
 // SignedClosingTx constructs a closing tx with witness
-func (b *Builder) SignedClosingTx() (*wire.MsgTx, error) {
-	deal, err := b.dlc.FixedDeal()
-	if err != nil {
-		return nil, err
-	}
-
-	cetx, err := b.dlc.ContractExecutionTx(b.party, deal)
-	if err != nil {
-		return nil, err
-	}
-
+func (b *Builder) SignedClosingTx(
+	deal *Deal, cetx *wire.MsgTx) (*wire.MsgTx, error) {
 	tx, err := b.dlc.ClosingTx(b.party, cetx)
 	if err != nil {
 		return nil, err
@@ -74,7 +65,9 @@ func (b *Builder) SignedClosingTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-func (b *Builder) witnessForCEScript(tx, cetx *wire.MsgTx, deal *Deal) (wire.TxWitness, error) {
+func (b *Builder) witnessForCEScript(
+	tx, cetx *wire.MsgTx, deal *Deal) (wire.TxWitness, error) {
+
 	cetxout := cetx.TxOut[closingTxOutAt]
 	amt := btcutil.Amount(cetxout.Value)
 
