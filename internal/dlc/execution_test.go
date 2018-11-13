@@ -96,17 +96,19 @@ func TestSignedContractExecutionTx(t *testing.T) {
 }
 
 func setupContractors() (b1, b2 *Builder) {
+	conds, _ := NewConditions(1, 1, 1, 1, 1)
+
 	// init first party
 	w1 := setupTestWallet()
-	b1 = NewBuilder(FirstParty, mockSelectUnspent(w1, 1, 1, nil))
-	b1.SetFundAmounts(1, 1)
+	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	b1 = NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
 	b1.PrepareFundTxIns()
 
 	// init second party
 	w2 := setupTestWallet()
-	b2 = NewBuilder(SecondParty, mockSelectUnspent(w2, 1, 1, nil))
-	b2.SetFundAmounts(1, 1)
+	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	b2 = NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
 	b2.PrepareFundTxIns()
 

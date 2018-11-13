@@ -99,12 +99,6 @@ func (d *DLC) witnessForFundScript(
 	return wit, nil
 }
 
-// SetFundAmounts sets fund amounts to DLC
-func (b *Builder) SetFundAmounts(amt1, amt2 btcutil.Amount) {
-	b.dlc.fundAmts[FirstParty] = amt1
-	b.dlc.fundAmts[SecondParty] = amt2
-}
-
 // fundAmount calculates total fund amount
 func (d *DLC) fundAmount() (btcutil.Amount, error) {
 	amt1, ok := d.conds.FundAmts[FirstParty]

@@ -151,7 +151,7 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 
 // AcceptCounterpartySign verifies couterparty's given sign is valid and then
 func (b *Builder) AcceptCounterpartySign(sign []byte) error {
-	p := b.dlc.counterparty(b.party)
+	p := counterparty(b.party)
 
 	err := b.dlc.VerifyRefundTx(sign, b.dlc.pubs[p])
 	if err != nil {
