@@ -56,7 +56,7 @@ func TestVerifyRefundTxBadRefund(t *testing.T) {
 	_, _, d := setupDLCRefund()
 
 	// VerifyRefundTX should return false bc the given signature and pubkey don't match
-	testBadSign := []byte{'b', 'a', 'd'}
+	testBadSign := []byte{'b', 'a', 'd'} // make a known bad signature
 	err := d.VerifyRefundTx(testBadSign, d.pubs[FirstParty])
 	assert.NotNil(err)
 }
@@ -82,12 +82,12 @@ func TestRefundTx(t *testing.T) {
 	assert.Len(refundtx.TxIn, 1)                  // fund from fundtx?
 	assert.Len(refundtx.TxOut, 2)                 // 1 for party and 1 for counterparty
 
-	// TODO: verify TxOut[0] == d.fundAmts[0] - redeemfee?
+	// Both parties should be able to have their initial funds refunded.
 	assert.Equal(refundtx.TxOut[0].Value, int64(d.fundAmts[0]))
 	assert.Equal(refundtx.TxOut[1].Value, int64(d.fundAmts[1]))
 }
 
-// TestRedeemRefundTx? Test redeem before lock out time, test after?
+// TODO: TestRedeemRefundTx? Test redeem before lock out time, test after?
 func TestRefundTxOutput(t *testing.T) {
 	assert := assert.New(t)
 	_, _, d := setupDLCRefund()
