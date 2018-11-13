@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
@@ -15,19 +16,24 @@ import (
 type DLC struct {
 	// conditions of contract
 	fundAmts      map[Contractor]btcutil.Amount
-	fundFeerate   btcutil.Amount // fund fee per byte in satohi
-	redeemFeerate btcutil.Amount // redeem fee per byte in satohi
+	fundFeerate   btcutil.Amount // fund fee per byte in satoshi
+	redeemFeerate btcutil.Amount // redeem fee per byte in satoshi
+
+	lockTime uint32
 
 	// requirements to execute DLC
-	pubs       map[Contractor]*btcec.PublicKey
-	fundTxReqs *FundTxRequirements
+	pubs        map[Contractor]*btcec.PublicKey
+	fundTxReqs  *FundTxRequirements
+	refundSigns map[Contractor][]byte
 }
 
+// TODO: initialize DLC with locktime, fundFeerate, redeemFeerate later?
 func newDLC() *DLC {
 	return &DLC{
-		pubs:       make(map[Contractor]*btcec.PublicKey),
-		fundAmts:   make(map[Contractor]btcutil.Amount),
-		fundTxReqs: newFundTxReqs(),
+		pubs:        make(map[Contractor]*btcec.PublicKey),
+		fundAmts:    make(map[Contractor]btcutil.Amount),
+		fundTxReqs:  newFundTxReqs(),
+		refundSigns: make(map[Contractor][]byte),
 	}
 }
 
@@ -113,4 +119,24 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 	fundReqs := d.fundTxReqs
 	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
 	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
+}
+
+// AcceptCounterpartySign verifies couterparty's given sign is valid and then
+func (b *Builder) AcceptCounterpartySign(sign []byte) error {
+	p := b.dlc.counterparty(b.party)
+
+	err := b.dlc.VerifyRefundTx(sign, b.dlc.pubs[p])
+	if err != nil {
+		return fmt.Errorf("counterparty's signature didn't pass verification, had error: %v", err)
+	}
+
+	// sign passed verification, accept it
+	b.dlc.refundSigns[p] = sign
+	return nil
+}
+
+// SetLockTime sets the locktime of DLC
+// TODO: remove function once lockTime is set at DLC init
+func (b *Builder) SetLockTime(locktime uint32) {
+	b.dlc.lockTime = locktime
 }
