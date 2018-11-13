@@ -12,8 +12,6 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
-var validate *validator.Validate
-
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
@@ -59,8 +57,10 @@ func NewConditions(
 		LockTime:      lc,
 	}
 
-	validate = validator.New()
-	return conds, validate.Struct(conds)
+	// validate structure
+	err := validator.New().Struct(conds)
+
+	return conds, err
 }
 
 // ClosingTxOut returns a final txout owned only by a given party
