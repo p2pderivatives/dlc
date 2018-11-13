@@ -2,7 +2,6 @@ package dlc
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
@@ -88,34 +87,18 @@ func (d *DLC) fundTxOutForRedeemTx() (*wire.TxOut, error) {
 	return txout, nil
 }
 
-// SetFundAmounts sets fund amounts to DLC
-func (b *Builder) SetFundAmounts(amt1, amt2 btcutil.Amount) {
-	b.dlc.fundAmts[FirstParty] = amt1
-	b.dlc.fundAmts[SecondParty] = amt2
-}
-
 // fundAmount calculates total fund amount
 func (d *DLC) fundAmount() (btcutil.Amount, error) {
-	amt1, ok := d.fundAmts[FirstParty]
+	amt1, ok := d.conds.FundAmts[FirstParty]
 	if !ok {
 		return 0, errors.New("Fund amount for first party isn't set")
 	}
-	amt2, ok := d.fundAmts[SecondParty]
+	amt2, ok := d.conds.FundAmts[SecondParty]
 	if !ok {
 		return 0, errors.New("Fund amount for second party isn't set")
 	}
 
 	return amt1 + amt2, nil
-}
-
-// SetFundFeerate sets feerate (satoshi/byte) for fund tx fee calculation
-func (b *Builder) SetFundFeerate(feerate btcutil.Amount) {
-	b.dlc.fundFeerate = feerate
-}
-
-// SetRedeemFeerate sets feerate (satoshi/byte) for fund tx fee calculation
-func (b *Builder) SetRedeemFeerate(feerate btcutil.Amount) {
-	b.dlc.redeemFeerate = feerate
 }
 
 // Tx sizes for fee estimation
@@ -125,36 +108,30 @@ const fundTxOutSize = int64(31)
 const redeemTxSize = int64(345)
 
 func (d *DLC) fundTxFeeBase() btcutil.Amount {
-	return d.fundFeerate.MulF64(float64(fundTxBaseSize))
+	return d.conds.FundFeerate.MulF64(float64(fundTxBaseSize))
 }
 
 func (d *DLC) fundTxFeePerTxIn() btcutil.Amount {
-	return d.fundFeerate.MulF64(float64(fundTxInSize))
+	return d.conds.FundFeerate.MulF64(float64(fundTxInSize))
 }
 
 func (d *DLC) fundTxFeePerTxOut() btcutil.Amount {
-	return d.fundFeerate.MulF64(float64(fundTxOutSize))
+	return d.conds.FundFeerate.MulF64(float64(fundTxOutSize))
 }
 
 func (d *DLC) redeemTxFee() btcutil.Amount {
-	return d.redeemFeerate.MulF64(float64(redeemTxSize))
+	return d.conds.RedeemFeerate.MulF64(float64(redeemTxSize))
 }
 
 // PrepareFundTxIns prepares utxos for fund tx by calculating fees
 func (b *Builder) PrepareFundTxIns() error {
-	famt, ok := b.dlc.fundAmts[b.party]
-	if !ok {
-		err := fmt.Errorf("fund amount isn't set yet")
-		return err
-	}
-
+	famt := b.dlc.conds.FundAmts[b.party]
 	feeBase := b.dlc.fundTxFeeBase()
-
-	// TODO: add redeem tx fee
-
-	feePerIn := b.dlc.fundTxFeePerTxIn()
-	feePerOut := b.dlc.fundTxFeePerTxOut()
-	utxos, change, err := b.wallet.SelectUnspent(famt+feeBase, feePerIn, feePerOut)
+	redeemTxFee := b.dlc.redeemTxFee()
+	utxos, change, err := b.wallet.SelectUnspent(
+		famt+feeBase+redeemTxFee,
+		b.dlc.fundTxFeePerTxIn(),
+		b.dlc.fundTxFeePerTxOut())
 	if err != nil {
 		return err
 	}
@@ -211,12 +188,13 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 }
 
 // witsigForFundTxIn returns sign for a given tx that redeems fund out
-// TODO: this method will be used to create settlement txs and refund tx
 func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
-	amt, err := b.dlc.fundAmount()
+	fundtx, err := b.dlc.FundTx()
 	if err != nil {
 		return nil, err
 	}
+	fout := fundtx.TxOut[fundTxOutAt]
+	famt := btcutil.Amount(fout.Value)
 
 	fc, err := b.dlc.fundScript()
 	if err != nil {
@@ -225,5 +203,5 @@ func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
 
 	pub := b.dlc.pubs[b.party]
 
-	return b.wallet.WitnessSignature(tx, fundTxInAt, amt, fc, pub)
+	return b.wallet.WitnessSignature(tx, fundTxInAt, famt, fc, pub)
 }
