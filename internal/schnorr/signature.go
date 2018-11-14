@@ -7,6 +7,19 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 )
 
+// CommitMulti calculates a commitment by summing commitments of multiple msgs
+func CommitMulti(
+	V *btcec.PublicKey, Rs []*btcec.PublicKey, msgs [][]byte,
+) *btcec.PublicKey {
+	Psum := new(btcec.PublicKey)
+	for i, m := range msgs {
+		R := Rs[i]
+		P := Commit(V, R, m)
+		Psum = addPubkeys(Psum, P)
+	}
+	return Psum
+}
+
 // Commit is calculatd by the following formula
 //   sG = R - h(R, m) * V
 // Where
@@ -26,10 +39,20 @@ func Commit(V, R *btcec.PublicKey, m []byte) *btcec.PublicKey {
 	hV.X, hV.Y = btcec.S256().ScalarMult(V.X, V.Y, h.Bytes())
 
 	// R - h(R, m) * V
-	P := new(btcec.PublicKey)
-	P.X, P.Y = btcec.S256().Add(R.X, R.Y, hV.X, hV.Y)
-
+	P := addPubkeys(R, hV)
 	return P
+}
+
+func addPubkeys(A, B *btcec.PublicKey) *btcec.PublicKey {
+	C := new(btcec.PublicKey)
+	if A.X == nil {
+		C.X, C.Y = B.X, B.Y
+	} else if B.X == nil {
+		C.X, C.Y = A.X, A.Y
+	} else {
+		C.X, C.Y = btcec.S256().Add(A.X, A.Y, B.X, B.Y)
+	}
+	return C
 }
 
 // Sign is calculated by the following formula
@@ -60,6 +83,16 @@ func Sign(opriv, rpriv *btcec.PrivateKey, m []byte) []byte {
 	s = new(big.Int).Mod(s, btcec.S256().N)
 
 	return s.Bytes()
+}
+
+// SumSigns sums signs up for a multi-message commitment
+func SumSigns(signs [][]byte) []byte {
+	sum := new(big.Int)
+	for _, sign := range signs {
+		sb := new(big.Int).SetBytes(sign)
+		sum = new(big.Int).Add(sum, sb)
+	}
+	return sum.Bytes()
 }
 
 func hash(R *btcec.PublicKey, m []byte) *big.Int {
