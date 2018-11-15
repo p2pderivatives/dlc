@@ -35,8 +35,8 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	rs2, _ := b2.SignRefundTx()
 
 	// exchange refund signs
-	b1.AcceptCounterpartySign(rs2)
-	b2.AcceptCounterpartySign(rs1)
+	b1.AcceptRefundTxSign(rs2)
+	b2.AcceptRefundTxSign(rs1)
 
 	d = b1.DLC()
 

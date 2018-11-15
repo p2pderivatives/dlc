@@ -96,6 +96,20 @@ func (d *DLC) witnessForRefundTx() (wire.TxWitness, error) {
 	return wt, nil
 }
 
+// AcceptRefundTxSign verifies couterparty's given sign is valid and then
+func (b *Builder) AcceptRefundTxSign(sign []byte) error {
+	p := counterparty(b.party)
+
+	err := b.dlc.VerifyRefundTx(sign, b.dlc.pubs[p])
+	if err != nil {
+		return fmt.Errorf("counterparty's signature didn't pass verification, had error: %v", err)
+	}
+
+	// sign passed verification, accept it
+	b.dlc.refundSigns[p] = sign
+	return nil
+}
+
 // VerifyRefundTx verifies the refund transaction signature.
 // Returns nil if the passed in sign is valid and corresponds to the passed
 // in public key, and an error if it isnt.

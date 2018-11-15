@@ -2,7 +2,6 @@ package dlc
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
@@ -16,6 +15,7 @@ import (
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
 	conds Conditions
+	deals []*Deal // TODO: move to Conditions
 
 	// requirements to execute DLC
 	pubs        map[Contractor]*btcec.PublicKey
@@ -93,7 +93,7 @@ const (
 )
 
 // counterparty returns the counterparty
-func (d *DLC) counterparty(p Contractor) (cp Contractor) {
+func counterparty(p Contractor) (cp Contractor) {
 	switch p {
 	case FirstParty:
 		cp = SecondParty
@@ -137,7 +137,7 @@ func (b *Builder) PreparePubkey() error {
 
 // CopyReqsFromCounterparty copies requirements from counterparty
 func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
-	p := b.dlc.counterparty(b.party)
+	p := counterparty(b.party)
 
 	// pubkey
 	b.dlc.pubs[p] = d.pubs[p]
@@ -146,18 +146,4 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 	fundReqs := d.fundTxReqs
 	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
 	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
-}
-
-// AcceptCounterpartySign verifies couterparty's given sign is valid and then
-func (b *Builder) AcceptCounterpartySign(sign []byte) error {
-	p := b.dlc.counterparty(b.party)
-
-	err := b.dlc.VerifyRefundTx(sign, b.dlc.pubs[p])
-	if err != nil {
-		return fmt.Errorf("counterparty's signature didn't pass verification, had error: %v", err)
-	}
-
-	// sign passed verification, accept it
-	b.dlc.refundSigns[p] = sign
-	return nil
 }

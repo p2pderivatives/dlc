@@ -6,5 +6,6 @@
     ".*/test_util.go"
   ],
   "EnableAll": true,
+  "Disable": ["unparam"],
   "LineLength": 120
 }
