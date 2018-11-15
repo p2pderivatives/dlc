@@ -16,6 +16,11 @@ type OracleRequirements struct {
 	signedMsgs  [][]byte           // Messages signed by Oracle
 }
 
+func newOracleReqs(n int) *OracleRequirements {
+	return &OracleRequirements{
+		commitments: make([]*btcec.PublicKey, n)}
+}
+
 // PrepareOracleCommitments prepares oracle's commitments for all deals
 func (d *DLC) PrepareOracleCommitments(
 	V *btcec.PublicKey, Rs []*btcec.PublicKey) {

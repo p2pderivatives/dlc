@@ -2,7 +2,6 @@ package dlc
 
 import (
 	"errors"
-	"time"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
@@ -26,11 +25,14 @@ type DLC struct {
 }
 
 func newDLC(conds Conditions) *DLC {
+	nDeal := len(conds.Deals)
 	return &DLC{
 		conds:       conds,
 		pubs:        make(map[Contractor]*btcec.PublicKey),
 		fundTxReqs:  newFundTxReqs(),
+		oracleReqs:  newOracleReqs(nDeal),
 		refundSigns: make(map[Contractor][]byte),
+		cetxSigns:   make([][]byte, nDeal),
 	}
 }
 
@@ -39,9 +41,10 @@ type Conditions struct {
 	FundAmts      map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
 	FundFeerate   btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
 	RedeemFeerate btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
-	SettlementAt  time.Time                     `validate:"required"`
-	LockTime      uint32                        `validate:"required,gt=0"` // refund locktime (block height)
-	Deals         []*Deal                       `validate:"required,gt=0,dive,required"`
+	// TODO: add SettlementAt
+	// SettlementAt  time.Time                     `validate:"required"`
+	LockTime uint32  `validate:"required,gt=0"` // refund locktime (block height)
+	Deals    []*Deal `validate:"required,gt=0,dive,required"`
 }
 
 // NewConditions creates a new DLC conditions

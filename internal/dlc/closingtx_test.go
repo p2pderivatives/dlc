@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/mocks/walletmock"
+	"github.com/dgarage/dlc/internal/oracle"
 	"github.com/dgarage/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -90,17 +91,19 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 	deal := NewDeal(damt1, damt2, msgs)
 	conds.Deals = []*Deal{deal}
 
-	msgPriv, _ := test.RandKeys()
-	msgSign := msgPriv.D.Bytes()
+	// oracle's sign and commitment
+	opriv, C := test.RandKeys()
+	osign := opriv.D.Bytes()
+	osignset := &oracle.SignSet{Msgs: msgs, Signs: [][]byte{osign}}
 
 	// init first party
-	w1 := setupTestWalletForTestSignedClosingTx(msgSign)
+	w1 := setupTestWalletForTestSignedClosingTx(osign)
 	b1 = NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
 	b1.PrepareFundTxIns()
 
 	// init second party
-	w2 := setupTestWalletForTestSignedClosingTx(msgSign)
+	w2 := setupTestWalletForTestSignedClosingTx(osign)
 	b2 = NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
 	b2.PrepareFundTxIns()
@@ -110,15 +113,20 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 	b2.CopyReqsFromCounterparty(b1.DLC())
 
 	dID, _, _ := b1.dlc.DealByMsgs(msgs)
-	// TODO: fix
-	// b1.FixDeal(dID, msign)
-	// b2.FixDeal(dID, msign)
 
+	// set oracle ocmmitment
+	b1.dlc.oracleReqs.commitments[dID] = C
+	b2.dlc.oracleReqs.commitments[dID] = C
+
+	// exchange signs
 	sign1, _ := b1.SignContractExecutionTx(deal, dID)
 	sign2, _ := b2.SignContractExecutionTx(deal, dID)
-
 	_ = b1.AcceptCETxSigns([][]byte{sign2})
 	_ = b2.AcceptCETxSigns([][]byte{sign1})
+
+	// fix deal by oracle's sign
+	b1.FixDeal(osignset)
+	b2.FixDeal(osignset)
 
 	return b1, b2
 }
