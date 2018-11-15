@@ -18,3 +18,13 @@ For more information on address management, please consult the original [godoc](
 
 Right now, to ask about UTXOS, the wallet will query the running `bitcoind` instance by using the rpc command `ListUnspent()`.
 When a public address is generated, it is also registered to `bitcoind`, so `bitcoind` knows to keep track of transactions associated with that addresss.
+
+## Connecting to `bitcoind`
+
+Until bitcoin rpc parameters can be read automatically from a `bitcoin.conf` file, your bitcoin rpc parameters need to be entered manually in the `wallet.go` file, in lines 59-60.
+```
+	rpcport     = "localhost: REPLACEME"
+	rpcusername = "RENAME!"
+	rpcpassword = "RENAME!"
+```
+For your convenience, the defualt `mainnet` port number is `8333`, for `testnet3` is `18332` , and `regnet` is `18443`.

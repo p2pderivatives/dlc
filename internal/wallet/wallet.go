@@ -56,9 +56,9 @@ var (
 	waddrmgrKeyScope     = waddrmgr.KeyScopeBIP0084
 
 	// TODO: have rpc params be read from conf file?
-	rpcport     = "localhost:18443"
-	rpcusername = "akek"
-	rpcpassword = "akek"
+	rpcport     = "localhost: REPLACEME"
+	rpcusername = "RENAME!"
+	rpcpassword = "RENAME!"
 )
 
 const accountName = "dlc"
