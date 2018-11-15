@@ -21,7 +21,7 @@ When a public address is generated, it is also registered to `bitcoind`, so `bit
 
 ## Connecting to `bitcoind`
 
-Until bitcoin rpc parameters can be read automatically from a `bitcoin.conf` file, your bitcoin rpc parameters need to be entered manually in the `wallet.go` file, in lines 59-60.
+Until bitcoin rpc parameters can be read automatically from a `bitcoin.conf` file, your bitcoin rpc parameters need to be entered manually in the `wallet.go` file, in lines 59-61.
 ```
 	rpcport     = "localhost: REPLACEME"
 	rpcusername = "RENAME!"
