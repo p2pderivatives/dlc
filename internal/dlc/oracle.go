@@ -24,13 +24,10 @@ func newOracleReqs(n int) *OracleRequirements {
 // PrepareOracleCommitments prepares oracle's commitments for all deals
 func (d *DLC) PrepareOracleCommitments(
 	V *btcec.PublicKey, Rs []*btcec.PublicKey) {
-	Cs := make([]*btcec.PublicKey, len(d.conds.Deals))
-
 	for i, deal := range d.conds.Deals {
-		Cs[i] = schnorr.CommitMulti(V, Rs, deal.Msgs)
+		C := schnorr.CommitMulti(V, Rs, deal.Msgs)
+		d.oracleReqs.commitments[i] = C
 	}
-
-	d.oracleReqs.commitments = Cs
 }
 
 // SetOraclePubkeySet sets oracle's pubkey set
