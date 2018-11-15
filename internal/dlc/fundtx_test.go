@@ -20,7 +20,7 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 	).Return(
 		[]wallet.Utxo{}, btcutil.Amount(0), errors.New("not enough utxos"))
 
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	conds := newTestConditions()
 	builder := NewBuilder(FirstParty, testWallet, conds)
 
 	err := builder.PrepareFundTxIns()
@@ -36,7 +36,7 @@ func TestPrepareFundTx(t *testing.T) {
 	var balance, change btcutil.Amount = 1, 1
 	mockSelectUnspent(testWallet, balance, change, nil)
 
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	conds := newTestConditions()
 	b := NewBuilder(FirstParty, testWallet, conds)
 
 	err := b.PrepareFundTxIns()
@@ -57,7 +57,7 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	var balance, change btcutil.Amount = 1, 0
 	mockSelectUnspent(testWallet, balance, change, nil)
 
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	conds := newTestConditions()
 	b := NewBuilder(FirstParty, testWallet, conds)
 
 	err := b.PrepareFundTxIns()
@@ -71,7 +71,7 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 
 func TestFundTx(t *testing.T) {
 	assert := assert.New(t)
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	conds := newTestConditions()
 
 	// first party
 	w1 := setupTestWallet()
@@ -104,7 +104,7 @@ func TestFundTx(t *testing.T) {
 
 func TestRedeemFundTx(t *testing.T) {
 	assert := assert.New(t)
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
+	conds := newTestConditions()
 
 	// init first party
 	w1 := setupTestWallet()

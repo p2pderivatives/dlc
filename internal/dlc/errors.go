@@ -26,3 +26,13 @@ type CETTakeNothingError struct {
 func newCETTakeNothingError(msg string) *CETTakeNothingError {
 	return &CETTakeNothingError{error: errors.New(msg)}
 }
+
+// NoFixedDealError is an error for a case when no deals has been fixed yet
+type NoFixedDealError struct {
+	error
+}
+
+func newNoFixedDealError() *NoFixedDealError {
+	msg := "No deal has been fixed"
+	return &NoFixedDealError{error: errors.New(msg)}
+}
