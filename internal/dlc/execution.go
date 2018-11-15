@@ -181,7 +181,3 @@ func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
 
 	return tx, nil
 }
-
-// func (b *Builder) ClosingTx(idx) (*wire.MsgTx, error) {
-//
-// }
