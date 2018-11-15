@@ -44,5 +44,5 @@ func (d *DLC) DealByMsgs(msgs [][]byte) (idx int, deal *Deal, err error) {
 		}
 	}
 	err = fmt.Errorf("deal not found. msgs: %v", msgs)
-	return
+	return idx, deal, err
 }
