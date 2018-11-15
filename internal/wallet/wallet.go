@@ -54,7 +54,6 @@ type PrivateKeyConverter func(*btcec.PrivateKey) (*btcec.PrivateKey, error)
 var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
 	waddrmgrKeyScope     = waddrmgr.KeyScopeBIP0084
-	wtxmgrNamespaceKey   = []byte("wtxmgr")
 
 	// TODO: have rpc params be read from conf file?
 	rpcport     = "localhost:18443"
