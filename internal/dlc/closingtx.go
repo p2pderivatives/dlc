@@ -49,14 +49,19 @@ func (d *DLC) ClosingTx(
 }
 
 // SignedClosingTx constructs a closing tx with witness
-func (b *Builder) SignedClosingTx(
-	deal *Deal, cetx *wire.MsgTx) (*wire.MsgTx, error) {
+func (b *Builder) SignedClosingTx(cetx *wire.MsgTx) (*wire.MsgTx, error) {
+	dID, _, err := b.dlc.FixedDeal()
+	if err != nil {
+		return nil, err
+	}
+	C := b.dlc.oracleReqs.commitments[dID]
+
 	tx, err := b.dlc.ClosingTx(b.party, cetx)
 	if err != nil {
 		return nil, err
 	}
 
-	wit, err := b.witnessForCEScript(tx, cetx, deal)
+	wit, err := b.witnessForCEScript(tx, cetx, C)
 	if err != nil {
 		return nil, err
 	}
@@ -66,21 +71,22 @@ func (b *Builder) SignedClosingTx(
 }
 
 func (b *Builder) witnessForCEScript(
-	tx, cetx *wire.MsgTx, deal *Deal) (wire.TxWitness, error) {
-
+	tx, cetx *wire.MsgTx, C *btcec.PublicKey) (wire.TxWitness, error) {
 	cetxout := cetx.TxOut[closingTxOutAt]
 	amt := btcutil.Amount(cetxout.Value)
 
 	cparty := counterparty(b.party)
 	pub1, pub2 := b.dlc.pubs[b.party], b.dlc.pubs[cparty]
+
 	sc, err := script.ContractExecutionScript(
-		pub1, pub2, deal.msgCommitment)
+		pub1, pub2, C)
 	if err != nil {
 		return nil, err
 	}
 
 	// callback function that adds message sign to private key
-	privkeyConverter := genAddSignToPrivkeyFunc(deal.msgSign)
+	osign := b.dlc.oracleReqs.sign
+	privkeyConverter := genAddSignToPrivkeyFunc(osign)
 
 	sign, err := b.wallet.WitnessSignatureWithCallback(
 		tx, closingTxOutAt, amt, sc, pub1, privkeyConverter)
