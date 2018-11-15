@@ -11,7 +11,7 @@ import (
 // Oracle is a struct
 type Oracle struct {
 	name      string                  // display name
-	nRpoints  int                     // number of commited R-points
+	nRpoints  int                     // number of committed R-points
 	masterKey *hdkeychain.ExtendedKey // master HD extended key (private)
 	db        *memdb                  // memory db for testing
 }

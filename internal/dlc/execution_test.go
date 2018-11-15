@@ -72,7 +72,7 @@ func TestFixDeal(t *testing.T) {
 	// setup
 	b, _, dID, deal := setupContractorsUntilPubkeyExchange(1, 1)
 
-	// sucess with valid sign and message set
+	// success with valid sign and message set
 	privkey, C := test.RandKeys()
 	b.dlc.oracleReqs.commitments[dID] = C
 	osigns := [][]byte{privkey.D.Bytes()}
