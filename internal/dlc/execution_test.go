@@ -5,6 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	"github.com/dgarage/dlc/internal/oracle"
 	"github.com/dgarage/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -64,33 +65,57 @@ func TestContractExecutionTxTakeNothing(t *testing.T) {
 	assert.IsType(&CETTakeNothingError{}, err)
 }
 
-// TODO: implement TestFixDeal
 func TestFixDeal(t *testing.T) {
+	assert := assert.New(t)
+	var err error
+
+	// setup
+	b, _, dID, deal := setupContractorsUntilPubkeyExchange(1, 1)
+
+	// sucess with valid sign and message set
+	privkey, C := test.RandKeys()
+	b.dlc.oracleReqs.commitments[dID] = C
+	osigns := [][]byte{privkey.D.Bytes()}
+	osignset := &oracle.SignSet{Msgs: deal.Msgs, Signs: osigns}
+
+	err = b.FixDeal(osignset)
+	assert.NoError(err)
+
+	// fail with invalid sign
+	privkeyInvalid, _ := test.RandKeys()
+	osignsInvalid := [][]byte{privkeyInvalid.D.Bytes()}
+	osignsetInvalid := &oracle.SignSet{Msgs: deal.Msgs, Signs: osignsInvalid}
+
+	err = b.FixDeal(osignsetInvalid)
+	assert.Error(err)
 }
 
 func TestSignedContractExecutionTx(t *testing.T) {
 	assert := assert.New(t)
+	var err error
 
 	// setup
 	b1, b2, dID, deal := setupContractorsUntilPubkeyExchange(1, 1)
-	_, C := test.RandKeys()
+	privkey, C := test.RandKeys()
 	b1.dlc.oracleReqs.commitments[dID] = C
 	b2.dlc.oracleReqs.commitments[dID] = C
+	osigns := [][]byte{privkey.D.Bytes()}
+	osignset := &oracle.SignSet{Msgs: deal.Msgs, Signs: osigns}
 
-	// TODO: fix
-	// b1.FixDeal(dID, osign)
-	// b2.FixDeal(dID, osign)
+	err = b1.FixDeal(osignset)
+	assert.NoError(err)
+	err = b2.FixDeal(osignset)
+	assert.NoError(err)
 
 	// fail without the counterparty's sign
-	var err error
 	_, err = b1.SignedContractExecutionTx()
-	assert.NotNil(err)
+	assert.NoError(err)
 	_, err = b2.SignedContractExecutionTx()
-	assert.NotNil(err)
+	assert.NoError(err)
 
 	// exchange signs
 	sign1, err := b1.SignContractExecutionTx(deal, dID)
-	assert.Nil(err)
+	assert.NoError(err)
 	sign2, err := b2.SignContractExecutionTx(deal, dID)
 	assert.Nil(err)
 
@@ -101,9 +126,9 @@ func TestSignedContractExecutionTx(t *testing.T) {
 
 	// no errors with the counterparty's sign
 	tx1, err := b1.SignedContractExecutionTx()
-	assert.Nil(err)
+	assert.NoError(err)
 	tx2, err := b2.SignedContractExecutionTx()
-	assert.Nil(err)
+	assert.NoError(err)
 
 	// each party has a tx that has the same txin but has different txouts
 	assert.Len(tx1.TxOut, 2)

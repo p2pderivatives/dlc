@@ -11,6 +11,7 @@ const testLockTime = uint32(1541951794) // 2018/11/11 3:46pm (UTC)
 
 func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	conds := newTestConditions()
+	conds.LockTime = testLockTime
 
 	// init first party
 	w1 := setupTestWallet()
@@ -72,7 +73,7 @@ func TestRefundTx(t *testing.T) {
 
 	refundtx, err := d.RefundTx()
 	assert.Nil(err)
-	assert.Equal(refundtx.LockTime, testLockTime) // check lockTime is same as set by DLC
+	assert.Equal(testLockTime, refundtx.LockTime) // check lockTime is same as set by DLC
 	assert.Len(refundtx.TxIn, 1)                  // fund from fundtx?
 	assert.Len(refundtx.TxOut, 2)                 // 1 for party and 1 for counterparty
 
