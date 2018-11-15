@@ -80,7 +80,7 @@ func (d *DLC) fundTxOutForRedeemTx() (*wire.TxOut, error) {
 		return nil, err
 	}
 
-	amt += d.redeemTxFee()
+	amt += d.redeemTxFee(cetxSize)
 
 	txout := wire.NewTxOut(int64(amt), pkScript)
 
@@ -117,7 +117,7 @@ func (d *DLC) fundAmount() (btcutil.Amount, error) {
 const fundTxBaseSize = int64(55)
 const fundTxInSize = int64(149)
 const fundTxOutSize = int64(31)
-const redeemTxSize = int64(345)
+const cetxSize = int64(345) // context execution tx size
 
 func (d *DLC) fundTxFeeBase() btcutil.Amount {
 	return d.conds.FundFeerate.MulF64(float64(fundTxBaseSize))
@@ -131,15 +131,15 @@ func (d *DLC) fundTxFeePerTxOut() btcutil.Amount {
 	return d.conds.FundFeerate.MulF64(float64(fundTxOutSize))
 }
 
-func (d *DLC) redeemTxFee() btcutil.Amount {
-	return d.conds.RedeemFeerate.MulF64(float64(redeemTxSize))
+func (d *DLC) redeemTxFee(size int64) btcutil.Amount {
+	return d.conds.RedeemFeerate.MulF64(float64(size))
 }
 
 // PrepareFundTxIns prepares utxos for fund tx by calculating fees
 func (b *Builder) PrepareFundTxIns() error {
 	famt := b.dlc.conds.FundAmts[b.party]
 	feeBase := b.dlc.fundTxFeeBase()
-	redeemTxFee := b.dlc.redeemTxFee()
+	redeemTxFee := b.dlc.redeemTxFee(cetxSize)
 	utxos, change, err := b.wallet.SelectUnspent(
 		famt+feeBase+redeemTxFee,
 		b.dlc.fundTxFeePerTxIn(),

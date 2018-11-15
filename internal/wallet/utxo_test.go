@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/dgarage/dlc/internal/mocks"
+	"github.com/dgarage/dlc/internal/mocks/rpcmock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +33,7 @@ func TestListUnspent(t *testing.T) {
 	}
 	utxos = append(utxos, utxo)
 
-	rpcc := &mocks.Client{}
+	rpcc := &rpcmock.Client{}
 	rpcc = mockListUnspent(rpcc, utxos, nil)
 	w.rpc = rpcc
 
@@ -43,7 +43,7 @@ func TestListUnspent(t *testing.T) {
 	assert.Equal(t, rutxos, utxos)
 }
 
-func mockListUnspent(c *mocks.Client, utxos []btcjson.ListUnspentResult, err error) *mocks.Client {
+func mockListUnspent(c *rpcmock.Client, utxos []btcjson.ListUnspentResult, err error) *rpcmock.Client {
 	c.On("ListUnspent").Return(utxos, err)
 
 	return c

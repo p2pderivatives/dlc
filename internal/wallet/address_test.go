@@ -3,7 +3,7 @@ package wallet
 import (
 	"testing"
 
-	"github.com/dgarage/dlc/internal/mocks"
+	"github.com/dgarage/dlc/internal/mocks/rpcmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -12,7 +12,7 @@ func TestNewPubkey(t *testing.T) {
 	wallet, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
 
-	rpcc := &mocks.Client{}
+	rpcc := &rpcmock.Client{}
 	rpcc = mockImportAddress(rpcc, nil)
 	wallet.rpc = rpcc
 
@@ -22,7 +22,7 @@ func TestNewPubkey(t *testing.T) {
 	assert.NotNil(t, pub)
 }
 
-func mockImportAddress(c *mocks.Client, err error) *mocks.Client {
+func mockImportAddress(c *rpcmock.Client, err error) *rpcmock.Client {
 	c.On("ImportAddress",
 		mock.AnythingOfType("string"),
 	).Return(err)

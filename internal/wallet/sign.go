@@ -24,3 +24,10 @@ func (w *wallet) WitnessSignature(
 	sign, err := script.WitnessSignature(tx, idx, int64(amt), sc, priv)
 	return sign, err
 }
+
+func (w *wallet) WitnessSignatureWithCallback(
+	tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
+	privkeyConverter PrivateKeyConverter,
+) (sign []byte, err error) {
+	return
+}

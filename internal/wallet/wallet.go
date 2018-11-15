@@ -23,11 +23,14 @@ type Wallet interface {
 
 	// WitnessSignature returns witness signature for a given txin and pubkey
 	WitnessSignature(
-		tx *wire.MsgTx,
-		idx int,
-		amt btcutil.Amount,
-		script []byte,
-		pub *btcec.PublicKey,
+		tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
+	) (sign []byte, err error)
+
+	// WitnessSignatureWithCallback does the same with WitnessSignature do
+	// applying a given func to private key before calculating signature
+	WitnessSignatureWithCallback(
+		tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
+		privkeyConverter PrivateKeyConverter,
 	) (sign []byte, err error)
 
 	ListUnspent() (utxos []Utxo, err error)
@@ -43,6 +46,9 @@ type Wallet interface {
 
 	Close() error
 }
+
+// PrivateKeyConverter is a callback func applied to private key before creating witness signature
+type PrivateKeyConverter func(*btcec.PrivateKey) (*btcec.PrivateKey, error)
 
 // Namespace bucket keys.
 var (
