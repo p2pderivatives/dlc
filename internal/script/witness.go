@@ -32,7 +32,7 @@ func P2WSHpkScript(script []byte) ([]byte, error) {
 
 // WitnessSignature returns a witness signature for given script
 //
-// TODO: Note that txscript.RawTxInWitnessSignature converts a script from p2wkh to p2pkh implicitly.
+// Note: txscript.RawTxInWitnessSignature converts a script from p2wkh to p2pkh implicitly.
 // https://github.com/btcsuite/btcd/blob/master/txscript/script.go#L488
 // It's better to convert it on ourside explicitly.
 func WitnessSignature(

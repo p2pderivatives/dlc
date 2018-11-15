@@ -37,7 +37,6 @@ func isMainNet(params chaincfg.Params) bool {
 
 // randMasterKey creates oracle's random master key
 func randMasterKey(name string, params chaincfg.Params) (*hdkeychain.ExtendedKey, error) {
-	// TODO: add random logic
 	seed := chainhash.DoubleHashB([]byte(name))
 	return hdkeychain.NewMaster(seed, &params)
 }

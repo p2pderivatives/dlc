@@ -7,7 +7,6 @@ import (
 )
 
 // SignSet contains fixed messages and signs
-// TODO: implement serialization and parsing
 type SignSet struct {
 	Msgs  [][]byte
 	Signs [][]byte

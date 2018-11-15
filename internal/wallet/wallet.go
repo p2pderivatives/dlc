@@ -265,7 +265,7 @@ func (w *wallet) Close() error {
 	return nil
 }
 
-// Helper function, TODO: move somewhere else?
+// Helper function
 func fileExists(filePath string) (bool, error) {
 	_, err := os.Stat(filePath)
 	if err != nil {

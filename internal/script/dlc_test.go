@@ -31,9 +31,9 @@ func TestCEScript(t *testing.T) {
 	redeemTx := test.NewRedeemTx(sourceTx, 0)
 
 	// unlock with message sign
-	// TODO: should encapsulate this logic
-	n := utils.AddBigInts(priva.D, privm.D)
-	privam, _ := btcec.PrivKeyFromBytes(btcec.S256(), n.Bytes())
+	privam, _ := btcec.PrivKeyFromBytes(
+		btcec.S256(),
+		utils.AddBigInts(priva.D, privm.D).Bytes())
 	signam, err := WitnessSignature(redeemTx, 0, amt, script, privam)
 	assert.Nil(err)
 	redeemTx.TxIn[0].Witness = WitnessForCEScript(signam, script)

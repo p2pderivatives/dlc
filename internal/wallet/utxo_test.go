@@ -18,7 +18,6 @@ func TestListUnspent(t *testing.T) {
 	w, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
 
-	// TODO: prepare test utxos
 	var utxos []btcjson.ListUnspentResult
 	utxo := btcjson.ListUnspentResult{
 		TxID:          "ce9d930c2664547ad8aba6944c8047321bde0c1c1d6551c41ebb8d9ad975dd0b",

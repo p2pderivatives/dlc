@@ -13,11 +13,7 @@ type PubkeySet struct {
 }
 
 // PubkeySet returns a key set for given fixing time
-// TODO: Add a document for pubkey set generation
-// TODO: implement serialization and parsing
 func (oracle *Oracle) PubkeySet(ftime time.Time) (PubkeySet, error) {
-	// TODO: Should we check if it's later than now?
-
 	extKey, err := oracle.extKeyForFixingTime(ftime)
 	// derive oracle's pubkey for the given time
 	if err != nil {

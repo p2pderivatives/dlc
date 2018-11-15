@@ -13,7 +13,6 @@ type privExtKey struct {
 }
 
 func (oracle *Oracle) baseKey() privExtKey {
-	// TODO: define HD path following bip44, 47
 	return privExtKey{oracle.masterKey}
 }
 

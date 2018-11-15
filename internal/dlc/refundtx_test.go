@@ -74,7 +74,7 @@ func TestRefundTx(t *testing.T) {
 	refundtx, err := d.RefundTx()
 	assert.Nil(err)
 	assert.Equal(testLockTime, refundtx.LockTime) // check lockTime is same as set by DLC
-	assert.Len(refundtx.TxIn, 1)                  // fund from fundtx?
+	assert.Len(refundtx.TxIn, 1)                  // fund from fundtx
 	assert.Len(refundtx.TxOut, 2)                 // 1 for party and 1 for counterparty
 
 	// Both parties should be able to have their initial funds refunded.
@@ -82,7 +82,6 @@ func TestRefundTx(t *testing.T) {
 	assert.Equal(refundtx.TxOut[1].Value, int64(d.conds.FundAmts[SecondParty]))
 }
 
-// TODO: TestRedeemRefundTx? Test redeem before lock out time, test after?
 func TestRefundTxOutput(t *testing.T) {
 	assert := assert.New(t)
 	_, _, d := setupDLCRefund()

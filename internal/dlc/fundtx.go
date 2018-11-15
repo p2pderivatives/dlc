@@ -162,8 +162,6 @@ func (b *Builder) PrepareFundTxIns() error {
 			return err
 		}
 
-		// TODO: manager pubkey address for change
-
 		pkScript, err := script.P2WPKHpkScript(pub)
 		if err != nil {
 			return err
