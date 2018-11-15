@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"errors"
+	"time"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
@@ -15,12 +16,13 @@ import (
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
 	conds Conditions
-	deals []*Deal // TODO: move to Conditions
 
-	// requirements to execute DLC
-	pubs        map[Contractor]*btcec.PublicKey
-	fundTxReqs  *FundTxRequirements
-	refundSigns map[Contractor][]byte
+	// requirements
+	pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
+	fundTxReqs  *FundTxRequirements             // fund txins/outs
+	oracleReqs  *OracleRequirements
+	refundSigns map[Contractor][]byte // counterparty's sign for refund tx
+	cetxSigns   [][]byte              // counterparty's signs for CETs
 }
 
 func newDLC(conds Conditions) *DLC {
@@ -37,7 +39,9 @@ type Conditions struct {
 	FundAmts      map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
 	FundFeerate   btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
 	RedeemFeerate btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
+	SettlementAt  time.Time                     `validate:"required"`
 	LockTime      uint32                        `validate:"required,gt=0"` // refund locktime (block height)
+	Deals         []*Deal                       `validate:"required,gt=0,dive,required"`
 }
 
 // NewConditions creates a new DLC conditions
@@ -45,6 +49,7 @@ func NewConditions(
 	famt1, famt2 btcutil.Amount,
 	ffeerate, rfeerate btcutil.Amount, // fund feerate and redeem feerate
 	lc uint32, // locktime
+	deals []*Deal,
 ) (Conditions, error) {
 	famts := make(map[Contractor]btcutil.Amount)
 	famts[FirstParty] = famt1
@@ -55,6 +60,7 @@ func NewConditions(
 		FundFeerate:   ffeerate,
 		RedeemFeerate: rfeerate,
 		LockTime:      lc,
+		Deals:         deals,
 	}
 
 	// validate structure

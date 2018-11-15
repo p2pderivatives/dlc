@@ -10,24 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupDLC(conds Conditions) *DLC {
-	d := newDLC(conds)
-	_, pub1 := test.RandKeys()
-	_, pub2 := test.RandKeys()
-	d.pubs[FirstParty] = pub1
-	d.pubs[SecondParty] = pub2
-	return d
-}
-
-func newTestCETx(amt btcutil.Amount) *wire.MsgTx {
-	tx := wire.NewMsgTx(txVersion)
-	tx.AddTxOut(wire.NewTxOut(int64(amt), []byte{}))
-	return tx
-}
-
 func TestClosingTxFailIfNotEnoughFees(t *testing.T) {
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
-	d := setupDLC(conds)
+	d := setupDLC()
 	inamt := btcutil.Amount(1)
 	cetx := newTestCETx(inamt)
 
@@ -38,8 +22,7 @@ func TestClosingTxFailIfNotEnoughFees(t *testing.T) {
 }
 
 func TestClosingTx(t *testing.T) {
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
-	d := setupDLC(conds)
+	d := setupDLC()
 	inamt := btcutil.Amount(1 * btcutil.SatoshiPerBitcoin)
 	cetx := newTestCETx(inamt)
 
@@ -55,6 +38,21 @@ func TestClosingTx(t *testing.T) {
 	)
 }
 
+func setupDLC() *DLC {
+	d := newDLC(newTestConditions())
+	_, pub1 := test.RandKeys()
+	_, pub2 := test.RandKeys()
+	d.pubs[FirstParty] = pub1
+	d.pubs[SecondParty] = pub2
+	return d
+}
+
+func newTestCETx(amt btcutil.Amount) *wire.MsgTx {
+	tx := wire.NewMsgTx(txVersion)
+	tx.AddTxOut(wire.NewTxOut(int64(amt), []byte{}))
+	return tx
+}
+
 func TestSignedClosingTx(t *testing.T) {
 	assert := assert.New(t)
 
@@ -62,15 +60,13 @@ func TestSignedClosingTx(t *testing.T) {
 	b1, b2 := setupContractorsUntilSignExchange()
 
 	// first party
-	deal1, _ := b1.dlc.FixedDeal()
 	cetx1, _ := b1.SignedContractExecutionTx()
-	tx1, err := b1.SignedClosingTx(deal1, cetx1)
+	tx1, err := b1.SignedClosingTx(cetx1)
 	assert.NoError(err)
 
 	// second party
-	deal2, _ := b2.dlc.FixedDeal()
 	cetx2, _ := b2.SignedContractExecutionTx()
-	tx2, err := b2.SignedClosingTx(deal2, cetx2)
+	tx2, err := b2.SignedClosingTx(cetx2)
 	assert.NoError(err)
 
 	// first party can redeem only their tx
@@ -87,8 +83,14 @@ func TestSignedClosingTx(t *testing.T) {
 }
 
 func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
-	conds, _ := NewConditions(1, 1, 1, 1, 1)
-	msgPriv, msgCommit := test.RandKeys()
+	conds := newTestConditions()
+
+	var damt1, damt2 btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin, 1 * btcutil.SatoshiPerBitcoin
+	msgs := [][]byte{{1}}
+	deal := NewDeal(damt1, damt2, msgs)
+	conds.Deals = []*Deal{deal}
+
+	msgPriv, _ := test.RandKeys()
 	msgSign := msgPriv.D.Bytes()
 
 	// init first party
@@ -107,22 +109,16 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 	b1.CopyReqsFromCounterparty(b2.DLC())
 	b2.CopyReqsFromCounterparty(b1.DLC())
 
-	dID, deal := setupDeal(b1,
-		1*btcutil.SatoshiPerBitcoin, 1*btcutil.SatoshiPerBitcoin)
-	b1.SetMsgCommitmentToDeal(dID, msgCommit)
-	_, _ = setupDeal(b2,
-		1*btcutil.SatoshiPerBitcoin, 1*btcutil.SatoshiPerBitcoin)
-	b2.SetMsgCommitmentToDeal(dID, msgCommit)
+	dID, _, _ := b1.dlc.DealByMsgs(msgs)
+	// TODO: fix
+	// b1.FixDeal(dID, msign)
+	// b2.FixDeal(dID, msign)
 
-	msign := msgPriv.D.Bytes()
-	b1.FixDeal(dID, msign)
-	b2.FixDeal(dID, msign)
+	sign1, _ := b1.SignContractExecutionTx(deal, dID)
+	sign2, _ := b2.SignContractExecutionTx(deal, dID)
 
-	sign1, _ := b1.SignContractExecutionTx(deal)
-	sign2, _ := b2.SignContractExecutionTx(deal)
-
-	_ = b1.AcceptCETxSign(dID, sign2)
-	_ = b2.AcceptCETxSign(dID, sign1)
+	_ = b1.AcceptCETxSigns([][]byte{sign2})
+	_ = b2.AcceptCETxSigns([][]byte{sign1})
 
 	return b1, b2
 }

@@ -3,18 +3,15 @@ package dlc
 import (
 	"errors"
 	"fmt"
+	"reflect"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcutil"
 )
 
 // Deal contains information about the distributed amounts, commitment messages, and signatures of fixed messages
 type Deal struct {
-	amts          map[Contractor]btcutil.Amount
-	msgs          [][]byte
-	msgCommitment *btcec.PublicKey
-	msgSign       []byte // oracle's message sign
-	cpSign        []byte // counterparty's sign
+	Amts map[Contractor]btcutil.Amount `validate:"required,dive,gte=0"`
+	Msgs [][]byte                      `validate:"required,gt=0"`
 }
 
 // NewDeal creates a new deal
@@ -23,60 +20,29 @@ func NewDeal(amt1, amt2 btcutil.Amount, msgs [][]byte) *Deal {
 	amts[FirstParty] = amt1
 	amts[SecondParty] = amt2
 	return &Deal{
-		amts: amts,
-		msgs: msgs,
+		Amts: amts,
+		Msgs: msgs,
 	}
-}
-
-// AddDeal adds a deal to DLC
-func (b *Builder) AddDeal(deal *Deal) int {
-	b.dlc.deals = append(b.dlc.deals, deal)
-	return len(b.dlc.deals) - 1
 }
 
 // Deal gets a deal by id
 func (d *DLC) Deal(idx int) (*Deal, error) {
-	if len(d.deals) < idx+1 {
+	if len(d.conds.Deals) < idx+1 {
 		errmsg := fmt.Sprintf("Invalid deal id. id: %d", idx)
 		return nil, errors.New(errmsg)
 	}
 
-	deal := d.deals[idx]
+	deal := d.conds.Deals[idx]
 	return deal, nil
 }
 
-// FixedDeal returns a fixed deal
-func (d *DLC) FixedDeal() (*Deal, error) {
-	for _, deal := range d.deals {
-		if deal.msgSign != nil {
-			return deal, nil
+// DealByMsgs finds a deal by messages
+func (d *DLC) DealByMsgs(msgs [][]byte) (idx int, deal *Deal, err error) {
+	for i, deal := range d.conds.Deals {
+		if reflect.DeepEqual(deal.Msgs, msgs) {
+			return i, deal, nil
 		}
 	}
-	return nil, errors.New("no fixed deal found")
-}
-
-// SetMsgCommitmentToDeal sets a message commitment received from oracle
-func (b *Builder) SetMsgCommitmentToDeal(
-	idx int, mc *btcec.PublicKey) error {
-
-	d, err := b.dlc.Deal(idx)
-	if err != nil {
-		return err
-	}
-
-	d.msgCommitment = mc
-	return nil
-}
-
-// FixDeal fixes a deal by setting the signature provided by oracle
-func (b *Builder) FixDeal(idx int, sign []byte) error {
-	d, err := b.dlc.Deal(idx)
-	if err != nil {
-		return err
-	}
-
-	// TODO: verify the given sign
-
-	d.msgSign = sign
-	return nil
+	err = fmt.Errorf("deal not found. msgs: %v", msgs)
+	return
 }

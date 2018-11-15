@@ -89,3 +89,8 @@ func mockSelectUnspent(
 
 	return w
 }
+
+func newTestConditions() Conditions {
+	conds, _ := NewConditions(1, 1, 1, 1, 1, []*Deal{})
+	return conds
+}
