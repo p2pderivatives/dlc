@@ -8,6 +8,7 @@ import (
 	"github.com/btcsuite/btcwallet/walletdb"
 )
 
+// NewPubKey returns a new btcec.PublicKey type public key
 func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 	mAddr, err := w.newAddress()
 	if err != nil {

@@ -56,14 +56,14 @@ var (
 	waddrmgrKeyScope     = waddrmgr.KeyScopeBIP0084
 
 	// TODO: have rpc params be read from conf file?
-	rpcport     = "localhost:18443"
-	rpcusername = "akek"
-	rpcpassword = "akek"
+	rpcport     = "localhost: REPLACEME"
+	rpcusername = "RENAME!"
+	rpcpassword = "RENAME!"
 )
 
 const accountName = "dlc"
 
-// Wallet is hierarchical deterministic wallet
+// wallet is hierarchical deterministic wallet
 type wallet struct {
 	params           *chaincfg.Params
 	publicPassphrase []byte

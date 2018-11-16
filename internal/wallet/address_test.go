@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// TestNewPubkey tests generating a new public key
 func TestNewPubkey(t *testing.T) {
 	wallet, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
