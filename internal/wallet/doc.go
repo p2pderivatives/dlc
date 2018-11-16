@@ -44,7 +44,7 @@ file, your bitcoin rpc parameters need to be entered manually in the
 	rpcusername = "RENAME!"
 	rpcpassword = "RENAME!"
 ```
-For your convenience, the defualt `mainnet` port number is `8333`, for
+For your convenience, the default `mainnet` port number is `8333`, for
 `testnet3` is `18332` , and `regnet` is `18443`.
 
 */
