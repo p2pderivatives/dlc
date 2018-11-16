@@ -65,31 +65,6 @@ func TestContractExecutionTxTakeNothing(t *testing.T) {
 	assert.IsType(&CETTakeNothingError{}, err)
 }
 
-func TestFixDeal(t *testing.T) {
-	assert := assert.New(t)
-	var err error
-
-	// setup
-	b, _, dID, deal := setupContractorsUntilPubkeyExchange(1, 1)
-
-	// success with valid sign and message set
-	privkey, C := test.RandKeys()
-	b.dlc.oracleReqs.commitments[dID] = C
-	osigns := [][]byte{privkey.D.Bytes()}
-	osignset := &oracle.SignSet{Msgs: deal.Msgs, Signs: osigns}
-
-	err = b.FixDeal(osignset)
-	assert.NoError(err)
-
-	// fail with invalid sign
-	privkeyInvalid, _ := test.RandKeys()
-	osignsInvalid := [][]byte{privkeyInvalid.D.Bytes()}
-	osignsetInvalid := &oracle.SignSet{Msgs: deal.Msgs, Signs: osignsInvalid}
-
-	err = b.FixDeal(osignsetInvalid)
-	assert.Error(err)
-}
-
 func TestSignedContractExecutionTx(t *testing.T) {
 	assert := assert.New(t)
 	var err error
@@ -102,9 +77,9 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	osigns := [][]byte{privkey.D.Bytes()}
 	osignset := &oracle.SignSet{Msgs: deal.Msgs, Signs: osigns}
 
-	err = b1.FixDeal(osignset)
+	err = b1.FixDeal(osignset, []int{0})
 	assert.NoError(err)
-	err = b2.FixDeal(osignset)
+	err = b2.FixDeal(osignset, []int{0})
 	assert.NoError(err)
 
 	// fail without the counterparty's sign

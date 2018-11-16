@@ -29,7 +29,7 @@ func TestSignSet(t *testing.T) {
 
 	// Fix msgs
 	msgs := randomMsgs(o.nRpoints)
-	err := o.fixMsgs(ftime, msgs)
+	err := o.FixMsgs(ftime, msgs)
 	assert.Nil(err)
 
 	// Get signetures

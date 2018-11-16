@@ -12,8 +12,8 @@ type memdb struct {
 	msgs map[string][][]byte
 }
 
-// initDB initialized oracle's DB
-func (o *Oracle) initDB() {
+// InitDB initialized oracle's DB
+func (o *Oracle) InitDB() {
 	msgs := make(map[string][][]byte)
 	o.db = &memdb{msgs: msgs}
 }
@@ -35,7 +35,8 @@ func (o *Oracle) msgsAt(ftime time.Time) ([][]byte, error) {
 	return vals, nil
 }
 
-func (o *Oracle) fixMsgs(ftime time.Time, msgs [][]byte) error {
+// FixMsgs fixes messsages at a specified time
+func (o *Oracle) FixMsgs(ftime time.Time, msgs [][]byte) error {
 	if !o.dbReady() {
 		return fmt.Errorf("DB isn't ready")
 	}

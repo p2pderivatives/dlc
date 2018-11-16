@@ -3,7 +3,8 @@
   "Exclude": [
     "internal/test/.*",
     "internal/mocks/.*",
-    ".*/test_util.go"
+    ".*/test_util.go",
+    "test/integration/.*"
   ],
   "EnableAll": true,
   "Disable": ["unparam"],

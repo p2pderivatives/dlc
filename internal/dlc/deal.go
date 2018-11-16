@@ -27,18 +27,18 @@ func NewDeal(amt1, amt2 btcutil.Amount, msgs [][]byte) *Deal {
 
 // Deal gets a deal by id
 func (d *DLC) Deal(idx int) (*Deal, error) {
-	if len(d.conds.Deals) < idx+1 {
+	if len(d.Conds.Deals) < idx+1 {
 		errmsg := fmt.Sprintf("Invalid deal id. id: %d", idx)
 		return nil, errors.New(errmsg)
 	}
 
-	deal := d.conds.Deals[idx]
+	deal := d.Conds.Deals[idx]
 	return deal, nil
 }
 
 // DealByMsgs finds a deal by messages
 func (d *DLC) DealByMsgs(msgs [][]byte) (idx int, deal *Deal, err error) {
-	for i, deal := range d.conds.Deals {
+	for i, deal := range d.Conds.Deals {
 		if reflect.DeepEqual(deal.Msgs, msgs) {
 			return i, deal, nil
 		}

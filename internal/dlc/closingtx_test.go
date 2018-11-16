@@ -125,8 +125,8 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 	_ = b2.AcceptCETxSigns([][]byte{sign1})
 
 	// fix deal by oracle's sign
-	b1.FixDeal(osignset)
-	b2.FixDeal(osignset)
+	b1.FixDeal(osignset, []int{0})
+	b2.FixDeal(osignset, []int{0})
 
 	return b1, b2
 }
