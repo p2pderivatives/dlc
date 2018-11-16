@@ -1,6 +1,8 @@
 # wallet
 
-This package provides wallet features necessary for implementing DLCs. 
+This package provides wallet features necessary for implementing DLCs.
+
+This package heavily relies on some of the packages of [`btcsuite/btcwallet`](🇲http://godoc.org/github.com/btcsuite/btcwallet/wallet) for its core functionality.
 
 ## Connecting to `bitcoind`
 
