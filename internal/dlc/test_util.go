@@ -1,6 +1,8 @@
 package dlc
 
 import (
+	"time"
+
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
@@ -90,7 +92,7 @@ func mockSelectUnspent(
 	return w
 }
 
-func newTestConditions() Conditions {
-	conds, _ := NewConditions(1, 1, 1, 1, 1, []*Deal{})
+func newTestConditions() *Conditions {
+	conds, _ := NewConditions(time.Now(), 1, 1, 1, 1, 1, []*Deal{})
 	return conds
 }

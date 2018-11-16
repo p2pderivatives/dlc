@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"errors"
+	"time"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
@@ -14,7 +15,7 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	conds Conditions
+	conds *Conditions
 
 	// requirements
 	pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
@@ -24,7 +25,7 @@ type DLC struct {
 	cetxSigns   [][]byte              // counterparty's signs for CETs
 }
 
-func newDLC(conds Conditions) *DLC {
+func newDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
 		conds:       conds,
@@ -38,27 +39,28 @@ func newDLC(conds Conditions) *DLC {
 
 // Conditions contains conditions of a contract
 type Conditions struct {
+	FixingTime    time.Time                     `validate:"required,gt=time.Now()"`
 	FundAmts      map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
 	FundFeerate   btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
 	RedeemFeerate btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
-	// TODO: add SettlementAt
-	// SettlementAt  time.Time                     `validate:"required"`
-	LockTime uint32  `validate:"required,gt=0"` // refund locktime (block height)
-	Deals    []*Deal `validate:"required,gt=0,dive,required"`
+	LockTime      uint32                        `validate:"required,gt=0"` // refund locktime (block height)
+	Deals         []*Deal                       `validate:"required,gt=0,dive,required"`
 }
 
 // NewConditions creates a new DLC conditions
 func NewConditions(
+	ftime time.Time,
 	famt1, famt2 btcutil.Amount,
 	ffeerate, rfeerate btcutil.Amount, // fund feerate and redeem feerate
 	lc uint32, // locktime
 	deals []*Deal,
-) (Conditions, error) {
+) (*Conditions, error) {
 	famts := make(map[Contractor]btcutil.Amount)
 	famts[FirstParty] = famt1
 	famts[SecondParty] = famt2
 
-	conds := Conditions{
+	conds := &Conditions{
+		FixingTime:    ftime,
 		FundAmts:      famts,
 		FundFeerate:   ffeerate,
 		RedeemFeerate: rfeerate,
@@ -121,7 +123,7 @@ type Builder struct {
 
 // NewBuilder creates a new Builder for a contractor
 func NewBuilder(
-	p Contractor, w wallet.Wallet, conds Conditions) *Builder {
+	p Contractor, w wallet.Wallet, conds *Conditions) *Builder {
 	return &Builder{
 		dlc:    newDLC(conds),
 		party:  p,
