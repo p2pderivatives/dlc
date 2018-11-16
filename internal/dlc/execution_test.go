@@ -77,9 +77,9 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	osigns := [][]byte{privkey.D.Bytes()}
 	osignset := &oracle.SignSet{Msgs: deal.Msgs, Signs: osigns}
 
-	err = b1.FixDeal(osignset)
+	err = b1.FixDeal(osignset, []int{0})
 	assert.NoError(err)
-	err = b2.FixDeal(osignset)
+	err = b2.FixDeal(osignset, []int{0})
 	assert.NoError(err)
 
 	// fail without the counterparty's sign

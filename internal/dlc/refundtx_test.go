@@ -78,8 +78,8 @@ func TestRefundTx(t *testing.T) {
 	assert.Len(refundtx.TxOut, 2)                 // 1 for party and 1 for counterparty
 
 	// Both parties should be able to have their initial funds refunded.
-	assert.Equal(refundtx.TxOut[0].Value, int64(d.conds.FundAmts[FirstParty]))
-	assert.Equal(refundtx.TxOut[1].Value, int64(d.conds.FundAmts[SecondParty]))
+	assert.Equal(refundtx.TxOut[0].Value, int64(d.Conds.FundAmts[FirstParty]))
+	assert.Equal(refundtx.TxOut[1].Value, int64(d.Conds.FundAmts[SecondParty]))
 }
 
 func TestRefundTxOutput(t *testing.T) {

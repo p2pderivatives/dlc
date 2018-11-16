@@ -101,11 +101,11 @@ func (d *DLC) witnessForFundScript(
 
 // fundAmount calculates total fund amount
 func (d *DLC) fundAmount() (btcutil.Amount, error) {
-	amt1, ok := d.conds.FundAmts[FirstParty]
+	amt1, ok := d.Conds.FundAmts[FirstParty]
 	if !ok {
 		return 0, errors.New("Fund amount for first party isn't set")
 	}
-	amt2, ok := d.conds.FundAmts[SecondParty]
+	amt2, ok := d.Conds.FundAmts[SecondParty]
 	if !ok {
 		return 0, errors.New("Fund amount for second party isn't set")
 	}
@@ -120,24 +120,24 @@ const fundTxOutSize = int64(31)
 const cetxSize = int64(345) // context execution tx size
 
 func (d *DLC) fundTxFeeBase() btcutil.Amount {
-	return d.conds.FundFeerate.MulF64(float64(fundTxBaseSize))
+	return d.Conds.FundFeerate.MulF64(float64(fundTxBaseSize))
 }
 
 func (d *DLC) fundTxFeePerTxIn() btcutil.Amount {
-	return d.conds.FundFeerate.MulF64(float64(fundTxInSize))
+	return d.Conds.FundFeerate.MulF64(float64(fundTxInSize))
 }
 
 func (d *DLC) fundTxFeePerTxOut() btcutil.Amount {
-	return d.conds.FundFeerate.MulF64(float64(fundTxOutSize))
+	return d.Conds.FundFeerate.MulF64(float64(fundTxOutSize))
 }
 
 func (d *DLC) redeemTxFee(size int64) btcutil.Amount {
-	return d.conds.RedeemFeerate.MulF64(float64(size))
+	return d.Conds.RedeemFeerate.MulF64(float64(size))
 }
 
 // PrepareFundTxIns prepares utxos for fund tx by calculating fees
 func (b *Builder) PrepareFundTxIns() error {
-	famt := b.dlc.conds.FundAmts[b.party]
+	famt := b.dlc.Conds.FundAmts[b.party]
 	feeBase := b.dlc.fundTxFeeBase()
 	redeemTxFee := b.dlc.redeemTxFee(cetxSize)
 	utxos, change, err := b.wallet.SelectUnspent(

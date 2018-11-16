@@ -15,7 +15,7 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	conds *Conditions
+	Conds *Conditions
 
 	// requirements
 	pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
@@ -28,7 +28,7 @@ type DLC struct {
 func newDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
-		conds:       conds,
+		Conds:       conds,
 		pubs:        make(map[Contractor]*btcec.PublicKey),
 		fundTxReqs:  newFundTxReqs(),
 		oracleReqs:  newOracleReqs(nDeal),

@@ -24,7 +24,7 @@ func newOracleReqs(n int) *OracleRequirements {
 // PrepareOracleCommitments prepares oracle's commitments for all deals
 func (d *DLC) PrepareOracleCommitments(
 	V *btcec.PublicKey, Rs []*btcec.PublicKey) {
-	for i, deal := range d.conds.Deals {
+	for i, deal := range d.Conds.Deals {
 		C := schnorr.CommitMulti(V, Rs, deal.Msgs)
 		d.oracleReqs.commitments[i] = C
 	}
@@ -59,9 +59,15 @@ func (d *DLC) FixDeal(msgs [][]byte, signs [][]byte) error {
 	return nil
 }
 
-// FixDeal fixes a deal by a oracle's sign set
-func (b *Builder) FixDeal(signSet *oracle.SignSet) error {
-	return b.dlc.FixDeal(signSet.Msgs, signSet.Signs)
+// FixDeal fixes a deal by a oracle's sign set by picking up required messages and signs
+func (b *Builder) FixDeal(signSet *oracle.SignSet, idxs []int) error {
+	msgs := [][]byte{}
+	signs := [][]byte{}
+	for _, idx := range idxs {
+		msgs = append(msgs, signSet.Msgs[idx])
+		signs = append(signs, signSet.Signs[idx])
+	}
+	return b.dlc.FixDeal(msgs, signs)
 }
 
 // FixedDeal returns a fixed deal

@@ -9,7 +9,7 @@ func NewTestOracle() *Oracle {
 	nRpoints := 3
 
 	o, _ := New(name, params, nRpoints)
-	o.initDB()
+	o.InitDB()
 
 	return o
 }

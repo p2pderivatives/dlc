@@ -37,13 +37,13 @@ func TestFixDeal(t *testing.T) {
 	osignsInvalid := [][]byte{privInvalid.D.Bytes()}
 	osignsetInvalid := &oracle.SignSet{Msgs: deal.Msgs, Signs: osignsInvalid}
 
-	err = b.FixDeal(osignsetInvalid)
+	err = b.FixDeal(osignsetInvalid, []int{0})
 	assert.Error(err)
 
 	// success with valid sign and message set
 	osigns := [][]byte{privkey.D.Bytes()}
 	osignset := &oracle.SignSet{Msgs: deal.Msgs, Signs: osigns}
-	err = b.FixDeal(osignset)
+	err = b.FixDeal(osignset, []int{0})
 	assert.NoError(err)
 
 	// retrieve fixed deal
