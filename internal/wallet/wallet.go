@@ -63,7 +63,7 @@ var (
 
 const accountName = "dlc"
 
-// Wallet is hierarchical deterministic wallet
+// wallet is hierarchical deterministic wallet
 type wallet struct {
 	params           *chaincfg.Params
 	publicPassphrase []byte

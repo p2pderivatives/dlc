@@ -14,7 +14,7 @@ import (
 	"github.com/btcsuite/btcwallet/wtxmgr"
 )
 
-// Utxo is a unspent transaction output
+// Utxo is an unspent transaction output
 type Utxo = btcjson.ListUnspentResult
 
 // ListUnspent returns unspent transactions.
