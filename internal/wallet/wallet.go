@@ -76,9 +76,6 @@ type wallet struct {
 var _ Wallet = (*wallet)(nil)
 
 // CreateWallet returns a new Wallet, also creates db where wallet resides
-// TODO: separate db creation and Manager creation
-// TODO: create loader script for wallet init
-// TODO: add prompts for dbDirPath, walletDBname
 func CreateWallet(
 	params *chaincfg.Params,
 	seed, pubPass, privPass []byte,
@@ -132,7 +129,7 @@ func create(
 		return nil, err
 	}
 
-	w, err := open(db, pubPass, params)
+	w, err := open(db, pubPass, params, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -191,14 +188,14 @@ func createAccount(
 
 // Open loads a wallet from the passed db and public pass phrase.
 func Open(
-	db walletdb.DB, pubPass []byte, params *chaincfg.Params,
+	db walletdb.DB, pubPass []byte, params *chaincfg.Params, rpcclient rpc.Client,
 ) (Wallet, error) {
-	return open(db, pubPass, params)
+	return open(db, pubPass, params, rpcclient)
 }
 
 // open is an implementation of Open
 func open(
-	db walletdb.DB, pubPass []byte, params *chaincfg.Params,
+	db walletdb.DB, pubPass []byte, params *chaincfg.Params, rpcclient rpc.Client,
 ) (*wallet, error) {
 	// TODO: Perform wallet upgrades/updates if necessary?
 
@@ -233,15 +230,15 @@ func open(
 		return nil, err
 	}
 
-	rpc, err := rpc.NewClient(rpcport, rpcusername, rpcpassword)
-	if err != nil {
-		return nil, err
-	}
+	// rpc, err := rpc.NewClient(rpcport, rpcusername, rpcpassword)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	w := &wallet{
 		params:           params,
 		publicPassphrase: pubPass,
-		rpc:              rpc,
+		rpc:              rpcclient,
 		db:               db,
 		manager:          addrMgr,
 		account:          account,

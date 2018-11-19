@@ -9,17 +9,38 @@ jobs:
       - image: circleci/golang:1.11
     working_directory: /go/src/github.com/dgarage/dlc
     steps:
+      - run:
+          name: add-localbin
+          command: echo "export PATH=$(pwd)/.bin:$PATH" >> $BASH_ENV
       - checkout
       - run:
-          name: dependency-installation
+          name: install-go-packages
           command: |
             dep ensure
+      - restore_cache:
+          keys:
+            - bitcion-cache-{{ checksum "./.circleci/install_bitcoin.sh" }}
+      - run:
+          name: install-bitcoin
+          command: ./.circleci/install_bitcoin.sh
+      - save_cache:
+          key: bitcion-cache-{{ checksum "./.circleci/install_bitcoin.sh" }}
+          paths:
+            - ./.bin/bitcoind
+            - ./.bin/bitcoin-cli
+      - run:
+          name: run-bitcoind
+          command: make run_bitcoind
+          background: true
       - run:
           name: build
           command: go build -v ./...
       - run:
           name: test
-          command: go test -v ./...
+          command: go test -count=1 -v ./...
+      - run:
+          name: stop-bitcoind
+          command: make stop_bitcoind
   lint:
     docker:
       - image: circleci/golang:1.11
@@ -27,7 +48,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: dependency-installation
+          name: install-go-packages
           command: |
             dep ensure
       - run:

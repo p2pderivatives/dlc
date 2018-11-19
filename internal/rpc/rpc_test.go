@@ -1,21 +1,25 @@
 package rpc
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	testport = "localhost:18433" //18443 for regnet, 18332 for testnet3
-	testuser = "username"
-	testpass = "password"
+	projectDir, _ = filepath.Abs("../../")
+	bitcoinDir    = filepath.Join(projectDir, "bitcoind/")
+	confName      = "bitcoin.regtest.conf"
+	confPath      = filepath.Join(bitcoinDir, confName)
 )
 
 func TestNewClient(t *testing.T) {
-	client, err := NewClient(testport, testuser, testpass)
-	//defer client.Shutdown()
+	assert := assert.New(t)
 
-	assert.Nil(t, err)
-	assert.NotNil(t, client)
+	client, err := NewClient(confPath)
+	assert.Nil(err)
+
+	_, err = client.ListUnspent()
+	assert.NoError(err)
 }

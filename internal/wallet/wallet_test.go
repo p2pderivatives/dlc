@@ -32,7 +32,7 @@ func TestOpen(t *testing.T) {
 	db := _w.db
 	pubPass := _w.publicPassphrase
 	params := _w.params
-	w, err := open(db, pubPass, params)
+	w, err := open(db, pubPass, params, nil)
 
 	// assertions
 	assert := assert.New(t)
