@@ -1,2 +1,5 @@
 # dependencies
 /vendor
+
+/bitcoind/*
+!/bitcoind/bitcoin*.conf
