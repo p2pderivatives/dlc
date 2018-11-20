@@ -1,11 +1,8 @@
 package integration
 
 import (
-	"log"
 	"math"
 	"math/rand"
-	"os"
-	"runtime/pprof"
 	"testing"
 	"time"
 
@@ -16,15 +13,7 @@ import (
 )
 
 func TestContractorMakeDLC(t *testing.T) {
-	cpuprofile := "mycpu.prof"
-	f, err := os.Create(cpuprofile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
-
-	// Given an oracle "Olivia" who publishes random a 5-digit number everday like lottery
+	// Given an oracle "Olivia" who publishes random a 2-digit number everday like lottery
 	nDigit := 2
 	olivia, _ := newOracle("Olivia", nDigit)
 
@@ -45,6 +34,18 @@ func TestContractorMakeDLC(t *testing.T) {
 	// When Alice offers a DLC to Bob
 	contractorGetCommitmentsFromOracle(t, alice, olivia)
 	contractorOfferCounterparty(t, alice, bob)
+
+	// And Bob accepts the offer
+	contractorGetCommitmentsFromOracle(t, bob, olivia)
+	contractorAcceptOffer(t, bob, alice)
+
+	// And Alice sends signs and witnesses of fund txins to Bob
+	ceSigns, rfSign := conractorSignCETxsAndRefundTx(t, alice)
+	contractorSendTxSigns(t, bob, ceSigns, rfSign)
+	contractorSendFundTxInWitnesses(t, alice, bob)
+
+	// And Bob sends fund tx to the network
+	contractorSendFundTx(t, bob)
 }
 
 func nextLotteryAnnouncement() time.Time {

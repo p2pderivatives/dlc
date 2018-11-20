@@ -33,3 +33,7 @@ func (c *Contractor) createDLCBuilder(
 	conds *dlc.Conditions, p dlc.Contractor) {
 	c.DLCBuilder = dlc.NewBuilder(p, c.Wallet, conds)
 }
+
+func (c *Contractor) unlockWallet() {
+	c.Wallet.Unlock(c.privpass)
+}

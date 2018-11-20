@@ -215,3 +215,14 @@ func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
 
 	return b.wallet.WitnessSignature(tx, fundTxInAt, famt, fc, pub)
 }
+
+// SendFundTx sends fund tx to the network
+func (b *Builder) SendFundTx() error {
+	tx, err := b.dlc.FundTx()
+	if err != nil {
+		return err
+	}
+
+	_, err = b.wallet.SendRawTransaction(tx)
+	return err
+}
