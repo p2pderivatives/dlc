@@ -43,6 +43,10 @@ type Wallet interface {
 	// Unlock unlocks address manager
 	Unlock(privPass []byte) error
 
+	// TODO: remove this interface after fixing wallet.Open
+	// SetRPCClient sets rpcclient
+	SetRPCClient(rpc.Client)
+
 	Close() error
 }
 
@@ -245,6 +249,11 @@ func open(
 	}
 
 	return w, nil
+}
+
+// SetRPCClient sets rpc client
+func (w *wallet) SetRPCClient(rpc rpc.Client) {
+	w.rpc = rpc
 }
 
 // Unlock unlocks address manager with a given private pass phrase

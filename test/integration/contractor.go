@@ -1,10 +1,6 @@
 package integration
 
 import (
-	"io/ioutil"
-
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/dgarage/dlc/internal/dlc"
 	"github.com/dgarage/dlc/internal/wallet"
 )
@@ -26,29 +22,11 @@ func newContractor(name string) (*Contractor, error) {
 }
 
 // createWallet creates a wallet
-func (c *Contractor) createWallet() error {
-	params := &chaincfg.RegressionNetParams
+func (c *Contractor) createWallet() (err error) {
 	c.pubpass = []byte("pubpass")
 	c.privpass = []byte("privpass")
-
-	// generate random seed
-	seed, err := hdkeychain.GenerateSeed(
-		hdkeychain.RecommendedSeedLen)
-	if err != nil {
-		return err
-	}
-
-	// create wallet dbdir
-	walletDir, err := ioutil.TempDir("", "dlcwallet")
-	if err != nil {
-		return err
-	}
-
-	// create wallet
-	walletName := c.Name
-	c.Wallet, err = wallet.CreateWallet(
-		params, seed, c.pubpass, c.privpass, walletDir, walletName)
-	return err
+	c.Wallet, err = newWallet(c.Name, c.pubpass, c.privpass)
+	return
 }
 
 func (c *Contractor) createDLCBuilder(
