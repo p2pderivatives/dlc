@@ -11,7 +11,6 @@ import (
 
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/dlc"
-	"github.com/dgarage/dlc/internal/oracle"
 	"github.com/dgarage/dlc/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,9 +33,11 @@ func TestContractorMakeDLC(t *testing.T) {
 
 	// And a contractor "Alice"
 	alice, _ := newContractor("Alice")
+	contratorHasBalance(t, alice, 1*btcutil.SatoshiPerBitcoin)
 
 	// And a contractor "Bob"
 	bob, _ := newContractor("Bob")
+	contratorHasBalance(t, alice, 1*btcutil.SatoshiPerBitcoin)
 
 	// And Alice and Bob bet on all cases
 	contractorsBetOnAllDigitPatters(t, alice, bob, nDigit, fixingTime)
@@ -95,30 +96,4 @@ func nDigitToBytes(d int, n int) [][]byte {
 		d = d / 10
 	}
 	return b
-}
-
-func contractorGetCommitmentsFromOracle(t *testing.T, c *Contractor, o *oracle.Oracle) {
-	// fixing time of the contract
-	fixingTime := c.DLCBuilder.DLC().Conds.FixingTime
-
-	// oracle provides pubkey set for the given time
-	pubkeySet, err := o.PubkeySet(fixingTime)
-	assert.NoError(t, err)
-
-	// contractor sets and prepare commitents on each deal
-	c.DLCBuilder.SetOraclePubkeySet(&pubkeySet)
-}
-
-// A contractor sends pubkey and fund txins to the counterparty
-func contractorOfferCounterparty(t *testing.T, c1, c2 *Contractor) {
-	// first party prepare pubkey and fund txins/txouts
-	c1.DLCBuilder.PreparePubkey()
-	err := c1.DLCBuilder.PrepareFundTxIns()
-	assert.NoError(t, err)
-
-	// send prepared data to second party
-	dlc1 := *c1.DLCBuilder.DLC()
-
-	// second party accepts it
-	c2.DLCBuilder.CopyReqsFromCounterparty(&dlc1)
 }

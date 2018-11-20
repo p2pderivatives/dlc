@@ -20,6 +20,10 @@ import (
 // sign scripts of managed addressesc using private key. It also manags utxos.
 type Wallet interface {
 	NewPubkey() (*btcec.PublicKey, error)
+
+	// NewAddress creates a new address
+	NewAddress() (btcutil.Address, error)
+
 	// WitnessSignature returns witness signature for a given txin and pubkey
 	WitnessSignature(
 		tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,

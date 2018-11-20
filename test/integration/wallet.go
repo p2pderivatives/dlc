@@ -2,19 +2,10 @@ package integration
 
 import (
 	"io/ioutil"
-	"path/filepath"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil/hdkeychain"
-	"github.com/dgarage/dlc/internal/rpc"
 	"github.com/dgarage/dlc/internal/wallet"
-)
-
-var (
-	projectDir, _ = filepath.Abs("../../")
-	bitcoinDir    = filepath.Join(projectDir, "bitcoind/")
-	btcconfName   = "bitcoin.regtest.conf"
-	btcconfPath   = filepath.Join(bitcoinDir, btcconfName)
 )
 
 func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {
@@ -41,7 +32,7 @@ func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {
 	}
 
 	// create rpcclient
-	rpcclient, err := rpc.NewClient(btcconfPath)
+	rpcclient, err := NewRPCClient()
 	if err != nil {
 		return nil, err
 	}
