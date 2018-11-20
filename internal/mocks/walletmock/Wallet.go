@@ -6,6 +6,7 @@ import btcec "github.com/btcsuite/btcd/btcec"
 import btcjson "github.com/btcsuite/btcd/btcjson"
 import btcutil "github.com/btcsuite/btcutil"
 import mock "github.com/stretchr/testify/mock"
+import rpc "github.com/dgarage/dlc/internal/rpc"
 import wallet "github.com/dgarage/dlc/internal/wallet"
 import wire "github.com/btcsuite/btcd/wire"
 
@@ -38,6 +39,29 @@ func (_m *Wallet) ListUnspent() ([]btcjson.ListUnspentResult, error) {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]btcjson.ListUnspentResult)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// NewAddress provides a mock function with given fields:
+func (_m *Wallet) NewAddress() (btcutil.Address, error) {
+	ret := _m.Called()
+
+	var r0 btcutil.Address
+	if rf, ok := ret.Get(0).(func() btcutil.Address); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(btcutil.Address)
 		}
 	}
 
@@ -102,6 +126,11 @@ func (_m *Wallet) SelectUnspent(amt btcutil.Amount, feePerTxIn btcutil.Amount, f
 	}
 
 	return r0, r1, r2
+}
+
+// SetRPCClient provides a mock function with given fields: _a0
+func (_m *Wallet) SetRPCClient(_a0 rpc.Client) {
+	_m.Called(_a0)
 }
 
 // Unlock provides a mock function with given fields: privPass
