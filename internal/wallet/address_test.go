@@ -10,14 +10,14 @@ import (
 
 // TestNewPubkey tests generating a new public key
 func TestNewPubkey(t *testing.T) {
-	wallet, tearDownFunc := setupWallet(t)
+	w, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
 
 	rpcc := &rpcmock.Client{}
 	rpcc = mockImportAddress(rpcc, nil)
-	wallet.rpc = rpcc
+	w.SetRPCClient(rpcc)
 
-	pub, err := wallet.NewPubkey()
+	pub, err := w.NewPubkey()
 
 	assert.Nil(t, err)
 	assert.NotNil(t, pub)
