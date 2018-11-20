@@ -1,6 +1,9 @@
 package integration
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -19,7 +22,7 @@ func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {
 	}
 
 	// create wallet dbdir
-	walletDir, err := ioutil.TempDir("", "dlcwallet")
+	walletDir, err := ioutil.TempDir("", randomWalletDirPrefix(seed))
 	if err != nil {
 		return nil, err
 	}
@@ -40,4 +43,10 @@ func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {
 	w.SetRPCClient(rpcclient)
 
 	return w, nil
+}
+
+func randomWalletDirPrefix(seed []byte) string {
+	hashB := md5.Sum(seed)
+	hash := hex.EncodeToString(hashB[:])
+	return fmt.Sprintf("dlcwallet_%s", hash)
 }
