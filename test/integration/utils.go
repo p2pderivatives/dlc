@@ -12,5 +12,7 @@ func Faucet(addr btcutil.Address, amt btcutil.Amount) error {
 	if err != nil {
 		return err
 	}
+
+	_, err = c.Generate(1)
 	return err
 }
