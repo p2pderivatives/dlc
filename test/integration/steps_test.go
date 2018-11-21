@@ -5,6 +5,7 @@ import (
 
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/oracle"
+	"github.com/dgarage/dlc/internal/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +13,7 @@ func contratorHasBalance(t *testing.T, c *Contractor, balance btcutil.Amount) {
 	addr, err := c.Wallet.NewAddress()
 	assert.NoError(t, err)
 
-	err = Faucet(addr, balance)
+	err = rpc.Faucet(addr, balance)
 	assert.NoError(t, err)
 }
 

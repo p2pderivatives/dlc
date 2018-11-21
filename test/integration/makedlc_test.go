@@ -22,11 +22,11 @@ func TestContractorMakeDLC(t *testing.T) {
 
 	// And a contractor "Alice"
 	alice, _ := newContractor("Alice")
-	contratorHasBalance(t, alice, 1*btcutil.SatoshiPerBitcoin)
+	contratorHasBalance(t, alice, 2*btcutil.SatoshiPerBitcoin)
 
 	// And a contractor "Bob"
 	bob, _ := newContractor("Bob")
-	contratorHasBalance(t, bob, 1*btcutil.SatoshiPerBitcoin)
+	contratorHasBalance(t, bob, 2*btcutil.SatoshiPerBitcoin)
 
 	// And Alice and Bob bet on all cases
 	contractorsBetOnAllDigitPatters(t, alice, bob, nDigit, fixingTime)

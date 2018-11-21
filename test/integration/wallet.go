@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/dgarage/dlc/internal/rpc"
 	"github.com/dgarage/dlc/internal/wallet"
 )
 
@@ -35,7 +36,7 @@ func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {
 	}
 
 	// create rpcclient
-	rpcclient, err := NewRPCClient()
+	rpcclient, err := rpc.NewTestRPCClient()
 	if err != nil {
 		return nil, err
 	}

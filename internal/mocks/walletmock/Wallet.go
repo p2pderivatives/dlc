@@ -5,6 +5,7 @@ package walletmock
 import btcec "github.com/btcsuite/btcd/btcec"
 import btcjson "github.com/btcsuite/btcd/btcjson"
 import btcutil "github.com/btcsuite/btcutil"
+import chainhash "github.com/btcsuite/btcd/chaincfg/chainhash"
 import mock "github.com/stretchr/testify/mock"
 import rpc "github.com/dgarage/dlc/internal/rpc"
 import wallet "github.com/dgarage/dlc/internal/wallet"
@@ -126,6 +127,29 @@ func (_m *Wallet) SelectUnspent(amt btcutil.Amount, feePerTxIn btcutil.Amount, f
 	}
 
 	return r0, r1, r2
+}
+
+// SendRawTransaction provides a mock function with given fields: tx
+func (_m *Wallet) SendRawTransaction(tx *wire.MsgTx) (*chainhash.Hash, error) {
+	ret := _m.Called(tx)
+
+	var r0 *chainhash.Hash
+	if rf, ok := ret.Get(0).(func(*wire.MsgTx) *chainhash.Hash); ok {
+		r0 = rf(tx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*chainhash.Hash)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*wire.MsgTx) error); ok {
+		r1 = rf(tx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // SetRPCClient provides a mock function with given fields: _a0

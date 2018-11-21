@@ -5,6 +5,7 @@ package rpcmock
 import btcjson "github.com/btcsuite/btcd/btcjson"
 import btcutil "github.com/btcsuite/btcutil"
 import chainhash "github.com/btcsuite/btcd/chaincfg/chainhash"
+import json "encoding/json"
 import mock "github.com/stretchr/testify/mock"
 
 import wire "github.com/btcsuite/btcd/wire"
@@ -51,13 +52,13 @@ func (_m *Client) ImportAddress(address string) error {
 	return r0
 }
 
-// ListUnspent provides a mock function with given fields:
-func (_m *Client) ListUnspent() ([]btcjson.ListUnspentResult, error) {
-	ret := _m.Called()
+// ListUnspentMinMaxAddresses provides a mock function with given fields: minConf, maxConf, addrs
+func (_m *Client) ListUnspentMinMaxAddresses(minConf int, maxConf int, addrs []btcutil.Address) ([]btcjson.ListUnspentResult, error) {
+	ret := _m.Called(minConf, maxConf, addrs)
 
 	var r0 []btcjson.ListUnspentResult
-	if rf, ok := ret.Get(0).(func() []btcjson.ListUnspentResult); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(int, int, []btcutil.Address) []btcjson.ListUnspentResult); ok {
+		r0 = rf(minConf, maxConf, addrs)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]btcjson.ListUnspentResult)
@@ -65,8 +66,31 @@ func (_m *Client) ListUnspent() ([]btcjson.ListUnspentResult, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(int, int, []btcutil.Address) error); ok {
+		r1 = rf(minConf, maxConf, addrs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RawRequest provides a mock function with given fields: method, params
+func (_m *Client) RawRequest(method string, params []json.RawMessage) (json.RawMessage, error) {
+	ret := _m.Called(method, params)
+
+	var r0 json.RawMessage
+	if rf, ok := ret.Get(0).(func(string, []json.RawMessage) json.RawMessage); ok {
+		r0 = rf(method, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(json.RawMessage)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, []json.RawMessage) error); ok {
+		r1 = rf(method, params)
 	} else {
 		r1 = ret.Error(1)
 	}
