@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
@@ -20,6 +21,10 @@ import (
 // sign scripts of managed addressesc using private key. It also manags utxos.
 type Wallet interface {
 	NewPubkey() (*btcec.PublicKey, error)
+
+	// NewAddress creates a new address
+	NewAddress() (btcutil.Address, error)
+
 	// WitnessSignature returns witness signature for a given txin and pubkey
 	WitnessSignature(
 		tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
@@ -32,16 +37,24 @@ type Wallet interface {
 		privkeyConverter PrivateKeyConverter,
 	) (sign []byte, err error)
 
-	ListUnspent() (utxos []Utxo, err error)
+	// WitnessSignTxByIdxs returns witness signatures for txins specified by idxs
+	WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitness, error)
 
 	// SelectUtxos selects utxos for requested amount
 	// by considering additional fee per txin and txout
 	SelectUnspent(
 		amt, feePerTxIn, feePerTxOut btcutil.Amount,
 	) (utxos []Utxo, change btcutil.Amount, err error)
-
 	// Unlock unlocks address manager
 	Unlock(privPass []byte) error
+
+	// TODO: remove this interface after fixing wallet.Open
+	// SetRPCClient sets rpcclient
+	SetRPCClient(rpc.Client)
+
+	// methods delegating to RPC Client
+	ListUnspent() (utxos []Utxo, err error)
+	SendRawTransaction(tx *wire.MsgTx) (*chainhash.Hash, error)
 
 	Close() error
 }
@@ -245,6 +258,16 @@ func open(
 	}
 
 	return w, nil
+}
+
+// SetRPCClient sets rpc client
+func (w *wallet) SetRPCClient(rpc rpc.Client) {
+	w.rpc = rpc
+}
+
+// SendRawTransaction delegates to RPC client
+func (w *wallet) SendRawTransaction(tx *wire.MsgTx) (*chainhash.Hash, error) {
+	return w.rpc.SendRawTransaction(tx, false)
 }
 
 // Unlock unlocks address manager with a given private pass phrase

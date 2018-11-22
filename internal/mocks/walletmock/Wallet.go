@@ -5,7 +5,9 @@ package walletmock
 import btcec "github.com/btcsuite/btcd/btcec"
 import btcjson "github.com/btcsuite/btcd/btcjson"
 import btcutil "github.com/btcsuite/btcutil"
+import chainhash "github.com/btcsuite/btcd/chaincfg/chainhash"
 import mock "github.com/stretchr/testify/mock"
+import rpc "github.com/dgarage/dlc/internal/rpc"
 import wallet "github.com/dgarage/dlc/internal/wallet"
 import wire "github.com/btcsuite/btcd/wire"
 
@@ -38,6 +40,29 @@ func (_m *Wallet) ListUnspent() ([]btcjson.ListUnspentResult, error) {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]btcjson.ListUnspentResult)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// NewAddress provides a mock function with given fields:
+func (_m *Wallet) NewAddress() (btcutil.Address, error) {
+	ret := _m.Called()
+
+	var r0 btcutil.Address
+	if rf, ok := ret.Get(0).(func() btcutil.Address); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(btcutil.Address)
 		}
 	}
 
@@ -104,6 +129,34 @@ func (_m *Wallet) SelectUnspent(amt btcutil.Amount, feePerTxIn btcutil.Amount, f
 	return r0, r1, r2
 }
 
+// SendRawTransaction provides a mock function with given fields: tx
+func (_m *Wallet) SendRawTransaction(tx *wire.MsgTx) (*chainhash.Hash, error) {
+	ret := _m.Called(tx)
+
+	var r0 *chainhash.Hash
+	if rf, ok := ret.Get(0).(func(*wire.MsgTx) *chainhash.Hash); ok {
+		r0 = rf(tx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*chainhash.Hash)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*wire.MsgTx) error); ok {
+		r1 = rf(tx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SetRPCClient provides a mock function with given fields: _a0
+func (_m *Wallet) SetRPCClient(_a0 rpc.Client) {
+	_m.Called(_a0)
+}
+
 // Unlock provides a mock function with given fields: privPass
 func (_m *Wallet) Unlock(privPass []byte) error {
 	ret := _m.Called(privPass)
@@ -116,6 +169,29 @@ func (_m *Wallet) Unlock(privPass []byte) error {
 	}
 
 	return r0
+}
+
+// WitnessSignTxByIdxs provides a mock function with given fields: tx, idxs
+func (_m *Wallet) WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitness, error) {
+	ret := _m.Called(tx, idxs)
+
+	var r0 []wire.TxWitness
+	if rf, ok := ret.Get(0).(func(*wire.MsgTx, []int) []wire.TxWitness); ok {
+		r0 = rf(tx, idxs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]wire.TxWitness)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*wire.MsgTx, []int) error); ok {
+		r1 = rf(tx, idxs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // WitnessSignature provides a mock function with given fields: tx, idx, amt, sc, pub

@@ -31,7 +31,7 @@ func TestOracleCommitAndSign(t *testing.T) {
 	// When Alice fixes a deal using Olivia's sign and singed weather info
 	contractorFixesDeal(t, alice, olivia)
 
-	// Then The fixed deal should be subset of the fixed weather info
+	// Then The fixed deal should be a subset of the fixed weather info
 	shouldFixedDealSameWithFixedWeather(t, alice, fixedWeather)
 }
 

@@ -5,20 +5,26 @@ import (
 	"os"
 	"testing"
 
+	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateWallet(t *testing.T) {
+	assert := assert.New(t)
 	dirName, _ := ioutil.TempDir("", "testcreatewallet")
 	defer os.RemoveAll(dirName)
 
+	seed, err := hdkeychain.GenerateSeed(
+		hdkeychain.RecommendedSeedLen)
+	assert.NoError(err)
+
 	w, err := CreateWallet(
-		testNetParams, testSeed, testPubPass, testPrivPass, dirName, testWalletName)
+		testNetParams, seed, testPubPass, testPrivPass, dirName, testWalletName)
 
 	// assertions
-	assert.Nil(t, err)
+	assert.Nil(err)
 	_, ok := w.(Wallet)
-	assert.True(t, ok)
+	assert.True(ok)
 }
 
 func TestOpen(t *testing.T) {

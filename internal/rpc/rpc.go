@@ -2,6 +2,7 @@
 package rpc
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net"
@@ -13,13 +14,19 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcutil"
 )
 
 // Client is an interface that provides access to certain methods of type rpcclient.Client
 type Client interface {
-	ListUnspent() ([]btcjson.ListUnspentResult, error)
+	ListUnspentMinMaxAddresses(
+		minConf, maxConf int, addrs []btcutil.Address,
+	) ([]btcjson.ListUnspentResult, error)
 	ImportAddress(address string) error
 	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
+	SendToAddress(address btcutil.Address, amount btcutil.Amount) (*chainhash.Hash, error)
+	Generate(numBlocks uint32) ([]*chainhash.Hash, error)
+	RawRequest(method string, params []json.RawMessage) (json.RawMessage, error)
 	// TODO: add Shutdown func
 }
 

@@ -3,3 +3,7 @@ run_bitcoind:
 
 stop_bitcoind:
 	./scripts/stop_bitcoind.sh
+
+generate_mocks:
+	./scripts/generate_mocks.sh
+

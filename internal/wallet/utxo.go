@@ -1,127 +1,46 @@
 package wallet
 
 import (
-	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
-	"github.com/btcsuite/btcwallet/wtxmgr"
 )
 
 // Utxo is an unspent transaction output
 type Utxo = btcjson.ListUnspentResult
 
+const (
+	unspentMinConf = 1
+	unspentMaxConf = 9999999
+)
+
 // ListUnspent returns unspent transactions.
-// It asks the running bitcoind instance to return all known utxos for addresses it knows about
+// It asks the running bitcoind instance to return all known utxos for addresses managed by the wallet
 func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
-	return w.rpc.ListUnspent()
-}
-
-func (w *wallet) credit2ListUnspentResult(
-	c wtxmgr.Credit,
-	addrmgrNs walletdb.ReadBucket) *btcjson.ListUnspentResult {
-
-	syncBlock := w.manager.SyncedTo()
-
-	// TODO: add minconf, maxconf params
-	confs := confirms(c.Height, syncBlock.Height)
-	// // Outputs with fewer confirmations than the minimum or more
-	// // confs than the maximum are excluded.
-	// confs := confirms(output.Height, syncBlock.Height)
-	// if confs < minconf || confs > maxconf {
-	// 	continue
-	// }
-
-	// Only mature coinbase outputs are included.
-	if c.FromCoinBase {
-		target := int32(w.params.CoinbaseMaturity) // make param
-		if !confirmed(target, c.Height, syncBlock.Height) {
-			// continue
-			return nil // maybe?
-
+	var addrs []btcutil.Address
+	err = walletdb.View(w.db, func(tx walletdb.ReadTx) error {
+		ns := tx.ReadBucket(waddrmgrNamespaceKey)
+		appendAddr := func(addr btcutil.Address) error {
+			addrs = append(addrs, addr)
+			return nil
 		}
+		return w.manager.ForEachActiveAddress(ns, appendAddr)
+	})
+	if err != nil {
+		return utxos, err
 	}
 
-	acctName := accountName
-
-	result := &btcjson.ListUnspentResult{
-		TxID:          c.OutPoint.Hash.String(),
-		Vout:          c.OutPoint.Index,
-		Account:       acctName,
-		ScriptPubKey:  hex.EncodeToString(c.PkScript),
-		Amount:        c.Amount.ToBTC(),
-		Confirmations: int64(confs),
-		Spendable:     true,
+	if addrs == nil {
+		return utxos, err
 	}
 
-	return result
-}
-
-// isSpendable determines if given ScriptClass is spendable or not.
-// Does NOT support watch-only addresses. This func will need to be rewritten
-// to support watch-only addresses
-func (w *wallet) isSpendable(sc txscript.ScriptClass, addrs []btcutil.Address,
-	addrmgrNs walletdb.ReadBucket) (spendable bool) {
-	// At the moment watch-only addresses are not supported, so all
-	// recorded outputs that are not multisig are "spendable".
-	// Multisig outputs are only "spendable" if all keys are
-	// controlled by this wallet.
-	//
-	// TODO: Each case will need updates when watch-only addrs
-	// is added.  For P2PK, P2PKH, and P2SH, the address must be
-	// looked up and not be watching-only.  For multisig, all
-	// pubkeys must belong to the manager with the associated
-	// private key (currently it only checks whether the pubkey
-	// exists, since the private key is required at the moment).
-scSwitch:
-	switch sc {
-	case txscript.PubKeyHashTy:
-		spendable = true
-	case txscript.PubKeyTy:
-		spendable = true
-	case txscript.WitnessV0ScriptHashTy:
-		spendable = true
-	case txscript.WitnessV0PubKeyHashTy:
-		spendable = true
-	case txscript.MultiSigTy:
-		for _, a := range addrs {
-			_, err := w.manager.Address(addrmgrNs, a)
-			if err == nil {
-				continue
-			}
-			if waddrmgr.IsError(err, waddrmgr.ErrAddressNotFound) {
-				break scSwitch
-			}
-			// return err TODO: figure out what to replace the return error
-		}
-		spendable = true
-	}
-
-	return spendable
-}
-
-// confirms returns the number of confirmations for a transaction in a block at
-// height txHeight (or -1 for an unconfirmed tx) given the chain height
-// curHeight.
-func confirms(txHeight, curHeight int32) int32 {
-	switch {
-	case txHeight == -1, txHeight > curHeight:
-		return 0
-	default:
-		return curHeight - txHeight + 1
-	}
-}
-
-// confirmed checks whether a transaction at height txHeight has met minconf
-// confirmations for a blockchain at height curHeight.
-func confirmed(minconf, txHeight, curHeight int32) bool {
-	return confirms(txHeight, curHeight) >= minconf
+	return w.rpc.ListUnspentMinMaxAddresses(
+		unspentMinConf, unspentMaxConf, addrs)
 }
 
 // SelectUnspent is an implementation of Wallet.SelectUnspent
@@ -172,4 +91,23 @@ func UtxosToTxIns(utxos []Utxo) ([]*wire.TxIn, error) {
 		txins = append(txins, wire.NewTxIn(op, nil, nil))
 	}
 	return txins, nil
+}
+
+// UtxoByTxIn finds utxo by txin
+func (w *wallet) UtxoByTxIn(txin *wire.TxIn) (Utxo, error) {
+	txid := txin.PreviousOutPoint.Hash.String()
+	vout := txin.PreviousOutPoint.Index
+
+	utxos, err := w.ListUnspent()
+	if err != nil {
+		return Utxo{}, err
+	}
+
+	for _, utxo := range utxos {
+		if utxo.TxID == txid && utxo.Vout == vout {
+			return utxo, nil
+		}
+	}
+
+	return Utxo{}, errors.New("utxo isn't found")
 }

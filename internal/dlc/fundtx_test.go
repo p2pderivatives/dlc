@@ -130,9 +130,9 @@ func TestRedeemFundTx(t *testing.T) {
 	assert.Nil(err)
 
 	// both parties signs redeem tx
-	sign1, err := b1.witsigForFundTxIn(redeemtx)
+	sign1, err := b1.witsigForFundScript(redeemtx)
 	assert.Nil(err)
-	sign2, err := b2.witsigForFundTxIn(redeemtx)
+	sign2, err := b2.witsigForFundScript(redeemtx)
 	assert.Nil(err)
 
 	// create witness

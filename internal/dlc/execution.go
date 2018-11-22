@@ -73,6 +73,19 @@ func (d *DLC) ContractExecutionTx(
 	return tx, nil
 }
 
+// SignContractExecutionTxs signs contract execution txs for all deals
+func (b *Builder) SignContractExecutionTxs() ([][]byte, error) {
+	var signs [][]byte
+	for idx, deal := range b.dlc.Conds.Deals {
+		sign, err := b.SignContractExecutionTx(deal, idx)
+		if err != nil {
+			return nil, err
+		}
+		signs = append(signs, sign)
+	}
+	return signs, nil
+}
+
 // SignContractExecutionTx signs a contract execution tx for a given party
 func (b *Builder) SignContractExecutionTx(deal *Deal, idx int) ([]byte, error) {
 	cparty := counterparty(b.party)
@@ -82,7 +95,7 @@ func (b *Builder) SignContractExecutionTx(deal *Deal, idx int) ([]byte, error) {
 		return nil, err
 	}
 
-	return b.witsigForFundTxIn(tx)
+	return b.witsigForFundScript(tx)
 }
 
 // AcceptCETxSigns accepts CETx signs received from the counterparty
@@ -170,7 +183,7 @@ func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
 		return nil, err
 	}
 
-	sign, err := b.witsigForFundTxIn(tx)
+	sign, err := b.witsigForFundScript(tx)
 	if err != nil {
 		return nil, err
 	}

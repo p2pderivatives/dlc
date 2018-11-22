@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 )
@@ -18,7 +19,17 @@ func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 	return pub, err
 }
 
-// NewAddress returns a new ManagedAddress
+// NewAddress creates a new address managed by wallet
+func (w *wallet) NewAddress() (btcutil.Address, error) {
+	maddr, err := w.newAddress()
+	if err != nil {
+		return nil, err
+	}
+
+	return maddr.Address(), nil
+}
+
+// newAddress returns a new ManagedAddress
 // NOTE: this function calls NextExternalAddresses to generate a ManagadAdddress.
 func (w *wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 	scopedMgr, err := w.manager.FetchScopedKeyManager(waddrmgrKeyScope)
@@ -38,14 +49,15 @@ func (w *wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 		return nil, err
 	}
 
+	addr := addrs[0]
+
 	// register address to bitcoind
-	mpka := addrs[0].(waddrmgr.ManagedPubKeyAddress)
-	err = w.rpc.ImportAddress(mpka.ExportPubKey())
+	err = w.rpc.ImportAddress(addr.Address().EncodeAddress())
 	if err != nil {
 		return nil, err
 	}
 
-	return addrs[0], nil
+	return addr, nil
 }
 
 func (w *wallet) managedPubKeyAddressFromPubkey(

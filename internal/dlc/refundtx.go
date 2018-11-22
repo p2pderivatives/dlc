@@ -50,7 +50,7 @@ func (b *Builder) SignRefundTx() ([]byte, error) {
 		return nil, err
 	}
 
-	sign, err := b.witsigForFundTxIn(tx)
+	sign, err := b.witsigForFundScript(tx)
 	if err != nil {
 		return nil, err
 	}
