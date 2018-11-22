@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcjson"
@@ -90,4 +91,23 @@ func UtxosToTxIns(utxos []Utxo) ([]*wire.TxIn, error) {
 		txins = append(txins, wire.NewTxIn(op, nil, nil))
 	}
 	return txins, nil
+}
+
+// UtxoByTxIn finds utxo by txin
+func (w *wallet) UtxoByTxIn(txin *wire.TxIn) (Utxo, error) {
+	txid := txin.PreviousOutPoint.Hash.String()
+	vout := txin.PreviousOutPoint.Index
+
+	utxos, err := w.ListUnspent()
+	if err != nil {
+		return Utxo{}, err
+	}
+
+	for _, utxo := range utxos {
+		if utxo.TxID == txid && utxo.Vout == vout {
+			return utxo, nil
+		}
+	}
+
+	return Utxo{}, errors.New("utxo isn't found")
 }

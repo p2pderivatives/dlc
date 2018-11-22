@@ -171,6 +171,29 @@ func (_m *Wallet) Unlock(privPass []byte) error {
 	return r0
 }
 
+// WitnessSignTxByIdxs provides a mock function with given fields: tx, idxs
+func (_m *Wallet) WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitness, error) {
+	ret := _m.Called(tx, idxs)
+
+	var r0 []wire.TxWitness
+	if rf, ok := ret.Get(0).(func(*wire.MsgTx, []int) []wire.TxWitness); ok {
+		r0 = rf(tx, idxs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]wire.TxWitness)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*wire.MsgTx, []int) error); ok {
+		r1 = rf(tx, idxs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // WitnessSignature provides a mock function with given fields: tx, idx, amt, sc, pub
 func (_m *Wallet) WitnessSignature(tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey) ([]byte, error) {
 	ret := _m.Called(tx, idx, amt, sc, pub)

@@ -95,7 +95,7 @@ func (b *Builder) SignContractExecutionTx(deal *Deal, idx int) ([]byte, error) {
 		return nil, err
 	}
 
-	return b.witsigForFundTxIn(tx)
+	return b.witsigForFundScript(tx)
 }
 
 // AcceptCETxSigns accepts CETx signs received from the counterparty
@@ -183,7 +183,7 @@ func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
 		return nil, err
 	}
 
-	sign, err := b.witsigForFundTxIn(tx)
+	sign, err := b.witsigForFundScript(tx)
 	if err != nil {
 		return nil, err
 	}

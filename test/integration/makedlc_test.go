@@ -39,10 +39,8 @@ func TestContractorMakeDLC(t *testing.T) {
 	contractorGetCommitmentsFromOracle(t, bob, olivia)
 	contractorAcceptOffer(t, bob, alice)
 
-	// And Alice sends signs and witnesses of fund txins to Bob
-	ceSigns, rfSign := conractorSignCETxsAndRefundTx(t, alice)
-	contractorSendTxSigns(t, bob, ceSigns, rfSign)
-	contractorSendFundTxInWitnesses(t, alice, bob)
+	// And Alice signs all txs and send the signs to Bob
+	contractorSignAllTxs(t, alice, bob)
 
 	// And Bob sends fund tx to the network
 	contractorSendFundTx(t, bob)

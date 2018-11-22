@@ -197,8 +197,8 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-// witsigForFundTxIn returns sign for a given tx that redeems fund out
-func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
+// witsigForFundScript returns sign for a given tx that redeems fund out
+func (b *Builder) witsigForFundScript(tx *wire.MsgTx) ([]byte, error) {
 	fundtx, err := b.dlc.FundTx()
 	if err != nil {
 		return nil, err
@@ -216,7 +216,26 @@ func (b *Builder) witsigForFundTxIn(tx *wire.MsgTx) ([]byte, error) {
 	return b.wallet.WitnessSignature(tx, fundTxInAt, famt, fc, pub)
 }
 
-func (b *Builder) WitnessesForFundTxIn() ([]*wire.TxWitness, error) {
+// SignFundTx signs fund tx and return witnesses for the txins owned by the party
+func (b *Builder) SignFundTx() ([]wire.TxWitness, error) {
+	fundtx, err := b.dlc.FundTx()
+	if err != nil {
+		return nil, err
+	}
+
+	// get witnesses
+	idxs := b.fundTxInAt()
+	wits, err := b.wallet.WitnessSignTxByIdxs(fundtx, idxs)
+	if err != nil {
+		return nil, err
+	}
+
+	// set witnesses to txins
+	for i, wit := range wits {
+		b.dlc.fundTxReqs.txIns[b.party][i].Witness = wit
+	}
+
+	return wits, nil
 }
 
 // SendFundTx sends fund tx to the network
@@ -228,4 +247,30 @@ func (b *Builder) SendFundTx() error {
 
 	_, err = b.wallet.SendRawTransaction(tx)
 	return err
+}
+
+// fundTxInAt returns indices of txin in fundtx by the party
+func (b *Builder) fundTxInAt() (idxs []int) {
+	nTxInMe := len(b.dlc.fundTxReqs.txIns[b.party])
+	var txinFrom, txinTo int
+	if b.party == FirstParty {
+		txinFrom = 0
+		txinTo = nTxInMe
+	} else {
+		nTxInCP := len(b.dlc.fundTxReqs.txIns[SecondParty])
+		txinFrom = nTxInCP
+		txinTo = txinFrom + nTxInMe
+	}
+	for i := txinFrom; i < txinTo; i++ {
+		idxs = append(idxs, i)
+	}
+	return idxs
+}
+
+// AcceptFundWitnesses accepts witnesses for fund txins owned by the counerparty
+func (b *Builder) AcceptFundWitnesses(fundWits []wire.TxWitness) {
+	cparty := counterparty(b.party)
+	for idx, wit := range fundWits {
+		b.dlc.fundTxReqs.txIns[cparty][idx].Witness = wit
+	}
 }

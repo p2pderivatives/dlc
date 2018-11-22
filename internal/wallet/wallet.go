@@ -37,6 +37,9 @@ type Wallet interface {
 		privkeyConverter PrivateKeyConverter,
 	) (sign []byte, err error)
 
+	// WitnessSignTxByIdxs returns witness signatures for txins specified by idxs
+	WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitness, error)
+
 	// SelectUtxos selects utxos for requested amount
 	// by considering additional fee per txin and txout
 	SelectUnspent(
