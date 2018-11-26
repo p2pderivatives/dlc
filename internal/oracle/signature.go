@@ -7,6 +7,7 @@ import (
 	"github.com/dgarage/dlc/pkg/schnorr"
 )
 
+// SignSet is an alias of oracle.SignSet
 type SignSet = oracle.SignSet
 
 // SignSet returns SignSet for given fixing time
