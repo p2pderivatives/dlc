@@ -27,7 +27,7 @@ func (oracle *Oracle) SignSet(ftime time.Time) (SignSet, error) {
 		return SignSet{}, err
 	}
 
-	return SignSet{msgs, signs}, nil
+	return SignSet{Msgs: msgs, Signs: signs}, nil
 }
 
 func signMsgs(msgs [][]byte, extKey *privExtKey) ([][]byte, error) {
