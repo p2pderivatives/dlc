@@ -7,8 +7,8 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/script"
-	"github.com/dgarage/dlc/internal/wallet"
+	"github.com/dgarage/dlc/pkg/script"
+	"github.com/dgarage/dlc/pkg/wallet"
 	validator "gopkg.in/go-playground/validator.v9"
 )
 

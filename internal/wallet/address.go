@@ -10,7 +10,7 @@ import (
 )
 
 // NewPubKey returns a new btcec.PublicKey type public key
-func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
+func (w *Wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 	mAddr, err := w.newAddress()
 	if err != nil {
 		return nil, err
@@ -20,7 +20,7 @@ func (w *wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 }
 
 // NewAddress creates a new address managed by wallet
-func (w *wallet) NewAddress() (btcutil.Address, error) {
+func (w *Wallet) NewAddress() (btcutil.Address, error) {
 	maddr, err := w.newAddress()
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (w *wallet) NewAddress() (btcutil.Address, error) {
 
 // newAddress returns a new ManagedAddress
 // NOTE: this function calls NextExternalAddresses to generate a ManagadAdddress.
-func (w *wallet) newAddress() (waddrmgr.ManagedAddress, error) {
+func (w *Wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 	scopedMgr, err := w.manager.FetchScopedKeyManager(waddrmgrKeyScope)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (w *wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 	return addr, nil
 }
 
-func (w *wallet) managedPubKeyAddressFromPubkey(
+func (w *Wallet) managedPubKeyAddressFromPubkey(
 	pub *btcec.PublicKey,
 ) (rmpaddr waddrmgr.ManagedPubKeyAddress, err error) {
 	err = walletdb.View(w.db, func(tx walletdb.ReadTx) error {

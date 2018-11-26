@@ -9,7 +9,8 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/dgarage/dlc/internal/rpc"
-	"github.com/dgarage/dlc/internal/wallet"
+	_wallet "github.com/dgarage/dlc/internal/wallet"
+	"github.com/dgarage/dlc/pkg/wallet"
 )
 
 func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {
@@ -29,7 +30,7 @@ func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {
 	}
 
 	// create wallet
-	w, err := wallet.CreateWallet(
+	w, err := _wallet.CreateWallet(
 		params, seed, pubpass, privpass, walletDir, name)
 	if err != nil {
 		return nil, err

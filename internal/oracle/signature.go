@@ -3,14 +3,11 @@ package oracle
 import (
 	"time"
 
-	"github.com/dgarage/dlc/internal/schnorr"
+	"github.com/dgarage/dlc/pkg/oracle"
+	"github.com/dgarage/dlc/pkg/schnorr"
 )
 
-// SignSet contains fixed messages and signs
-type SignSet struct {
-	Msgs  [][]byte
-	Signs [][]byte
-}
+type SignSet = oracle.SignSet
 
 // SignSet returns SignSet for given fixing time
 func (oracle *Oracle) SignSet(ftime time.Time) (SignSet, error) {

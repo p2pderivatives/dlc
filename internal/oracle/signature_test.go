@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgarage/dlc/internal/schnorr"
+	"github.com/dgarage/dlc/pkg/schnorr"
 	"github.com/stretchr/testify/assert"
 )
 

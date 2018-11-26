@@ -6,77 +6,26 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
 	"github.com/dgarage/dlc/internal/rpc"
+	"github.com/dgarage/dlc/pkg/wallet"
 )
-
-// Wallet is an interface that provides access to manage pubkey addresses and
-// sign scripts of managed addressesc using private key. It also manags utxos.
-type Wallet interface {
-	NewPubkey() (*btcec.PublicKey, error)
-
-	// NewAddress creates a new address
-	NewAddress() (btcutil.Address, error)
-
-	// WitnessSignature returns witness signature for a given txin and pubkey
-	WitnessSignature(
-		tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
-	) (sign []byte, err error)
-
-	// WitnessSignatureWithCallback does the same with WitnessSignature do
-	// applying a given func to private key before calculating signature
-	WitnessSignatureWithCallback(
-		tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
-		privkeyConverter PrivateKeyConverter,
-	) (sign []byte, err error)
-
-	// WitnessSignTxByIdxs returns witness signatures for txins specified by idxs
-	WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitness, error)
-
-	// SelectUtxos selects utxos for requested amount
-	// by considering additional fee per txin and txout
-	SelectUnspent(
-		amt, feePerTxIn, feePerTxOut btcutil.Amount,
-	) (utxos []Utxo, change btcutil.Amount, err error)
-	// Unlock unlocks address manager
-	Unlock(privPass []byte) error
-
-	// TODO: remove this interface after fixing wallet.Open
-	// SetRPCClient sets rpcclient
-	SetRPCClient(rpc.Client)
-
-	// methods delegating to RPC Client
-	ListUnspent() (utxos []Utxo, err error)
-	SendRawTransaction(tx *wire.MsgTx) (*chainhash.Hash, error)
-
-	Close() error
-}
-
-// PrivateKeyConverter is a callback func applied to private key before creating witness signature
-type PrivateKeyConverter func(*btcec.PrivateKey) (*btcec.PrivateKey, error)
 
 // Namespace bucket keys.
 var (
 	waddrmgrNamespaceKey = []byte("waddrmgr")
 	waddrmgrKeyScope     = waddrmgr.KeyScopeBIP0084
-
-	// TODO: have rpc params be read from conf file?
-	rpcport     = "localhost: REPLACEME"
-	rpcusername = "RENAME!"
-	rpcpassword = "RENAME!"
 )
 
 const accountName = "dlc"
 
-// wallet is hierarchical deterministic wallet
-type wallet struct {
+// Wallet is hierarchical deterministic Wallet
+type Wallet struct {
 	params           *chaincfg.Params
 	publicPassphrase []byte
 	rpc              rpc.Client
@@ -86,13 +35,13 @@ type wallet struct {
 }
 
 // wallet should satisfy Wallet interface
-var _ Wallet = (*wallet)(nil)
+var _ wallet.Wallet = (*Wallet)(nil)
 
 // CreateWallet returns a new Wallet, also creates db where wallet resides
 func CreateWallet(
 	params *chaincfg.Params,
 	seed, pubPass, privPass []byte,
-	dbFilePath, walletName string) (Wallet, error) {
+	dbFilePath, walletName string) (wallet.Wallet, error) {
 
 	dbDirPath := filepath.Join(dbFilePath, params.Name)
 	db, err := createDB(dbDirPath, walletName+".db")
@@ -130,7 +79,7 @@ func createDB(dbDirPath, dbname string) (walletdb.DB, error) {
 func create(
 	db walletdb.DB,
 	params *chaincfg.Params,
-	seed, pubPass, privPass []byte) (*wallet, error) {
+	seed, pubPass, privPass []byte) (*Wallet, error) {
 
 	err := createManagers(db, seed, pubPass, privPass, params)
 	if err != nil {
@@ -202,14 +151,14 @@ func createAccount(
 // Open loads a wallet from the passed db and public pass phrase.
 func Open(
 	db walletdb.DB, pubPass []byte, params *chaincfg.Params, rpcclient rpc.Client,
-) (Wallet, error) {
+) (wallet.Wallet, error) {
 	return open(db, pubPass, params, rpcclient)
 }
 
 // open is an implementation of Open
 func open(
 	db walletdb.DB, pubPass []byte, params *chaincfg.Params, rpcclient rpc.Client,
-) (*wallet, error) {
+) (*Wallet, error) {
 	// TODO: Perform wallet upgrades/updates if necessary?
 
 	// Open database abstraction instances
@@ -243,12 +192,7 @@ func open(
 		return nil, err
 	}
 
-	// rpc, err := rpc.NewClient(rpcport, rpcusername, rpcpassword)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	w := &wallet{
+	w := &Wallet{
 		params:           params,
 		publicPassphrase: pubPass,
 		rpc:              rpcclient,
@@ -261,17 +205,17 @@ func open(
 }
 
 // SetRPCClient sets rpc client
-func (w *wallet) SetRPCClient(rpc rpc.Client) {
+func (w *Wallet) SetRPCClient(rpc rpc.Client) {
 	w.rpc = rpc
 }
 
 // SendRawTransaction delegates to RPC client
-func (w *wallet) SendRawTransaction(tx *wire.MsgTx) (*chainhash.Hash, error) {
+func (w *Wallet) SendRawTransaction(tx *wire.MsgTx) (*chainhash.Hash, error) {
 	return w.rpc.SendRawTransaction(tx, false)
 }
 
 // Unlock unlocks address manager with a given private pass phrase
-func (w *wallet) Unlock(privPass []byte) error {
+func (w *Wallet) Unlock(privPass []byte) error {
 	return walletdb.Update(w.db, func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(waddrmgrNamespaceKey)
 		return w.manager.Unlock(ns, privPass)
@@ -279,7 +223,7 @@ func (w *wallet) Unlock(privPass []byte) error {
 }
 
 // Close closes managers
-func (w *wallet) Close() error {
+func (w *Wallet) Close() error {
 	w.manager.Close()
 	return nil
 }
