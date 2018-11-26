@@ -27,7 +27,7 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 
 	// use locktime
 	tx.TxIn[fundTxInAt].Sequence-- // max(0xffffffff-0x01)
-	tx.LockTime = d.Conds.LockTime
+	tx.LockTime = d.Conds.RefundLockTime
 
 	// txouts
 	for _, p := range []Contractor{FirstParty, SecondParty} {
@@ -152,4 +152,15 @@ func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) error {
 	}
 
 	return nil
+}
+
+// SendRefundTx sends refund tx
+func (b *Builder) SendRefundTx() error {
+	tx, err := b.dlc.SignedRefundTx()
+	if err != nil {
+		return err
+	}
+
+	_, err = b.wallet.SendRawTransaction(tx)
+	return err
 }

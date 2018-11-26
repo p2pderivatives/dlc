@@ -42,3 +42,12 @@ func Generate(n uint32) ([]*chainhash.Hash, error) {
 	}
 	return c.Generate(n)
 }
+
+// GetBlockCount returns the current block height
+func GetBlockCount() (int64, error) {
+	c, err := NewTestRPCClient()
+	if err != nil {
+		return 0, err
+	}
+	return c.GetBlockCount()
+}

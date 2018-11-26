@@ -11,7 +11,7 @@ const testLockTime = uint32(1541951794) // 2018/11/11 3:46pm (UTC)
 
 func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	conds := newTestConditions()
-	conds.LockTime = testLockTime
+	conds.RefundLockTime = testLockTime
 
 	// init first party
 	w1 := setupTestWallet()
