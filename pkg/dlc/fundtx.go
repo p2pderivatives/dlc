@@ -5,8 +5,8 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/script"
-	"github.com/dgarage/dlc/internal/wallet"
+	"github.com/dgarage/dlc/pkg/script"
+	"github.com/dgarage/dlc/pkg/wallet"
 )
 
 // FundTxRequirements contains txins and txouts for fund tx

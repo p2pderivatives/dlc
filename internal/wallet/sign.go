@@ -9,12 +9,13 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
-	"github.com/dgarage/dlc/internal/script"
+	"github.com/dgarage/dlc/pkg/script"
+	"github.com/dgarage/dlc/pkg/wallet"
 )
 
 // WitnessSignature returns witness signature
 // by signing tx with the privkey of given pubkey
-func (w *wallet) WitnessSignature(
+func (w *Wallet) WitnessSignature(
 	tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
 ) ([]byte, error) {
 	mpaddr, err := w.managedPubKeyAddressFromPubkey(pub)
@@ -33,9 +34,9 @@ func (w *wallet) WitnessSignature(
 // WitnessSignatureWithCallback does the same with WitnessSignature does,
 // but applying a func PrivateKeyConverter to raw privkey and use the result
 // as privkey for calculating witness signature
-func (w *wallet) WitnessSignatureWithCallback(
+func (w *Wallet) WitnessSignatureWithCallback(
 	tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
-	privkeyConverter PrivateKeyConverter,
+	privkeyConverter wallet.PrivateKeyConverter,
 ) ([]byte, error) {
 	mpaddr, err := w.managedPubKeyAddressFromPubkey(pub)
 	if err != nil {
@@ -56,7 +57,7 @@ func (w *wallet) WitnessSignatureWithCallback(
 }
 
 // WitnessSignTxByIdxs returns witnesses associated to txins at given indices
-func (w *wallet) WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitness, error) {
+func (w *Wallet) WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitness, error) {
 	wits := []wire.TxWitness{}
 	for _, idx := range idxs {
 		txin := tx.TxIn[idx]
@@ -106,7 +107,7 @@ func (w *wallet) WitnessSignTxByIdxs(tx *wire.MsgTx, idxs []int) ([]wire.TxWitne
 }
 
 // managedAddressByUtxo finds managed address by utxo
-func (w *wallet) managedAddressByUtxo(utxo Utxo) (maddr waddrmgr.ManagedAddress, err error) {
+func (w *Wallet) managedAddressByUtxo(utxo wallet.Utxo) (maddr waddrmgr.ManagedAddress, err error) {
 	onEachAddr := func(_maddr waddrmgr.ManagedAddress) error {
 		if _maddr.Address().String() == utxo.Address {
 			maddr = _maddr

@@ -37,7 +37,7 @@ func setupDB(t *testing.T) (db walletdb.DB, tearDownFunc func()) {
 	return
 }
 
-func setupWallet(t *testing.T) (*wallet, func()) {
+func setupWallet(t *testing.T) (*Wallet, func()) {
 	assert := assert.New(t)
 	db, deleteDB := setupDB(t)
 

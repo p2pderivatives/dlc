@@ -3,15 +3,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cb4e01d1c8a24e5f3eb7975d1223f37e1ec2b6a7cba06d6a310cc8e993ef1839"
+  digest = "1:ab6815e0f7c5f12fa55de1a367797cd0ace7cce2678d7b3e6c9dbb94b8e2a3fe"
   name = "github.com/btcsuite/btcd"
   packages = [
-    "blockchain",
     "btcec",
     "btcjson",
     "chaincfg",
     "chaincfg/chainhash",
-    "database",
     "rpcclient",
     "txscript",
     "wire",
@@ -42,7 +40,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:83aa3de05caeb9faec1b32476a35418897a023543036eadb0bfc48db64664eb0"
+  digest = "1:8980602e62605c1c3421314cda12cf4ae8701f00b34e9d8fbb987d58248d4860"
   name = "github.com/btcsuite/btcwallet"
   packages = [
     "internal/zero",
@@ -50,7 +48,6 @@
     "waddrmgr",
     "walletdb",
     "walletdb/bdb",
-    "wtxmgr",
   ]
   pruneopts = "UT"
   revision = "c4dd27e481f9801866cf5226bfe532084772ec2a"
@@ -187,7 +184,6 @@
     "github.com/btcsuite/btcwallet/waddrmgr",
     "github.com/btcsuite/btcwallet/walletdb",
     "github.com/btcsuite/btcwallet/walletdb/bdb",
-    "github.com/btcsuite/btcwallet/wtxmgr",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
     "gopkg.in/go-playground/validator.v9",

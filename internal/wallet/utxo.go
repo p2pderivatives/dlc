@@ -4,15 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/walletdb"
+	"github.com/dgarage/dlc/pkg/wallet"
 )
-
-// Utxo is an unspent transaction output
-type Utxo = btcjson.ListUnspentResult
 
 const (
 	unspentMinConf = 1
@@ -21,7 +17,7 @@ const (
 
 // ListUnspent returns unspent transactions.
 // It asks the running bitcoind instance to return all known utxos for addresses managed by the wallet
-func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
+func (w *Wallet) ListUnspent() (utxos []wallet.Utxo, err error) {
 	var addrs []btcutil.Address
 	err = walletdb.View(w.db, func(tx walletdb.ReadTx) error {
 		ns := tx.ReadBucket(waddrmgrNamespaceKey)
@@ -44,10 +40,10 @@ func (w *wallet) ListUnspent() (utxos []Utxo, err error) {
 }
 
 // SelectUnspent is an implementation of Wallet.SelectUnspent
-func (w *wallet) SelectUnspent(
+func (w *Wallet) SelectUnspent(
 	amt, feePerTxIn, feePerTxOut btcutil.Amount,
-) (utxos []Utxo, change btcutil.Amount, err error) {
-	var utxosAll []Utxo
+) (utxos []wallet.Utxo, change btcutil.Amount, err error) {
+	var utxosAll []wallet.Utxo
 	utxosAll, err = w.ListUnspent()
 	if err != nil {
 		return
@@ -79,28 +75,14 @@ func (w *wallet) SelectUnspent(
 	return utxos, change, err
 }
 
-// UtxosToTxIns converts utxos to txins
-func UtxosToTxIns(utxos []Utxo) ([]*wire.TxIn, error) {
-	var txins []*wire.TxIn
-	for _, utxo := range utxos {
-		txid, err := chainhash.NewHashFromStr(utxo.TxID)
-		if err != nil {
-			return txins, err
-		}
-		op := wire.NewOutPoint(txid, utxo.Vout)
-		txins = append(txins, wire.NewTxIn(op, nil, nil))
-	}
-	return txins, nil
-}
-
 // UtxoByTxIn finds utxo by txin
-func (w *wallet) UtxoByTxIn(txin *wire.TxIn) (Utxo, error) {
+func (w *Wallet) UtxoByTxIn(txin *wire.TxIn) (wallet.Utxo, error) {
 	txid := txin.PreviousOutPoint.Hash.String()
 	vout := txin.PreviousOutPoint.Index
 
 	utxos, err := w.ListUnspent()
 	if err != nil {
-		return Utxo{}, err
+		return wallet.Utxo{}, err
 	}
 
 	for _, utxo := range utxos {
@@ -109,5 +91,5 @@ func (w *wallet) UtxoByTxIn(txin *wire.TxIn) (Utxo, error) {
 		}
 	}
 
-	return Utxo{}, errors.New("utxo isn't found")
+	return wallet.Utxo{}, errors.New("utxo isn't found")
 }

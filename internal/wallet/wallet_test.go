@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/dgarage/dlc/pkg/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +24,7 @@ func TestCreateWallet(t *testing.T) {
 
 	// assertions
 	assert.Nil(err)
-	_, ok := w.(Wallet)
+	_, ok := w.(wallet.Wallet)
 	assert.True(ok)
 }
 
@@ -48,7 +49,7 @@ func TestOpen(t *testing.T) {
 	assert.Equal(_w.account, w.account)
 
 	// test if it satisfies Wallet interface
-	var W Wallet = w
-	_, ok := W.(Wallet)
+	var W wallet.Wallet = w
+	_, ok := W.(wallet.Wallet)
 	assert.True(ok)
 }

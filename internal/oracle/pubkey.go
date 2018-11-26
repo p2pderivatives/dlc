@@ -4,17 +4,15 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/dgarage/dlc/pkg/oracle"
 )
 
-// PubkeySet contains oracle's pub key and keys for all rate
-type PubkeySet struct {
-	Pubkey           *btcec.PublicKey
-	CommittedRpoints []*btcec.PublicKey
-}
+// PubkeySet is an alias of oracle.PubkeySet
+type PubkeySet = oracle.PubkeySet
 
 // PubkeySet returns a key set for given fixing time
-func (oracle *Oracle) PubkeySet(ftime time.Time) (PubkeySet, error) {
-	extKey, err := oracle.extKeyForFixingTime(ftime)
+func (o *Oracle) PubkeySet(ftime time.Time) (PubkeySet, error) {
+	extKey, err := o.extKeyForFixingTime(ftime)
 	// derive oracle's pubkey for the given time
 	if err != nil {
 		return PubkeySet{}, err
@@ -25,12 +23,15 @@ func (oracle *Oracle) PubkeySet(ftime time.Time) (PubkeySet, error) {
 	}
 
 	// derive pubkeys for all committed R-points at the given time
-	rpoints, err := committedRpoints(extKey, oracle.nRpoints)
+	rpoints, err := committedRpoints(extKey, o.nRpoints)
 	if err != nil {
 		return PubkeySet{}, err
 	}
 
-	keyset := PubkeySet{pubkey, rpoints}
+	keyset := PubkeySet{
+		Pubkey:           pubkey,
+		CommittedRpoints: rpoints,
+	}
 
 	return keyset, nil
 }

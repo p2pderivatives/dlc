@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/dgarage/dlc/internal/test"
-	"github.com/dgarage/dlc/internal/utils"
+	"github.com/dgarage/dlc/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 

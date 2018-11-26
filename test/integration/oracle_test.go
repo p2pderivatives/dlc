@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgarage/dlc/internal/dlc"
 	"github.com/dgarage/dlc/internal/oracle"
+	"github.com/dgarage/dlc/pkg/dlc"
 	"github.com/stretchr/testify/assert"
 )
 
