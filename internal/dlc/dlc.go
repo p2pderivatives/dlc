@@ -39,12 +39,12 @@ func newDLC(conds *Conditions) *DLC {
 
 // Conditions contains conditions of a contract
 type Conditions struct {
-	FixingTime    time.Time                     `validate:"required,gt=time.Now()"`
-	FundAmts      map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
-	FundFeerate   btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
-	RedeemFeerate btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
-	LockTime      uint32                        `validate:"required,gt=0"` // refund locktime (block height)
-	Deals         []*Deal                       `validate:"required,gt=0,dive,required"`
+	FixingTime     time.Time                     `validate:"required,gt=time.Now()"`
+	FundAmts       map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
+	FundFeerate    btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
+	RedeemFeerate  btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
+	RefundLockTime uint32                        `validate:"required,gt=0"` // refund locktime (block height)
+	Deals          []*Deal                       `validate:"required,gt=0,dive,required"`
 }
 
 // NewConditions creates a new DLC conditions
@@ -52,7 +52,7 @@ func NewConditions(
 	ftime time.Time,
 	famt1, famt2 btcutil.Amount,
 	ffeerate, rfeerate btcutil.Amount, // fund feerate and redeem feerate
-	lc uint32, // locktime
+	refundLockTime uint32, // refund locktime
 	deals []*Deal,
 ) (*Conditions, error) {
 	famts := make(map[Contractor]btcutil.Amount)
@@ -60,12 +60,12 @@ func NewConditions(
 	famts[SecondParty] = famt2
 
 	conds := &Conditions{
-		FixingTime:    ftime,
-		FundAmts:      famts,
-		FundFeerate:   ffeerate,
-		RedeemFeerate: rfeerate,
-		LockTime:      lc,
-		Deals:         deals,
+		FixingTime:     ftime,
+		FundAmts:       famts,
+		FundFeerate:    ffeerate,
+		RedeemFeerate:  rfeerate,
+		RefundLockTime: refundLockTime,
+		Deals:          deals,
 	}
 
 	// validate structure

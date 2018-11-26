@@ -26,6 +26,7 @@ type Client interface {
 	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
 	SendToAddress(address btcutil.Address, amount btcutil.Amount) (*chainhash.Hash, error)
 	Generate(numBlocks uint32) ([]*chainhash.Hash, error)
+	GetBlockCount() (int64, error)
 	RawRequest(method string, params []json.RawMessage) (json.RawMessage, error)
 	// TODO: add Shutdown func
 }

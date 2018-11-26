@@ -38,6 +38,27 @@ func (_m *Client) Generate(numBlocks uint32) ([]*chainhash.Hash, error) {
 	return r0, r1
 }
 
+// GetBlockCount provides a mock function with given fields:
+func (_m *Client) GetBlockCount() (int64, error) {
+	ret := _m.Called()
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func() int64); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ImportAddress provides a mock function with given fields: address
 func (_m *Client) ImportAddress(address string) error {
 	ret := _m.Called(address)

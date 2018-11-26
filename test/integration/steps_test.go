@@ -153,6 +153,19 @@ func contractorFixDeal(
 	assert.NoError(t, err)
 }
 
+func contractorCannotFixDeal(
+	t *testing.T, c *Contractor, o *oracle.Oracle, idxs []int) {
+	ftime := c.DLCBuilder.DLC().Conds.FixingTime
+
+	// receive signset
+	signSet, err := o.SignSet(ftime)
+	assert.NoError(t, err)
+
+	// fail to fix deal with the signset
+	err = c.DLCBuilder.FixDeal(&signSet, idxs)
+	assert.Error(t, err)
+}
+
 func contractorExecuteContract(t *testing.T, c *Contractor) {
 	err := c.DLCBuilder.ExecuteContract()
 	assert.NoError(t, err)
@@ -176,4 +189,38 @@ func contractorShouldReceiveFundsByFixedDeal(
 	actual := int64(balance)
 	feeAtMost := float64(1000)
 	assert.InDelta(t, expected, actual, feeAtMost)
+}
+
+func contractorRefund(t *testing.T, c *Contractor) {
+	err := c.DLCBuilder.SendRefundTx()
+	assert.NoError(t, err)
+
+	_, err = rpc.Generate(1)
+	assert.NoError(t, err)
+}
+
+func contractorCannotRefund(t *testing.T, c *Contractor) {
+	err := c.DLCBuilder.SendRefundTx()
+	assert.Error(t, err)
+}
+
+func contractorShouldReceiveRefund(
+	t *testing.T, c *Contractor, balanceBefore btcutil.Amount) {
+
+	balance, err := c.balance()
+	assert.NoError(t, err)
+
+	// expected_balance = balance_before - fee
+	expected := int64(balanceBefore)
+	actual := int64(balance)
+	feeAtMost := float64(1000)
+	assert.InDelta(t, expected, actual, feeAtMost)
+}
+
+func waitUntil(t *testing.T, height uint32) {
+	curHeight, err := rpc.GetBlockCount()
+	assert.NoError(t, err)
+
+	_, err = rpc.Generate(uint32(int64(height) - curHeight))
+	assert.NoError(t, err)
 }
