@@ -123,3 +123,21 @@ func contractorSendFundTx(t *testing.T, c *Contractor) {
 	err = c.DLCBuilder.SendFundTx()
 	assert.NoError(t, err)
 }
+
+func contractorFixDeal(
+	t *testing.T, c *Contractor, o *oracle.Oracle, idxs []int) {
+	ftime := c.DLCBuilder.DLC().Conds.FixingTime
+
+	// receive signset
+	signSet, err := o.SignSet(ftime)
+	assert.NoError(t, err)
+
+	// fix deal with the signset
+	err = c.DLCBuilder.FixDeal(&signSet, idxs)
+	assert.NoError(t, err)
+}
+
+func contractorSendCETxAndClosingTx(t *testing.T, c *Contractor) {
+	err := c.DLCBuilder.ExecuteContract()
+	assert.NoError(t, err)
+}

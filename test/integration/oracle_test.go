@@ -29,7 +29,7 @@ func TestOracleCommitAndSign(t *testing.T) {
 	fixedWeather := oracleFixesWeather(t, olivia, fixingTime)
 
 	// When Alice fixes a deal using Olivia's sign and singed weather info
-	contractorFixesDeal(t, alice, olivia)
+	contractorFixesWeatherDeal(t, alice, olivia)
 
 	// Then The fixed deal should be a subset of the fixed weather info
 	shouldFixedDealSameWithFixedWeather(t, alice, fixedWeather)
@@ -94,17 +94,9 @@ func randomMsg(msgs [][][]byte) [][]byte {
 	return msgs[idx]
 }
 
-func contractorFixesDeal(t *testing.T, c *Contractor, o *oracle.Oracle) {
-	ftime := c.DLCBuilder.DLC().Conds.FixingTime
-
-	// receive signset
-	signSet, err := o.SignSet(ftime)
-	assert.NoError(t, err)
-
-	// fix deal with the signset
+func contractorFixesWeatherDeal(t *testing.T, c *Contractor, o *oracle.Oracle) {
 	idxs := []int{0, 1} // use only weather and temperature
-	err = c.DLCBuilder.FixDeal(&signSet, idxs)
-	assert.NoError(t, err)
+	contractorFixDeal(t, c, o, idxs)
 }
 
 func shouldFixedDealSameWithFixedWeather(t *testing.T, c *Contractor, fixedWeather [][]byte) {

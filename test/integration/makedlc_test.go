@@ -8,16 +8,19 @@ import (
 
 	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/dlc"
+	"github.com/dgarage/dlc/internal/oracle"
 	"github.com/dgarage/dlc/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestContractorMakeDLC(t *testing.T) {
-	// Given an oracle "Olivia" who publishes random a 2-digit number everday like lottery
+// Senario: There's a `lottery` oracle who publishes a random digit number everyday,
+// and 2 parties bet on tomorrow's numbers randomly
+func TestContractorMakeAndExecuteDLC(t *testing.T) {
+	// Given an oracle "Olivia"
 	nDigit := 2
 	olivia, _ := newOracle("Olivia", nDigit)
 
-	// And next announcement time is noon tomorrow
+	// And next announcement time
 	fixingTime := nextLotteryAnnouncement()
 
 	// And a contractor "Alice"
@@ -28,10 +31,12 @@ func TestContractorMakeDLC(t *testing.T) {
 	bob, _ := newContractor("Bob")
 	contratorHasBalance(t, bob, 2*btcutil.SatoshiPerBitcoin)
 
-	// And Alice and Bob bet on all cases
+	// -- Making DLC --
+
+	// When Alice and Bob bet on all cases
 	contractorsBetOnAllDigitPatters(t, alice, bob, nDigit, fixingTime)
 
-	// When Alice offers a DLC to Bob
+	// And Alice offers a DLC to Bob
 	contractorGetCommitmentsFromOracle(t, alice, olivia)
 	contractorOfferCounterparty(t, alice, bob)
 
@@ -44,8 +49,20 @@ func TestContractorMakeDLC(t *testing.T) {
 
 	// And Bob sends fund tx to the network
 	contractorSendFundTx(t, bob)
+
+	// -- Executing Contract --
+
+	// When Olivia fixes a number
+	oracleFixLottery(t, olivia, nDigit, fixingTime)
+
+	// And Alice fixes a deal using Olivia's messages and sign
+	contractorFixLotteryDeal(t, alice, olivia, nDigit)
+
+	// And Alice sends CETx and closing tx
+	contractorSendCETxAndClosingTx(t, alice)
 }
 
+// nextLotteryAnnouncement returns time of tomorrow noon
 func nextLotteryAnnouncement() time.Time {
 	tomorrow := time.Now().AddDate(0, 0, 1)
 	year, month, day := tomorrow.Date()
@@ -79,7 +96,7 @@ func randomDealsForAllDigitPatterns(nDigit, famt int) []*dlc.Deal {
 }
 
 func randomDealAmts(famt int) (btcutil.Amount, btcutil.Amount) {
-	s := rand.NewSource(time.Now().Unix())
+	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 	a := r.Intn(famt + 1)
 	b := famt - a
@@ -95,4 +112,36 @@ func nDigitToBytes(d int, n int) [][]byte {
 		d = d / 10
 	}
 	return b
+}
+
+func oracleFixLottery(
+	t *testing.T, o *oracle.Oracle, n int, ftime time.Time) {
+	msgs := nDigitToBytes(randomNdigit(n), n)
+
+	err := o.FixMsgs(ftime, msgs)
+	assert.NoError(t, err)
+}
+
+func randomNdigit(n int) (d int) {
+	for i := 0; i < n; i++ {
+		d = d + randomDigit()*int(math.Pow10(i))
+	}
+	return
+}
+
+func randomDigit() int {
+	s := rand.NewSource(time.Now().UnixNano())
+	return rand.New(s).Intn(10)
+}
+
+func contractorFixLotteryDeal(
+	t *testing.T, c *Contractor, o *oracle.Oracle, n int) {
+
+	// use all messages that oracle publishes
+	idxs := []int{}
+	for i := 0; i < n; i++ {
+		idxs = append(idxs, i)
+	}
+
+	contractorFixDeal(t, c, o, idxs)
 }
