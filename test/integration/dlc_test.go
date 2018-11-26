@@ -38,7 +38,8 @@ func TestContractorMakeAndExecuteDLC(t *testing.T) {
 	// -- Making DLC --
 
 	// When Alice and Bob bet on tomorrow's lottery
-	contractorsBetOnLottery(t, alice, bob, nDigit, fixingTime, 0)
+	contractorsBetOnLottery(
+		t, alice, bob, nDigit, fixingTime, blockHeightAfterDays(2))
 
 	// And Alice offers a DLC to Bob
 	contractorGetCommitmentsFromOracle(t, alice, olivia)
@@ -97,7 +98,7 @@ func TestContractorRefundDLC(t *testing.T) {
 	// -- Making DLC --
 
 	// When Alice and Bob bet on tomorrow's lottery
-	refundUnlockAt := blockHeighAfter(2) // block height of 2 days later
+	refundUnlockAt := blockHeightAfterDays(2) // block height of 2 days later
 	contractorsBetOnLottery(t, alice, bob, nDigit, fixingTime, refundUnlockAt)
 
 	// And Alice offers a DLC to Bob
@@ -149,7 +150,7 @@ func nextLotteryAnnouncement() time.Time {
 	return time.Date(year, month, day, 12, 0, 0, 0, tomorrow.Location())
 }
 
-func blockHeighAfter(days int) uint32 {
+func blockHeightAfterDays(days int) uint32 {
 	unlockAt := time.Now().AddDate(0, 0, days)
 	d := time.Until(unlockAt)
 	timePerBlock := chaincfg.RegressionNetParams.TargetTimePerBlock
