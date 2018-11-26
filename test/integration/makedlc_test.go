@@ -25,11 +25,13 @@ func TestContractorMakeAndExecuteDLC(t *testing.T) {
 
 	// And a contractor "Alice"
 	alice, _ := newContractor("Alice")
-	contratorHasBalance(t, alice, 2*btcutil.SatoshiPerBitcoin)
+	balanceA := btcutil.Amount(2 * btcutil.SatoshiPerBitcoin)
+	contratorHasBalance(t, alice, balanceA)
 
 	// And a contractor "Bob"
 	bob, _ := newContractor("Bob")
-	contratorHasBalance(t, bob, 2*btcutil.SatoshiPerBitcoin)
+	balanceB := btcutil.Amount(2 * btcutil.SatoshiPerBitcoin)
+	contratorHasBalance(t, bob, balanceB)
 
 	// -- Making DLC --
 
@@ -50,16 +52,25 @@ func TestContractorMakeAndExecuteDLC(t *testing.T) {
 	// And Bob sends fund tx to the network
 	contractorSendFundTx(t, bob)
 
+	// Then Alice and Bob should have remaining balance after funding
+	contractorShouldHaveBalanceAfterFunding(t, alice, balanceA)
+	contractorShouldHaveBalanceAfterFunding(t, bob, balanceB)
+
 	// -- Executing Contract --
 
 	// When Olivia fixes a number
 	oracleFixLottery(t, olivia, nDigit, fixingTime)
 
-	// And Alice fixes a deal using Olivia's messages and sign
+	// And Alice and Bob fixe a deal using Olivia's messages and sign
 	contractorFixLotteryDeal(t, alice, olivia, nDigit)
+	contractorFixLotteryDeal(t, bob, olivia, nDigit)
 
 	// And Alice sends CETx and closing tx
-	contractorSendCETxAndClosingTx(t, alice)
+	contractorExecuteContract(t, alice)
+
+	// Alice and Bob should receive funds accoding to the fixed deal
+	contractorShouldReceiveFundsByFixedDeal(t, alice, balanceA)
+	contractorShouldReceiveFundsByFixedDeal(t, bob, balanceB)
 }
 
 // nextLotteryAnnouncement returns time of tomorrow noon

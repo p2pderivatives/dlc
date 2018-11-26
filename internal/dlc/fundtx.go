@@ -113,6 +113,11 @@ func (d *DLC) fundAmount() (btcutil.Amount, error) {
 	return amt1 + amt2, nil
 }
 
+// FundAmt returns amt funded by the party
+func (b *Builder) FundAmt() btcutil.Amount {
+	return b.dlc.Conds.FundAmts[b.party]
+}
+
 // Tx sizes for fee estimation
 const fundTxBaseSize = int64(55)
 const fundTxInSize = int64(149)

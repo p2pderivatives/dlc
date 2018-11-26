@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/btcsuite/btcutil"
 	"github.com/dgarage/dlc/internal/dlc"
 	"github.com/dgarage/dlc/internal/wallet"
 )
@@ -36,4 +37,21 @@ func (c *Contractor) createDLCBuilder(
 
 func (c *Contractor) unlockWallet() {
 	c.Wallet.Unlock(c.privpass)
+}
+
+func (c *Contractor) balance() (total btcutil.Amount, err error) {
+	utxos, err := c.Wallet.ListUnspent()
+	if err != nil {
+		return
+	}
+
+	for _, utxo := range utxos {
+		amt, err := btcutil.NewAmount(utxo.Amount)
+		if err != nil {
+			return total, err
+		}
+		total += amt
+	}
+
+	return total, nil
 }

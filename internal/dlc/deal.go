@@ -46,3 +46,13 @@ func (d *DLC) DealByMsgs(msgs [][]byte) (idx int, deal *Deal, err error) {
 	err = fmt.Errorf("deal not found. msgs: %v", msgs)
 	return idx, deal, err
 }
+
+// FixedDealAmt returns fixed amt that the party will receive
+func (b *Builder) FixedDealAmt() (btcutil.Amount, error) {
+	_, deal, err := b.dlc.FixedDeal()
+	if err != nil {
+		return 0, err
+	}
+
+	return deal.Amts[b.party], nil
+}

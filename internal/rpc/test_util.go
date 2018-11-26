@@ -3,6 +3,7 @@ package rpc
 import (
 	"path/filepath"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcutil"
 )
 
@@ -31,4 +32,13 @@ func Faucet(addr btcutil.Address, amt btcutil.Amount) error {
 
 	_, err = c.Generate(1)
 	return err
+}
+
+// Generate generates n blocks in regtest
+func Generate(n uint32) ([]*chainhash.Hash, error) {
+	c, err := NewTestRPCClient()
+	if err != nil {
+		return nil, err
+	}
+	return c.Generate(n)
 }
