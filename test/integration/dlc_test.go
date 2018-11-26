@@ -35,8 +35,8 @@ func TestContractorMakeAndExecuteDLC(t *testing.T) {
 
 	// -- Making DLC --
 
-	// When Alice and Bob bet on all cases
-	contractorsBetOnAllDigitPatters(t, alice, bob, nDigit, fixingTime)
+	// When Alice and Bob bet on tomorrow's lottery
+	contractorsBetOnLottery(t, alice, bob, nDigit, fixingTime)
 
 	// And Alice offers a DLC to Bob
 	contractorGetCommitmentsFromOracle(t, alice, olivia)
@@ -80,9 +80,9 @@ func nextLotteryAnnouncement() time.Time {
 	return time.Date(year, month, day, 12, 0, 0, 0, tomorrow.Location())
 }
 
-// The both contractors agree on conditions of DLC
-// In this case, random 5-digit numbers and random deals
-func contractorsBetOnAllDigitPatters(
+// The both contractors agree on random n-digit number lottery
+// by creating all patterns randomly
+func contractorsBetOnLottery(
 	t *testing.T, c1, c2 *Contractor, nDigit int, fixingTime time.Time) {
 
 	var onebtc btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin
