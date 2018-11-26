@@ -122,4 +122,58 @@ func contractorSendFundTx(t *testing.T, c *Contractor) {
 	assert.NoError(t, err)
 	err = c.DLCBuilder.SendFundTx()
 	assert.NoError(t, err)
+
+	_, err = rpc.Generate(1)
+	assert.NoError(t, err)
+}
+
+func contractorShouldHaveBalanceAfterFunding(
+	t *testing.T, c *Contractor, balanceBefore btcutil.Amount) {
+	fundAmt := c.DLCBuilder.FundAmt()
+	balance, err := c.balance()
+	assert.NoError(t, err)
+
+	// expected_balance = balance_before - fund_amount - fee
+	expected := int64(balanceBefore - fundAmt)
+	actual := int64(balance)
+	feeAtMost := float64(1000)
+	assert.InDelta(t, expected, actual, feeAtMost)
+}
+
+func contractorFixDeal(
+	t *testing.T, c *Contractor, o *oracle.Oracle, idxs []int) {
+	ftime := c.DLCBuilder.DLC().Conds.FixingTime
+
+	// receive signset
+	signSet, err := o.SignSet(ftime)
+	assert.NoError(t, err)
+
+	// fix deal with the signset
+	err = c.DLCBuilder.FixDeal(&signSet, idxs)
+	assert.NoError(t, err)
+}
+
+func contractorExecuteContract(t *testing.T, c *Contractor) {
+	err := c.DLCBuilder.ExecuteContract()
+	assert.NoError(t, err)
+
+	_, err = rpc.Generate(1)
+	assert.NoError(t, err)
+}
+
+func contractorShouldReceiveFundsByFixedDeal(
+	t *testing.T, c *Contractor, balanceBefore btcutil.Amount) {
+
+	fundAmt := c.DLCBuilder.FundAmt()
+	dealAmt, err := c.DLCBuilder.FixedDealAmt()
+	assert.NoError(t, err)
+	balance, err := c.balance()
+	assert.NoError(t, err)
+
+	// expected_balance =
+	//   balance_before - fund_amount + deal_amount - fee
+	expected := int64(balanceBefore - fundAmt + dealAmt)
+	actual := int64(balance)
+	feeAtMost := float64(1000)
+	assert.InDelta(t, expected, actual, feeAtMost)
 }

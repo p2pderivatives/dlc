@@ -107,3 +107,23 @@ func genAddSignToPrivkeyFunc(
 		return p, nil
 	}
 }
+
+// ExecuteContract sends CETx and closing tx
+func (b *Builder) ExecuteContract() error {
+	cetx, err := b.SignedContractExecutionTx()
+	if err != nil {
+		return err
+	}
+	cltx, err := b.SignedClosingTx(cetx)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.wallet.SendRawTransaction(cetx)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.wallet.SendRawTransaction(cltx)
+	return err
+}

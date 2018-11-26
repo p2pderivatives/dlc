@@ -13,7 +13,7 @@ import (
 )
 
 // WitnessSignature returns witness signature
-// by creating a new keyset and signing tx with its privkey
+// by signing tx with the privkey of given pubkey
 func (w *wallet) WitnessSignature(
 	tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
 ) ([]byte, error) {
@@ -30,11 +30,29 @@ func (w *wallet) WitnessSignature(
 	return sign, err
 }
 
+// WitnessSignatureWithCallback does the same with WitnessSignature does,
+// but applying a func PrivateKeyConverter to raw privkey and use the result
+// as privkey for calculating witness signature
 func (w *wallet) WitnessSignatureWithCallback(
 	tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,
 	privkeyConverter PrivateKeyConverter,
-) (sign []byte, err error) {
-	return
+) ([]byte, error) {
+	mpaddr, err := w.managedPubKeyAddressFromPubkey(pub)
+	if err != nil {
+		return nil, err
+	}
+
+	rawpriv, err := mpaddr.PrivKey()
+	if err != nil {
+		return nil, err
+	}
+	priv, err := privkeyConverter(rawpriv)
+	if err != nil {
+		return nil, err
+	}
+
+	sign, err := script.WitnessSignature(tx, idx, int64(amt), sc, priv)
+	return sign, err
 }
 
 // WitnessSignTxByIdxs returns witnesses associated to txins at given indices
