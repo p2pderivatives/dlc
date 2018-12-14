@@ -13,7 +13,7 @@ This contract schema involves three parties, 2 contractors and an oracle. We cal
 * Olivia
   * Olivia publishes messages and signs of them
 
-You can read more details in [this article](https://medium.com/@gertjaap/discreet-log-contracts-invisible-smart-contracts-on-the-bitcoin-blockchain-cc8afbdbf0db) or [the paper](this paper](https://adiabat.github.io/dlc.pdf) for more details.
+You can read more details in [this article](https://medium.com/@gertjaap/discreet-log-contracts-invisible-smart-contracts-on-the-bitcoin-blockchain-cc8afbdbf0db) or [the paper](https://adiabat.github.io/dlc.pdf) for more details.
 
 ## Examples
 ### Communication between 3 parties
