@@ -32,11 +32,6 @@ import (
 )
 
 var bitcoinConf string
-
-// var seed []byte
-var pubpass string
-var privpass string
-var walletName string
 var walletDir string
 
 // rootCmd represents the base command when called without any subcommands
@@ -57,14 +52,10 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringVar(
 		&bitcoinConf, "conf", "", "bitcoin config file")
+	rootCmd.MarkPersistentFlagRequired("conf")
 	rootCmd.PersistentFlags().StringVar(
 		&walletDir, "walletdir", "", "directory path to store wallets")
-	rootCmd.PersistentFlags().StringVar(
-		&walletName, "walletname", "", "wallet name")
-	rootCmd.PersistentFlags().StringVar(
-		&pubpass, "pubpass", "", "public passphrase")
-	rootCmd.PersistentFlags().StringVar(
-		&privpass, "privpass", "", "private passphrase")
+	rootCmd.MarkPersistentFlagRequired("walletdir")
 }
 
 func loadNetParams(cfgPath string) (*chaincfg.Params, error) {

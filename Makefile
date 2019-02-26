@@ -7,5 +7,5 @@ stop_bitcoind:
 generate_mocks:
 	./scripts/generate_mocks.sh
 
-cli:
-	go build -o bin/dlccli ./cmd/dlccli
+demo_cli:
+	go build -o bin/dlcdemo-cli ./cmd/dlcdemo

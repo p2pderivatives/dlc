@@ -41,10 +41,9 @@ var _ wallet.Wallet = (*Wallet)(nil)
 func CreateWallet(
 	params *chaincfg.Params,
 	seed, pubPass, privPass []byte,
-	dbFilePath, walletName string) (wallet.Wallet, error) {
+	walletDir, walletName string) (wallet.Wallet, error) {
 
-	dbDirPath := filepath.Join(dbFilePath, params.Name)
-	db, err := createDB(dbDirPath, walletName+".db")
+	db, err := createDB(walletDir, walletName+".db")
 	if err != nil {
 		return nil, err
 	}
@@ -139,6 +138,21 @@ func createAccount(
 		_, e = scopedMgr.NewAccount(ns, accountName)
 		return e
 	})
+}
+
+// OpenWallet opens a wallet
+func OpenWallet(
+	params *chaincfg.Params, pubpass []byte,
+	walletDir string, walletName string,
+	rpcclient rpc.Client,
+) (wallet.Wallet, error) {
+	dbpath := filepath.Join(walletDir, walletName+".db")
+	wdb, err := walletdb.Open("bdb", dbpath)
+	if err != nil {
+		return nil, err
+	}
+
+	return Open(wdb, pubpass, params, rpcclient)
 }
 
 // Open loads a wallet from the passed db and public pass phrase.
