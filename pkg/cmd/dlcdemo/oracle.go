@@ -1,31 +1,66 @@
 package dlccli
 
 import (
+	"fmt"
+	"os"
+
+	_oracle "github.com/dgarage/dlc/internal/oracle"
 	"github.com/spf13/cobra"
 )
+
+var oracleName string
+var oracleRpoints int
 
 // oracleCmd represents the oracle command
 var oracleCmd = &cobra.Command{
 	Use:   "oracle",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "oracle commands",
+}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+var oracleRpointsCmd = &cobra.Command{
+	Use:   "rpoints",
+	Short: "Get commited R points from Oracle",
+	Run: func(cmd *cobra.Command, args []string) {
+		o := initOracle()
+		ftime := parseFixingTimeFlag()
+		p, err := o.PubkeySet(ftime)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		pjson, err := p.ToJSON()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println(string(pjson))
+	},
+}
+
+func initOracle() *_oracle.Oracle {
+	netParams := loadNetParams(bitcoinConf)
+	o, err := _oracle.New(oracleName, netParams, oracleRpoints)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	return o
 }
 
 func init() {
+	// subcomand root
+	oracleCmd.PersistentFlags().IntVar(
+		&oracleRpoints, "rpoints", 0, "number of commited R points")
+	oracleCmd.MarkPersistentFlagRequired("rpoints")
+	oracleCmd.PersistentFlags().StringVar(
+		&oracleName, "oraclename", "", "oracle name")
+	oracleCmd.MarkPersistentFlagRequired("oraclename")
+	oracleCmd.PersistentFlags().StringVar(
+		&fixingTime, "fixingtime", "", "fixing time")
+	oracleCmd.MarkPersistentFlagRequired("fixingtime")
 	rootCmd.AddCommand(oracleCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// oracleCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// oracleCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Rpoints
+	oracleCmd.AddCommand(oracleRpointsCmd)
 }

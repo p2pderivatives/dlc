@@ -29,11 +29,7 @@ var walletsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new wallet",
 	Run: func(cmd *cobra.Command, args []string) {
-		netParams, err := loadNetParams(bitcoinConf)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		netParams := loadNetParams(bitcoinConf)
 
 		// TODO: give seed as command line parameter
 		seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
@@ -107,11 +103,7 @@ var balanceCmd = &cobra.Command{
 }
 
 func openWallet() wallet.Wallet {
-	netParams, err := loadNetParams(bitcoinConf)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	netParams := loadNetParams(bitcoinConf)
 
 	rpcclient, err := rpc.NewClient(bitcoinConf)
 	if err != nil {
@@ -131,6 +123,9 @@ func openWallet() wallet.Wallet {
 
 func init() {
 	// subcommand root
+	walletsCmd.PersistentFlags().StringVar(
+		&walletDir, "walletdir", "", "directory path to store wallets")
+	walletsCmd.MarkPersistentFlagRequired("walletdir")
 	rootCmd.AddCommand(walletsCmd)
 
 	// create

@@ -26,6 +26,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/spf13/cobra"
@@ -33,6 +34,7 @@ import (
 
 var bitcoinConf string
 var walletDir string
+var fixingTime string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -53,29 +55,28 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(
 		&bitcoinConf, "conf", "", "bitcoin config file")
 	rootCmd.MarkPersistentFlagRequired("conf")
-	rootCmd.PersistentFlags().StringVar(
-		&walletDir, "walletdir", "", "directory path to store wallets")
-	rootCmd.MarkPersistentFlagRequired("walletdir")
 }
 
-func loadNetParams(cfgPath string) (*chaincfg.Params, error) {
+func loadNetParams(cfgPath string) *chaincfg.Params {
 	cfgFile, err := os.Open(cfgPath)
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	defer cfgFile.Close()
 
 	content, err := ioutil.ReadAll(cfgFile)
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	if extractValue(content, "regtest") == "1" {
-		return &chaincfg.RegressionNetParams, nil
+		return &chaincfg.RegressionNetParams
 	} else if extractValue(content, "testnet") == "1" {
-		return &chaincfg.TestNet3Params, nil
+		return &chaincfg.TestNet3Params
 	} else {
-		return &chaincfg.MainNetParams, nil
+		return &chaincfg.MainNetParams
 	}
 }
 
@@ -89,4 +90,13 @@ func extractValue(content []byte, key string) string {
 	}
 
 	return strings.Split(string(matches[0]), "=")[1]
+}
+
+func parseFixingTimeFlag() time.Time {
+	t, err := time.Parse(time.RFC3339, fixingTime)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return t
 }

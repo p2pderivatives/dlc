@@ -8,9 +8,9 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/pkg/dlc"
 	"github.com/dgarage/dlc/internal/oracle"
 	"github.com/dgarage/dlc/internal/rpc"
+	"github.com/dgarage/dlc/pkg/dlc"
 	"github.com/dgarage/dlc/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )

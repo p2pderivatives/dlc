@@ -17,11 +17,12 @@ type Oracle struct {
 }
 
 // New creates a oracle
-func New(name string, params chaincfg.Params, nRpoints int) (*Oracle, error) {
+func New(name string, params *chaincfg.Params, nRpoints int) (*Oracle, error) {
 	if isMainNet(params) {
 		return nil, fmt.Errorf("mainnet isn't supported yet")
 	}
 
+	// TODO: pass master key from outside
 	mKey, err := randMasterKey(name, params)
 	if err != nil {
 		return nil, err
@@ -31,12 +32,12 @@ func New(name string, params chaincfg.Params, nRpoints int) (*Oracle, error) {
 	return oracle, nil
 }
 
-func isMainNet(params chaincfg.Params) bool {
+func isMainNet(params *chaincfg.Params) bool {
 	return params.Net == chaincfg.MainNetParams.Net
 }
 
 // randMasterKey creates oracle's random master key
-func randMasterKey(name string, params chaincfg.Params) (*hdkeychain.ExtendedKey, error) {
+func randMasterKey(name string, params *chaincfg.Params) (*hdkeychain.ExtendedKey, error) {
 	seed := chainhash.DoubleHashB([]byte(name))
-	return hdkeychain.NewMaster(seed, &params)
+	return hdkeychain.NewMaster(seed, params)
 }
