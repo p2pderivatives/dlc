@@ -55,14 +55,7 @@ func CreateWallet(
 // createDB creates a new db at specified path
 func createDB(dbDirPath, dbname string) (walletdb.DB, error) {
 	dbPath := filepath.Join(dbDirPath, dbname)
-	exists, err := fileExists(dbPath)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, errors.New("something already exists on this filepath")
-	}
-	err = os.MkdirAll(dbDirPath, 0700)
+	err := os.MkdirAll(dbDirPath, 0700)
 	if err != nil {
 		return nil, err
 	}
