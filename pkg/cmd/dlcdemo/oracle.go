@@ -5,11 +5,13 @@ import (
 	"os"
 
 	_oracle "github.com/dgarage/dlc/internal/oracle"
+	"github.com/dgarage/dlc/pkg/oracle"
 	"github.com/spf13/cobra"
 )
 
 var oracleName string
 var oracleRpoints int
+var fixingValue int
 
 // oracleCmd represents the oracle command
 var oracleCmd = &cobra.Command{
@@ -22,8 +24,7 @@ var oracleRpointsCmd = &cobra.Command{
 	Short: "Get commited R points from Oracle",
 	Run: func(cmd *cobra.Command, args []string) {
 		o := initOracle()
-		ftime := parseFixingTimeFlag()
-		p, err := o.PubkeySet(ftime)
+		p, err := o.PubkeySet(parseFixingTimeFlag())
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -34,6 +35,36 @@ var oracleRpointsCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		fmt.Println(string(pjson))
+	},
+}
+
+var oracleMsgsCmd = &cobra.Command{
+	Use: "messages",
+}
+
+var oracleFixMsgCmd = &cobra.Command{
+	Use:   "fix",
+	Short: "Fix message",
+	Run: func(cmd *cobra.Command, args []string) {
+		o := initOracle()
+		o.InitDB()
+
+		msgs := oracle.NumberToByteMsgs(fixingValue, oracleRpoints)
+
+		ftime := parseFixingTimeFlag()
+		o.FixMsgs(ftime, msgs)
+		s, err := o.SignSet(ftime)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		sjson, err := s.ToJSON()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println(string(sjson))
 	},
 }
 
@@ -63,4 +94,13 @@ func init() {
 
 	// Rpoints
 	oracleCmd.AddCommand(oracleRpointsCmd)
+
+	// messagees
+	oracleCmd.AddCommand(oracleMsgsCmd)
+
+	// fix message
+	oracleFixMsgCmd.PersistentFlags().IntVar(
+		&fixingValue, "fixingvalue", 0, "fixing value")
+	oracleFixMsgCmd.MarkPersistentFlagRequired("fixingvalue")
+	oracleMsgsCmd.AddCommand(oracleFixMsgCmd)
 }

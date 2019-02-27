@@ -3,6 +3,7 @@ package oracle
 import (
 	"encoding/hex"
 	"encoding/json"
+	"math"
 
 	"github.com/btcsuite/btcd/btcec"
 )
@@ -37,4 +38,49 @@ func pubkeyToStr(pub *btcec.PublicKey) string {
 type SignSet struct {
 	Msgs  [][]byte
 	Signs [][]byte
+}
+
+// ToJSON serialize SignSet to JSON
+func (sigset *SignSet) ToJSON() ([]byte, error) {
+	value := ByteMsgsToNumber(sigset.Msgs)
+
+	var sigs []string
+	for _, s := range sigset.Signs {
+		sigs = append(sigs, hex.EncodeToString(s))
+	}
+
+	v := map[string]interface{}{
+		"value": value,
+		"sigs":  sigs,
+	}
+
+	s, err := json.Marshal(v)
+	return s, err
+}
+
+// NumberToByteMsgs converts number value to byte messages
+func NumberToByteMsgs(v int, nDigits int) [][]byte {
+	msgs := [][]byte{}
+
+	for i := 0; i < nDigits; i++ {
+		d := int(math.Pow(10, float64(nDigits-1-i)))
+		b := []byte{byte(v / d)}
+		msgs = append(msgs, b)
+		v = v % d
+	}
+
+	return msgs
+}
+
+// ByteMsgsToNumber converts byte messages to number value
+func ByteMsgsToNumber(msgs [][]byte) int {
+	n := len(msgs)
+
+	v := 0
+	for i, m := range msgs {
+		d := int(math.Pow(10, float64(n-i-1)))
+		v += int(m[0]) * d
+	}
+
+	return v
 }
