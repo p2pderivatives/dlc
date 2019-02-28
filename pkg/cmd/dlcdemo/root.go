@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/dgarage/dlc/internal/rpc"
 	"github.com/spf13/cobra"
 )
 
@@ -99,4 +100,13 @@ func parseFixingTimeFlag() time.Time {
 		os.Exit(1)
 	}
 	return t
+}
+
+func initRPCClient() rpc.Client {
+	rpcclient, err := rpc.NewClient(bitcoinConf)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return rpcclient
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/spf13/cobra"
 
-	"github.com/dgarage/dlc/internal/rpc"
 	_wallet "github.com/dgarage/dlc/internal/wallet"
 	"github.com/dgarage/dlc/pkg/wallet"
 )
@@ -66,7 +65,7 @@ var addrsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create address",
 	Run: func(cmd *cobra.Command, args []string) {
-		w := openWallet()
+		w := openWallet(pubpass, walletDir, walletName)
 		addr, err := w.NewAddress()
 		if err != nil {
 			fmt.Println(err)
@@ -81,7 +80,7 @@ var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Check total balance",
 	Run: func(cmd *cobra.Command, args []string) {
-		w := openWallet()
+		w := openWallet(pubpass, walletDir, walletName)
 		utxos, err := w.ListUnspent()
 		if err != nil {
 			fmt.Println(err)
@@ -102,17 +101,12 @@ var balanceCmd = &cobra.Command{
 	},
 }
 
-func openWallet() wallet.Wallet {
+func openWallet(p string, dir string, name string) wallet.Wallet {
 	netParams := loadNetParams(bitcoinConf)
-
-	rpcclient, err := rpc.NewClient(bitcoinConf)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	rpcclient := initRPCClient()
 
 	w, err := _wallet.OpenWallet(
-		netParams, []byte(pubpass), walletDir, walletName, rpcclient)
+		netParams, []byte(p), dir, name, rpcclient)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
