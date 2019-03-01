@@ -3,7 +3,6 @@ package dlccli
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	_oracle "github.com/dgarage/dlc/internal/oracle"
 	"github.com/dgarage/dlc/pkg/oracle"
@@ -25,16 +24,12 @@ var oracleRpointsCmd = &cobra.Command{
 	Short: "Get commited R points from Oracle",
 	Run: func(cmd *cobra.Command, args []string) {
 		o := initOracle()
+
 		p, err := o.PubkeySet(parseFixingTimeFlag())
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
+
 		pjson, err := json.Marshal(p)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 		fmt.Println(string(pjson))
 	},
 }
@@ -55,16 +50,11 @@ var oracleFixMsgCmd = &cobra.Command{
 		ftime := parseFixingTimeFlag()
 		o.FixMsgs(ftime, msgs)
 		s, err := o.SignSet(ftime)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 
 		sjson, err := json.Marshal(s)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
+
 		fmt.Println(string(sjson))
 	},
 }
@@ -72,10 +62,7 @@ var oracleFixMsgCmd = &cobra.Command{
 func initOracle() *_oracle.Oracle {
 	netParams := loadNetParams(bitcoinConf)
 	o, err := _oracle.New(oracleName, netParams, oracleRpoints)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 
 	return o
 }

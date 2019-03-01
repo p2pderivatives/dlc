@@ -46,10 +46,8 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	err := rootCmd.Execute()
+	errorHandler(err)
 }
 
 func init() {
@@ -60,17 +58,11 @@ func init() {
 
 func loadNetParams(cfgPath string) *chaincfg.Params {
 	cfgFile, err := os.Open(cfgPath)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 	defer cfgFile.Close()
 
 	content, err := ioutil.ReadAll(cfgFile)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 
 	if extractValue(content, "regtest") == "1" {
 		return &chaincfg.RegressionNetParams
@@ -95,18 +87,19 @@ func extractValue(content []byte, key string) string {
 
 func parseFixingTimeFlag() time.Time {
 	t, err := time.Parse(time.RFC3339, fixingTime)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 	return t
 }
 
 func initRPCClient() rpc.Client {
 	rpcclient, err := rpc.NewClient(bitcoinConf)
+	errorHandler(err)
+	return rpcclient
+}
+
+func errorHandler(err error) {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	return rpcclient
 }

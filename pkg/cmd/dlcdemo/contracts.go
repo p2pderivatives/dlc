@@ -44,6 +44,7 @@ func initCreateContractCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create contract",
 		Run: func(cmd *cobra.Command, args []string) {
+			var err error
 			party1 := initFirstParty()
 			party2 := initSecondParty()
 			pubset := parseOraclePubkey()
@@ -120,21 +121,14 @@ func loadDLCConditions() *dlc.Conditions {
 
 	conds, err := dlc.NewConditions(
 		ftime, famt1, famt2, ffrate, rfrate, lc, deals)
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 
 	return conds
 }
 
 func loadDeals() []*dlc.Deal {
 	f, err := os.Open(dealsFile)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 
 	// TOOD: give nDigits from outside
 	nDigits := 5
@@ -146,10 +140,7 @@ func loadDeals() []*dlc.Deal {
 		if err == io.EOF {
 			break
 		}
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 
 		deal := convertRowToDeal(row, nDigits)
 		deals = append(deals, deal)
@@ -160,22 +151,14 @@ func loadDeals() []*dlc.Deal {
 
 func convertRowToDeal(rec []string, nDigits int) *dlc.Deal {
 	v, err := strconv.Atoi(rec[0])
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
+
 	msgs := oracle.NumberToByteMsgs(v, nDigits)
 
 	amt1, err := strconv.Atoi(rec[1])
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 	amt2, err := strconv.Atoi(rec[2])
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 
 	deal := dlc.NewDeal(
 		btcutil.Amount(amt1),
@@ -213,10 +196,7 @@ func initSecondParty() *Contractor {
 
 func parseOraclePubkey() *oracle.PubkeySet {
 	data, err := ioutil.ReadFile(opubfile)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 
 	pubset := &oracle.PubkeySet{}
 	json.Unmarshal(data, pubset)

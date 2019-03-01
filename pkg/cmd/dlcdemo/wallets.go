@@ -3,7 +3,6 @@ package dlccli
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
 
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
@@ -32,25 +31,16 @@ var walletsCreateCmd = &cobra.Command{
 
 		// TODO: give seed as command line parameter
 		seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 		fmt.Printf("Seed: %s\n", hex.EncodeToString(seed))
 
 		w, err := _wallet.CreateWallet(netParams,
 			seed, []byte(pubpass), []byte(privpass),
 			walletDir, walletName)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 
 		err = w.Close()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 
 		fmt.Println("Wallet created")
 	},
@@ -67,10 +57,7 @@ var addrsCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		w := openWallet(pubpass, walletDir, walletName)
 		addr, err := w.NewAddress()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 
 		fmt.Printf("%s\n", addr.EncodeAddress())
 	},
@@ -82,18 +69,12 @@ var balanceCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		w := openWallet(pubpass, walletDir, walletName)
 		utxos, err := w.ListUnspent()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		errorHandler(err)
 
 		var total btcutil.Amount
 		for _, utxo := range utxos {
 			amt, err := btcutil.NewAmount(utxo.Amount)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			errorHandler(err)
 			total += amt
 		}
 
@@ -107,10 +88,7 @@ func openWallet(p string, dir string, name string) wallet.Wallet {
 
 	w, err := _wallet.OpenWallet(
 		netParams, []byte(p), dir, name, rpcclient)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	errorHandler(err)
 
 	return w
 }
