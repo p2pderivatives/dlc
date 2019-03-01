@@ -1,6 +1,7 @@
 package dlccli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -29,7 +30,7 @@ var oracleRpointsCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		pjson, err := p.ToJSON()
+		pjson, err := json.Marshal(p)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -59,7 +60,7 @@ var oracleFixMsgCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		sjson, err := s.ToJSON()
+		sjson, err := json.Marshal(s)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

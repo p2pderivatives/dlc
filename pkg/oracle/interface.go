@@ -14,24 +14,62 @@ type PubkeySet struct {
 	CommittedRpoints []*btcec.PublicKey
 }
 
-// ToJSON serialize PubkeySet to JSON
-func (pubset *PubkeySet) ToJSON() ([]byte, error) {
+// PubkeySetJSON is serialized PubkeySet
+type PubkeySetJSON struct {
+	Pubkey           string   `json:"pubkey"`
+	CommittedRpoints []string `json:"rpoints"`
+}
+
+// MarshalJSON serialize PubkeySet to JSON
+func (pubset PubkeySet) MarshalJSON() ([]byte, error) {
+	pubkey := pubkeyToStr(pubset.Pubkey)
 	var rpoints []string
 	for _, R := range pubset.CommittedRpoints {
 		rpoints = append(rpoints, pubkeyToStr(R))
 	}
 
-	v := map[string]interface{}{
-		"pubkey":  pubkeyToStr(pubset.Pubkey),
-		"rpoints": rpoints,
-	}
-
-	s, err := json.Marshal(v)
+	s, err := json.Marshal(&PubkeySetJSON{
+		Pubkey:           pubkey,
+		CommittedRpoints: rpoints,
+	})
 	return s, err
 }
 
 func pubkeyToStr(pub *btcec.PublicKey) string {
 	return hex.EncodeToString(pub.SerializeCompressed())
+}
+
+// UnmarshalJSON deserialize JSON to PubkeySet
+func (pubset *PubkeySet) UnmarshalJSON(data []byte) error {
+	pjson := &PubkeySetJSON{}
+	json.Unmarshal(data, pjson)
+
+	pubkey, err := strToPubkey(pjson.Pubkey)
+	if err != nil {
+		return err
+	}
+
+	var rpoints []*btcec.PublicKey
+	for _, rstr := range pjson.CommittedRpoints {
+		r, err := strToPubkey(rstr)
+		if err != nil {
+			return err
+		}
+		rpoints = append(rpoints, r)
+	}
+
+	pubset.Pubkey = pubkey
+	pubset.CommittedRpoints = rpoints
+
+	return nil
+}
+
+func strToPubkey(str string) (*btcec.PublicKey, error) {
+	b, err := hex.DecodeString(str)
+	if err != nil {
+		return nil, err
+	}
+	return btcec.ParsePubKey(b, btcec.S256())
 }
 
 // SignSet contains fixed messages and signs
@@ -40,8 +78,8 @@ type SignSet struct {
 	Signs [][]byte
 }
 
-// ToJSON serialize SignSet to JSON
-func (sigset *SignSet) ToJSON() ([]byte, error) {
+// MarshalJSON serialize SignSet to JSON
+func (sigset SignSet) MarshalJSON() ([]byte, error) {
 	value := ByteMsgsToNumber(sigset.Msgs)
 
 	var sigs []string

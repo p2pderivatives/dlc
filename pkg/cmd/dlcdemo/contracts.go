@@ -3,8 +3,10 @@ package dlccli
 import (
 	"bufio"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -29,6 +31,7 @@ var redeemtxFeerate int
 
 // var refundLocktime string
 var dealsFile string
+var opubfile string
 var wallet1 string
 var wallet2 string
 var pubpass1 string
@@ -43,8 +46,14 @@ func initCreateContractCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			party1 := initFirstParty()
 			party2 := initSecondParty()
-			fmt.Println(party1)
-			fmt.Println(party2)
+			pubset := parseOraclePubkey()
+
+			// set oracle's pubkey
+			party1.builder.SetOraclePubkeySet(pubset)
+			party2.builder.SetOraclePubkeySet(pubset)
+
+			// TODO: rest of the steps
+
 			fmt.Println("Contract created")
 		},
 	}
@@ -67,6 +76,8 @@ func initCreateContractCmd() *cobra.Command {
 	// cmd.Flags().StringVar(&refund_locktime, "refund_locktime", "", "Locktime of refune tx")
 	cmd.Flags().StringVar(&dealsFile, "deals_file", "", "Path to a csv file that contains deals")
 	cmd.MarkFlagRequired("deals_file")
+	cmd.Flags().StringVar(&opubfile, "oracle_pubkey", "", "Path to oracle's pubkey json file")
+	cmd.MarkFlagRequired("oracle_pubkey")
 	cmd.Flags().StringVar(&walletDir, "walletdir", "", "directory path to store wallets")
 	cmd.MarkFlagRequired("walletdir")
 	cmd.Flags().StringVar(&wallet1, "wallet1", "", "wallet name of First Party")
@@ -125,6 +136,7 @@ func loadDeals() []*dlc.Deal {
 		os.Exit(1)
 	}
 
+	// TOOD: give nDigits from outside
 	nDigits := 5
 
 	deals := []*dlc.Deal{}
@@ -197,6 +209,19 @@ func initSecondParty() *Contractor {
 		pubpass:  pubpass2,
 		privpass: privpass2,
 	}
+}
+
+func parseOraclePubkey() *oracle.PubkeySet {
+	data, err := ioutil.ReadFile(opubfile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	pubset := &oracle.PubkeySet{}
+	json.Unmarshal(data, pubset)
+
+	return pubset
 }
 
 func init() {
