@@ -1,6 +1,8 @@
 package dlc
 
 import (
+	"bytes"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -157,4 +159,14 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 	fundReqs := d.fundTxReqs
 	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
 	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
+}
+
+func txToHex(tx *wire.MsgTx) (string, error) {
+	// Serialize the transaction and convert to hex string.
+	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+	if err := tx.Serialize(buf); err != nil {
+		return "", err
+	}
+	h := hex.EncodeToString(buf.Bytes())
+	return h, nil
 }

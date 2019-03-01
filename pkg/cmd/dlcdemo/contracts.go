@@ -29,7 +29,7 @@ var address2 string
 var fundtxFeerate int
 var redeemtxFeerate int
 
-// var refundLocktime string
+var refundlc int
 var dealsFile string
 var opubfile string
 var wallet1 string
@@ -39,24 +39,80 @@ var pubpass2 string
 var privpass1 string
 var privpass2 string
 
+func runCreateContract(cmd *cobra.Command, args []string) {
+	var err error
+	party1 := initFirstParty()
+	party2 := initSecondParty()
+	pubset := parseOraclePubkey()
+
+	// Both set oracle's pubkey
+	party1.builder.SetOraclePubkeySet(pubset)
+	party2.builder.SetOraclePubkeySet(pubset)
+
+	// and prepare pubkeys
+	err = party1.builder.PreparePubkey()
+	errorHandler(err)
+
+	// FirstParty prepares draft
+	err = party1.builder.PrepareFundTxIns()
+	errorHandler(err)
+
+	// First Party sends offer to Second Party
+	dlc1 := *party1.builder.DLC()
+	party2.builder.CopyReqsFromCounterparty(&dlc1)
+
+	// Second Party signs CETxs and RefundTx
+	err = party2.builder.PreparePubkey()
+	errorHandler(err)
+	err = party2.builder.PrepareFundTxIns()
+	errorHandler(err)
+	ceSigs2, err := party2.builder.SignContractExecutionTxs()
+	errorHandler(err)
+	refundSig2, err := party2.builder.SignRefundTx()
+	errorHandler(err)
+
+	// FirstParty accepts sigs
+	dlc2 := *party2.builder.DLC()
+	party1.builder.CopyReqsFromCounterparty(&dlc2)
+	errorHandler(err)
+	err = party1.builder.AcceptCETxSigns(ceSigs2)
+	errorHandler(err)
+	err = party1.builder.AcceptRefundTxSign(refundSig2)
+	errorHandler(err)
+
+	// FirstParty signs CETxs and RefundTx and FundTx
+	ceSigs1, err := party1.builder.SignContractExecutionTxs()
+	errorHandler(err)
+	refundSig1, err := party1.builder.SignRefundTx()
+	errorHandler(err)
+	fundWits1, err := party1.builder.SignFundTx()
+	errorHandler(err)
+
+	// SecondParty accepts sigs
+	err = party2.builder.AcceptCETxSigns(ceSigs1)
+	errorHandler(err)
+	err = party2.builder.AcceptRefundTxSign(refundSig1)
+	errorHandler(err)
+	party2.builder.AcceptFundWitnesses(fundWits1)
+
+	// SecondParty create FundTx
+	_, err = party2.builder.SignFundTx()
+	errorHandler(err)
+	fundtx, err := party2.builder.FundTxHex()
+	errorHandler(err)
+	refundtx, err := party2.builder.RefundTxHex()
+	errorHandler(err)
+
+	fmt.Println("Contract created")
+	fmt.Printf("FundTx hex:\n%s\n", fundtx)
+	fmt.Printf("RefundTx hex:\n%s\n", refundtx)
+}
+
 func initCreateContractCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "create",
 		Short: "Create contract",
-		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-			party1 := initFirstParty()
-			party2 := initSecondParty()
-			pubset := parseOraclePubkey()
-
-			// set oracle's pubkey
-			party1.builder.SetOraclePubkeySet(pubset)
-			party2.builder.SetOraclePubkeySet(pubset)
-
-			// TODO: rest of the steps
-
-			fmt.Println("Contract created")
-		},
+		Run:   runCreateContract,
 	}
 
 	cmd.Flags().StringVar(&fixingTime, "fixingtime", "", "fixing time")
@@ -73,8 +129,8 @@ func initCreateContractCmd() *cobra.Command {
 	cmd.MarkFlagRequired("fundtx_feerate")
 	cmd.Flags().IntVar(&redeemtxFeerate, "redeemtx_feerate", 0, "Fee rate for refund tx, cetx, closing tx (satoshi/byte)")
 	cmd.MarkFlagRequired("redeemtx_feerate")
-	// cmd.MarkFlagRequired("refund_locktime")
-	// cmd.Flags().StringVar(&refund_locktime, "refund_locktime", "", "Locktime of refune tx")
+	cmd.Flags().IntVar(&refundlc, "refund_locktime", 0, "Locktime of refune tx (block height)")
+	cmd.MarkFlagRequired("refund_locktime")
 	cmd.Flags().StringVar(&dealsFile, "deals_file", "", "Path to a csv file that contains deals")
 	cmd.MarkFlagRequired("deals_file")
 	cmd.Flags().StringVar(&opubfile, "oracle_pubkey", "", "Path to oracle's pubkey json file")
@@ -115,7 +171,7 @@ func loadDLCConditions() *dlc.Conditions {
 	rfrate := btcutil.Amount(redeemtxFeerate)
 
 	// TODO: confirm how to convert timestamp to locktime
-	lc := uint32(1)
+	lc := uint32(refundlc)
 
 	deals := loadDeals()
 
@@ -170,6 +226,8 @@ func convertRowToDeal(rec []string, nDigits int) *dlc.Deal {
 
 func initFirstParty() *Contractor {
 	w := openWallet(pubpass1, walletDir, wallet1)
+	err := w.Unlock([]byte(privpass1))
+	errorHandler(err)
 	conds := loadDLCConditions()
 	b := dlc.NewBuilder(dlc.FirstParty, w, conds)
 
@@ -183,6 +241,8 @@ func initFirstParty() *Contractor {
 
 func initSecondParty() *Contractor {
 	w := openWallet(pubpass2, walletDir, wallet2)
+	err := w.Unlock([]byte(privpass2))
+	errorHandler(err)
 	conds := loadDLCConditions()
 	b := dlc.NewBuilder(dlc.SecondParty, w, conds)
 

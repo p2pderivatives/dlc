@@ -46,6 +46,8 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 		}
 	}
 
+	// TODO: verify fundtx
+
 	return tx, nil
 }
 
@@ -254,6 +256,16 @@ func (b *Builder) SendFundTx() error {
 	return err
 }
 
+// FundTxHex returns hex string of fund tx
+func (b *Builder) FundTxHex() (string, error) {
+	tx, err := b.dlc.FundTx()
+	if err != nil {
+		return "", err
+	}
+
+	return txToHex(tx)
+}
+
 // fundTxInAt returns indices of txin in fundtx by the party
 func (b *Builder) fundTxInAt() (idxs []int) {
 	nTxInMe := len(b.dlc.fundTxReqs.txIns[b.party])
@@ -262,7 +274,7 @@ func (b *Builder) fundTxInAt() (idxs []int) {
 		txinFrom = 0
 		txinTo = nTxInMe
 	} else {
-		nTxInCP := len(b.dlc.fundTxReqs.txIns[SecondParty])
+		nTxInCP := len(b.dlc.fundTxReqs.txIns[FirstParty])
 		txinFrom = nTxInCP
 		txinTo = txinFrom + nTxInMe
 	}
@@ -278,4 +290,7 @@ func (b *Builder) AcceptFundWitnesses(fundWits []wire.TxWitness) {
 	for idx, wit := range fundWits {
 		b.dlc.fundTxReqs.txIns[cparty][idx].Witness = wit
 	}
+
+	// TODO: verify
+
 }

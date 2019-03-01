@@ -164,3 +164,13 @@ func (b *Builder) SendRefundTx() error {
 	_, err = b.wallet.SendRawTransaction(tx)
 	return err
 }
+
+// RefundTxHex return hex string of refund tx
+func (b *Builder) RefundTxHex() (string, error) {
+	tx, err := b.dlc.SignedRefundTx()
+	if err != nil {
+		return "", err
+	}
+
+	return txToHex(tx)
+}
