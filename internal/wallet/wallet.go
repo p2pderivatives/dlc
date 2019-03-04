@@ -140,21 +140,6 @@ func createAccount(
 	})
 }
 
-// OpenWallet opens a wallet
-func OpenWallet(
-	params *chaincfg.Params, pubpass []byte,
-	walletDir string, walletName string,
-	rpcclient rpc.Client,
-) (wallet.Wallet, error) {
-	dbpath := filepath.Join(walletDir, walletName+".db")
-	wdb, err := walletdb.Open("bdb", dbpath)
-	if err != nil {
-		return nil, err
-	}
-
-	return Open(wdb, pubpass, params, rpcclient)
-}
-
 // Open loads a wallet from the passed db and public pass phrase.
 func Open(
 	db walletdb.DB, pubPass []byte, params *chaincfg.Params, rpcclient rpc.Client,

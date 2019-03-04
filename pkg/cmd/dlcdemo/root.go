@@ -56,7 +56,7 @@ func init() {
 	rootCmd.MarkPersistentFlagRequired("conf")
 }
 
-func loadNetParams(cfgPath string) *chaincfg.Params {
+func loadChainParams(cfgPath string) *chaincfg.Params {
 	cfgFile, err := os.Open(cfgPath)
 	errorHandler(err)
 	defer cfgFile.Close()

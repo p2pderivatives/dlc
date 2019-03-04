@@ -60,7 +60,7 @@ var oracleFixMsgCmd = &cobra.Command{
 }
 
 func initOracle() *_oracle.Oracle {
-	netParams := loadNetParams(bitcoinConf)
+	netParams := loadChainParams(bitcoinConf)
 	o, err := _oracle.New(oracleName, netParams, oracleRpoints)
 	errorHandler(err)
 

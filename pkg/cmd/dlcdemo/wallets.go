@@ -3,9 +3,11 @@ package dlccli
 import (
 	"encoding/hex"
 	"fmt"
+	"path/filepath"
 
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/spf13/cobra"
 
 	_wallet "github.com/dgarage/dlc/internal/wallet"
@@ -27,14 +29,14 @@ var walletsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new wallet",
 	Run: func(cmd *cobra.Command, args []string) {
-		netParams := loadNetParams(bitcoinConf)
+		chainParams := loadChainParams(bitcoinConf)
 
 		// TODO: give seed as command line parameter
 		seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 		errorHandler(err)
 		fmt.Printf("Seed: %s\n", hex.EncodeToString(seed))
 
-		w, err := _wallet.CreateWallet(netParams,
+		w, err := _wallet.CreateWallet(chainParams,
 			seed, []byte(pubpass), []byte(privpass),
 			walletDir, walletName)
 		errorHandler(err)
@@ -82,15 +84,22 @@ var balanceCmd = &cobra.Command{
 	},
 }
 
-func openWallet(p string, dir string, name string) wallet.Wallet {
-	netParams := loadNetParams(bitcoinConf)
+func openWallet(pubpass string, dir string, name string) wallet.Wallet {
+	chainParams := loadChainParams(bitcoinConf)
 	rpcclient := initRPCClient()
+	wdb := openWalletDB(dir, name)
 
-	w, err := _wallet.OpenWallet(
-		netParams, []byte(p), dir, name, rpcclient)
+	w, err := _wallet.Open(wdb, []byte(pubpass), chainParams, rpcclient)
 	errorHandler(err)
 
 	return w
+}
+
+func openWalletDB(dir string, name string) walletdb.DB {
+	dbpath := filepath.Join(dir, name+".db")
+	wdb, err := walletdb.Open("bdb", dbpath)
+	errorHandler(err)
+	return wdb
 }
 
 func init() {
