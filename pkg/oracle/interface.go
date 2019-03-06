@@ -42,7 +42,10 @@ func pubkeyToStr(pub *btcec.PublicKey) string {
 // UnmarshalJSON deserialize JSON to PubkeySet
 func (pubset *PubkeySet) UnmarshalJSON(data []byte) error {
 	pjson := &PubkeySetJSON{}
-	json.Unmarshal(data, pjson)
+	err := json.Unmarshal(data, pjson)
+	if err != nil {
+		return err
+	}
 
 	pubkey, err := strToPubkey(pjson.Pubkey)
 	if err != nil {
