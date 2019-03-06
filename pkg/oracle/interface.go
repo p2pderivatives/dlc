@@ -75,18 +75,18 @@ func strToPubkey(str string) (*btcec.PublicKey, error) {
 	return btcec.ParsePubKey(b, btcec.S256())
 }
 
-// SignSet contains fixed messages and signs
-type SignSet struct {
-	Msgs  [][]byte
-	Signs [][]byte
+// SignedMsg contains fixed messages and signatures
+type SignedMsg struct {
+	Msgs [][]byte
+	Sigs [][]byte
 }
 
 // MarshalJSON serialize SignSet to JSON
-func (sigset SignSet) MarshalJSON() ([]byte, error) {
-	value := ByteMsgsToNumber(sigset.Msgs)
+func (fm SignedMsg) MarshalJSON() ([]byte, error) {
+	value := ByteMsgsToNumber(fm.Msgs)
 
 	var sigs []string
-	for _, s := range sigset.Signs {
+	for _, s := range fm.Sigs {
 		sigs = append(sigs, hex.EncodeToString(s))
 	}
 

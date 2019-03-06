@@ -36,11 +36,11 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 	tx.AddTxOut(txout)
 
 	for _, p := range []Contractor{FirstParty, SecondParty} {
-		for _, txin := range d.fundTxReqs.txIns[p] {
+		for _, txin := range d.FundTxReqs.txIns[p] {
 			tx.AddTxIn(txin)
 		}
 		// txout for change
-		txout := d.fundTxReqs.txOut[p]
+		txout := d.FundTxReqs.txOut[p]
 		if txout != nil {
 			tx.AddTxOut(txout)
 		}
@@ -52,11 +52,11 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 }
 
 func (d *DLC) fundScript() ([]byte, error) {
-	pub1, ok := d.pubs[FirstParty]
+	pub1, ok := d.Pubs[FirstParty]
 	if !ok {
 		return nil, errors.New("First party must provide a pubkey for fund script")
 	}
-	pub2, ok := d.pubs[SecondParty]
+	pub2, ok := d.Pubs[SecondParty]
 	if !ok {
 		return nil, errors.New("Second party must provide a pubkey for fund script")
 	}
@@ -90,14 +90,14 @@ func (d *DLC) fundTxOutForRedeemTx() (*wire.TxOut, error) {
 }
 
 func (d *DLC) witnessForFundScript(
-	sign1, sign2 []byte) (wire.TxWitness, error) {
+	sig1, sig2 []byte) (wire.TxWitness, error) {
 
 	sc, err := d.fundScript()
 	if err != nil {
 		return nil, err
 	}
 
-	wit := script.WitnessForFundScript(sign1, sign2, sc)
+	wit := script.WitnessForFundScript(sig1, sig2, sc)
 	return wit, nil
 }
 
@@ -161,7 +161,7 @@ func (b *Builder) PrepareFundTxIns() error {
 	}
 
 	// set txins to DLC
-	b.dlc.fundTxReqs.txIns[b.party] = txins
+	b.dlc.FundTxReqs.txIns[b.party] = txins
 
 	if change > 0 {
 		pub, err := b.wallet.NewPubkey()
@@ -177,7 +177,7 @@ func (b *Builder) PrepareFundTxIns() error {
 		txout := wire.NewTxOut(int64(change), pkScript)
 
 		// set change txout to DLC
-		b.dlc.fundTxReqs.txOut[b.party] = txout
+		b.dlc.FundTxReqs.txOut[b.party] = txout
 	}
 
 	return nil
@@ -204,7 +204,7 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 	return tx, nil
 }
 
-// witsigForFundScript returns sign for a given tx that redeems fund out
+// witsigForFundScript returns signature for a given tx that redeems fund out
 func (b *Builder) witsigForFundScript(tx *wire.MsgTx) ([]byte, error) {
 	fundtx, err := b.dlc.FundTx()
 	if err != nil {
@@ -218,7 +218,7 @@ func (b *Builder) witsigForFundScript(tx *wire.MsgTx) ([]byte, error) {
 		return nil, err
 	}
 
-	pub := b.dlc.pubs[b.party]
+	pub := b.dlc.Pubs[b.party]
 
 	return b.wallet.WitnessSignature(tx, fundTxInAt, famt, fc, pub)
 }
@@ -239,7 +239,7 @@ func (b *Builder) SignFundTx() ([]wire.TxWitness, error) {
 
 	// set witnesses to txins
 	for i, wit := range wits {
-		b.dlc.fundTxReqs.txIns[b.party][i].Witness = wit
+		b.dlc.FundTxReqs.txIns[b.party][i].Witness = wit
 	}
 
 	return wits, nil
@@ -268,13 +268,13 @@ func (b *Builder) FundTxHex() (string, error) {
 
 // fundTxInAt returns indices of txin in fundtx by the party
 func (b *Builder) fundTxInAt() (idxs []int) {
-	nTxInMe := len(b.dlc.fundTxReqs.txIns[b.party])
+	nTxInMe := len(b.dlc.FundTxReqs.txIns[b.party])
 	var txinFrom, txinTo int
 	if b.party == FirstParty {
 		txinFrom = 0
 		txinTo = nTxInMe
 	} else {
-		nTxInCP := len(b.dlc.fundTxReqs.txIns[FirstParty])
+		nTxInCP := len(b.dlc.FundTxReqs.txIns[FirstParty])
 		txinFrom = nTxInCP
 		txinTo = txinFrom + nTxInMe
 	}
@@ -288,7 +288,7 @@ func (b *Builder) fundTxInAt() (idxs []int) {
 func (b *Builder) AcceptFundWitnesses(fundWits []wire.TxWitness) {
 	cparty := counterparty(b.party)
 	for idx, wit := range fundWits {
-		b.dlc.fundTxReqs.txIns[cparty][idx].Witness = wit
+		b.dlc.FundTxReqs.txIns[cparty][idx].Witness = wit
 	}
 
 	// TODO: verify

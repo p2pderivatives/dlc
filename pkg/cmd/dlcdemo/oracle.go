@@ -49,7 +49,7 @@ var oracleFixMsgCmd = &cobra.Command{
 
 		ftime := parseFixingTimeFlag()
 		o.FixMsgs(ftime, msgs)
-		s, err := o.SignSet(ftime)
+		s, err := o.SignMsg(ftime)
 		errorHandler(err)
 
 		sjson, err := json.Marshal(s)

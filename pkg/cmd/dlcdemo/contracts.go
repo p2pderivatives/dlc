@@ -75,9 +75,9 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	dlc2 := *party2.builder.DLC()
 	party1.builder.CopyReqsFromCounterparty(&dlc2)
 	errorHandler(err)
-	err = party1.builder.AcceptCETxSigns(ceSigs2)
+	err = party1.builder.AcceptCETxSignatures(ceSigs2)
 	errorHandler(err)
-	err = party1.builder.AcceptRefundTxSign(refundSig2)
+	err = party1.builder.AcceptRefundTxSignature(refundSig2)
 	errorHandler(err)
 
 	// FirstParty signs CETxs and RefundTx and FundTx
@@ -89,9 +89,9 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 
 	// SecondParty accepts sigs
-	err = party2.builder.AcceptCETxSigns(ceSigs1)
+	err = party2.builder.AcceptCETxSignatures(ceSigs1)
 	errorHandler(err)
-	err = party2.builder.AcceptRefundTxSign(refundSig1)
+	err = party2.builder.AcceptRefundTxSignature(refundSig1)
 	errorHandler(err)
 	party2.builder.AcceptFundWitnesses(fundWits1)
 

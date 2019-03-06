@@ -8,11 +8,11 @@ import (
 	"github.com/dgarage/dlc/pkg/schnorr"
 )
 
-// OracleRequirements contains pubkeys and commitments and sign received from oracle
+// OracleRequirements contains pubkeys and commitments and signature received from oracle
 type OracleRequirements struct {
 	pubkeySet   *oracle.PubkeySet  // Oracle's pubkey set
 	commitments []*btcec.PublicKey // Commitments for deals
-	sign        []byte             // Sign for a fixed deal
+	sig         []byte             // Signature for a fixed deal
 	signedMsgs  [][]byte           // Messages signed by Oracle
 }
 
@@ -26,7 +26,7 @@ func (d *DLC) PrepareOracleCommitments(
 	V *btcec.PublicKey, Rs []*btcec.PublicKey) {
 	for i, deal := range d.Conds.Deals {
 		C := schnorr.CommitMulti(V, Rs, deal.Msgs)
-		d.oracleReqs.commitments[i] = C
+		d.OracleReqs.commitments[i] = C
 	}
 }
 
@@ -34,40 +34,40 @@ func (d *DLC) PrepareOracleCommitments(
 func (b *Builder) SetOraclePubkeySet(pubset *oracle.PubkeySet) {
 	b.dlc.PrepareOracleCommitments(
 		pubset.Pubkey, pubset.CommittedRpoints)
-	b.dlc.oracleReqs.pubkeySet = pubset
+	b.dlc.OracleReqs.pubkeySet = pubset
 }
 
 // FixDeal fixes a deal by setting the signature provided by oracle
-func (d *DLC) FixDeal(msgs [][]byte, signs [][]byte) error {
+func (d *DLC) FixDeal(msgs [][]byte, sigs [][]byte) error {
 	dID, _, err := d.DealByMsgs(msgs)
 	if err != nil {
 		return err
 	}
 
-	C := d.oracleReqs.commitments[dID]
-	s := schnorr.SumSigns(signs)
+	C := d.OracleReqs.commitments[dID]
+	s := schnorr.SumSigs(sigs)
 
 	ok := schnorr.Verify(C, s)
 	if !ok {
-		return errors.New("invalid oracle sign")
+		return errors.New("invalid oracle signature")
 	}
 
-	// set fixed messages and sign for it
-	d.oracleReqs.signedMsgs = msgs
-	d.oracleReqs.sign = s
+	// set fixed messages and signature for it
+	d.OracleReqs.signedMsgs = msgs
+	d.OracleReqs.sig = s
 
 	return nil
 }
 
-// FixDeal fixes a deal by a oracle's sign set by picking up required messages and signs
-func (b *Builder) FixDeal(signSet *oracle.SignSet, idxs []int) error {
+// FixDeal fixes a deal by a oracle's signature set by picking up required messages and sigs
+func (b *Builder) FixDeal(fm *oracle.SignedMsg, idxs []int) error {
 	msgs := [][]byte{}
-	signs := [][]byte{}
+	sigs := [][]byte{}
 	for _, idx := range idxs {
-		msgs = append(msgs, signSet.Msgs[idx])
-		signs = append(signs, signSet.Signs[idx])
+		msgs = append(msgs, fm.Msgs[idx])
+		sigs = append(sigs, fm.Sigs[idx])
 	}
-	return b.dlc.FixDeal(msgs, signs)
+	return b.dlc.FixDeal(msgs, sigs)
 }
 
 // FixedDeal returns a fixed deal
@@ -76,10 +76,10 @@ func (d *DLC) FixedDeal() (idx int, deal *Deal, err error) {
 		err = newNoFixedDealError()
 		return
 	}
-	return d.DealByMsgs(d.oracleReqs.signedMsgs)
+	return d.DealByMsgs(d.OracleReqs.signedMsgs)
 }
 
 // HasDealFixed checks if a deal has been fixed
 func (d *DLC) HasDealFixed() bool {
-	return d.oracleReqs.signedMsgs != nil && d.oracleReqs.sign != nil
+	return d.OracleReqs.signedMsgs != nil && d.OracleReqs.sig != nil
 }

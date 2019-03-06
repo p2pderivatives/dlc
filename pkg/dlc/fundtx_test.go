@@ -42,9 +42,9 @@ func TestPrepareFundTx(t *testing.T) {
 	err := b.PrepareFundTxIns()
 	assert.Nil(err)
 
-	txins := b.dlc.fundTxReqs.txIns[b.party]
+	txins := b.dlc.FundTxReqs.txIns[b.party]
 	assert.NotEmpty(txins, "txins")
-	txout := b.dlc.fundTxReqs.txOut[b.party]
+	txout := b.dlc.FundTxReqs.txOut[b.party]
 	assert.NotNil(txout, "txout")
 }
 
@@ -63,9 +63,9 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	err := b.PrepareFundTxIns()
 	assert.Nil(err)
 
-	txins := b.dlc.fundTxReqs.txIns[b.party]
+	txins := b.dlc.FundTxReqs.txIns[b.party]
 	assert.NotEmpty(txins, "txins")
-	txout := b.dlc.fundTxReqs.txOut[b.party]
+	txout := b.dlc.FundTxReqs.txOut[b.party]
 	assert.Nil(txout, "txout")
 }
 
@@ -130,14 +130,14 @@ func TestRedeemFundTx(t *testing.T) {
 	assert.Nil(err)
 
 	// both parties signs redeem tx
-	sign1, err := b1.witsigForFundScript(redeemtx)
+	sig1, err := b1.witsigForFundScript(redeemtx)
 	assert.Nil(err)
-	sign2, err := b2.witsigForFundScript(redeemtx)
+	sig2, err := b2.witsigForFundScript(redeemtx)
 	assert.Nil(err)
 
 	// create witness
 	fsc, _ := d.fundScript()
-	wt := wire.TxWitness{[]byte{}, sign1, sign2, fsc}
+	wt := wire.TxWitness{[]byte{}, sig1, sig2, fsc}
 	redeemtx.TxIn[0].Witness = wt
 
 	// run script

@@ -20,22 +20,22 @@ type DLC struct {
 	Conds *Conditions
 
 	// requirements
-	pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
-	fundTxReqs  *FundTxRequirements             // fund txins/outs
-	oracleReqs  *OracleRequirements
-	refundSigns map[Contractor][]byte // counterparty's sign for refund tx
-	cetxSigns   [][]byte              // counterparty's signs for CETs
+	Pubs       map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
+	FundTxReqs *FundTxRequirements             // fund txins/outs
+	OracleReqs *OracleRequirements
+	RefundSigs map[Contractor][]byte // signatures for refund tx
+	ExecSigs   [][]byte              // counterparty's signatures for CETxs
 }
 
 func newDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
-		Conds:       conds,
-		pubs:        make(map[Contractor]*btcec.PublicKey),
-		fundTxReqs:  newFundTxReqs(),
-		oracleReqs:  newOracleReqs(nDeal),
-		refundSigns: make(map[Contractor][]byte),
-		cetxSigns:   make([][]byte, nDeal),
+		Conds:      conds,
+		Pubs:       make(map[Contractor]*btcec.PublicKey),
+		FundTxReqs: newFundTxReqs(),
+		OracleReqs: newOracleReqs(nDeal),
+		RefundSigs: make(map[Contractor][]byte),
+		ExecSigs:   make([][]byte, nDeal),
 	}
 }
 
@@ -79,7 +79,7 @@ func NewConditions(
 // ClosingTxOut returns a final txout owned only by a given party
 func (d *DLC) ClosingTxOut(
 	p Contractor, amt btcutil.Amount) (*wire.TxOut, error) {
-	pub := d.pubs[p]
+	pub := d.Pubs[p]
 	if pub == nil {
 		return nil, errors.New("missing pubkey")
 	}
@@ -144,7 +144,7 @@ func (b *Builder) PreparePubkey() error {
 	if err != nil {
 		return err
 	}
-	b.dlc.pubs[b.party] = pub
+	b.dlc.Pubs[b.party] = pub
 	return nil
 }
 
@@ -153,12 +153,12 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 	p := counterparty(b.party)
 
 	// pubkey
-	b.dlc.pubs[p] = d.pubs[p]
+	b.dlc.Pubs[p] = d.Pubs[p]
 
 	// fund requirements
-	fundReqs := d.fundTxReqs
-	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
-	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
+	fundReqs := d.FundTxReqs
+	b.dlc.FundTxReqs.txIns[p] = fundReqs.txIns[p]
+	b.dlc.FundTxReqs.txOut[p] = fundReqs.txOut[p]
 }
 
 func txToHex(tx *wire.MsgTx) (string, error) {

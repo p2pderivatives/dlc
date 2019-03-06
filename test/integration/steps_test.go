@@ -45,39 +45,39 @@ func contractorOfferCounterparty(t *testing.T, c1, c2 *Contractor) {
 }
 
 // A contractor sends pubkey, fund txins and
-// signs of context execution txs and refund tx
+// signatures of context execution txs and refund tx
 func contractorAcceptOffer(t *testing.T, c1, c2 *Contractor) {
 	// Second party prepares pubkey and fund txins/txouts
 	c1.DLCBuilder.PreparePubkey()
 	err := c1.DLCBuilder.PrepareFundTxIns()
 	assert.NoError(t, err)
 
-	// signs CE txs and refund tx
-	ceSigns := conractorSignCETxs(t, c1)
-	rfSign := conractorSignRefundTx(t, c1)
+	// signatures CE txs and refund tx
+	ceSigs := conractorSignCETxs(t, c1)
+	rfSig := conractorSignRefundTx(t, c1)
 
 	// Sends pubkey and fund txins and sign to the counterparty
 	dlc1 := *c1.DLCBuilder.DLC()
 	c2.DLCBuilder.CopyReqsFromCounterparty(&dlc1)
 
-	// send signs
-	err = c2.DLCBuilder.AcceptCETxSigns(ceSigns)
+	// send sigatures
+	err = c2.DLCBuilder.AcceptCETxSignatures(ceSigs)
 	assert.NoError(t, err)
-	err = c2.DLCBuilder.AcceptRefundTxSign(rfSign)
+	err = c2.DLCBuilder.AcceptRefundTxSignature(rfSig)
 	assert.NoError(t, err)
 }
 
 // A contractor sends signs of all transactions (fund tx, CE txs, refund tx)
 func contractorSignAllTxs(t *testing.T, c1, c2 *Contractor) {
 	// signs all txs
-	ceSigns := conractorSignCETxs(t, c1)
-	rfSign := conractorSignRefundTx(t, c1)
+	ceSigs := conractorSignCETxs(t, c1)
+	rfSig := conractorSignRefundTx(t, c1)
 	fundWits := contractorSignFundTx(t, c1)
 
 	// send all signs and witnesses
-	err := c2.DLCBuilder.AcceptCETxSigns(ceSigns)
+	err := c2.DLCBuilder.AcceptCETxSignatures(ceSigs)
 	assert.NoError(t, err)
-	err = c2.DLCBuilder.AcceptRefundTxSign(rfSign)
+	err = c2.DLCBuilder.AcceptRefundTxSignature(rfSig)
 	assert.NoError(t, err)
 	c2.DLCBuilder.AcceptFundWitnesses(fundWits)
 }
@@ -87,11 +87,11 @@ func conractorSignCETxs(t *testing.T, c *Contractor) [][]byte {
 	// unlocks to sign txs
 	c.unlockWallet()
 
-	// context execution txs signs
-	ceSigns, err := c.DLCBuilder.SignContractExecutionTxs()
+	// context execution txs signatures
+	ceSigs, err := c.DLCBuilder.SignContractExecutionTxs()
 	assert.NoError(t, err)
 
-	return ceSigns
+	return ceSigs
 }
 
 // A contractor signs Refund tx
@@ -100,10 +100,10 @@ func conractorSignRefundTx(t *testing.T, c *Contractor) []byte {
 	c.unlockWallet()
 
 	// create refund tx sign
-	rfSign, err := c.DLCBuilder.SignRefundTx()
+	rfSig, err := c.DLCBuilder.SignRefundTx()
 	assert.NoError(t, err)
 
-	return rfSign
+	return rfSig
 }
 
 func contractorSignFundTx(t *testing.T, c *Contractor) []wire.TxWitness {
@@ -144,12 +144,12 @@ func contractorFixDeal(
 	t *testing.T, c *Contractor, o *oracle.Oracle, idxs []int) {
 	ftime := c.DLCBuilder.DLC().Conds.FixingTime
 
-	// receive signset
-	signSet, err := o.SignSet(ftime)
+	// receive signed message
+	sm, err := o.SignMsg(ftime)
 	assert.NoError(t, err)
 
-	// fix deal with the signset
-	err = c.DLCBuilder.FixDeal(&signSet, idxs)
+	// fix deal with the fixed msg
+	err = c.DLCBuilder.FixDeal(&sm, idxs)
 	assert.NoError(t, err)
 }
 
@@ -158,11 +158,11 @@ func contractorCannotFixDeal(
 	ftime := c.DLCBuilder.DLC().Conds.FixingTime
 
 	// receive signset
-	signSet, err := o.SignSet(ftime)
+	signedMsg, err := o.SignMsg(ftime)
 	assert.NoError(t, err)
 
-	// fail to fix deal with the signset
-	err = c.DLCBuilder.FixDeal(&signSet, idxs)
+	// fail to fix deal with the siged msg
+	err = c.DLCBuilder.FixDeal(&signedMsg, idxs)
 	assert.Error(t, err)
 }
 

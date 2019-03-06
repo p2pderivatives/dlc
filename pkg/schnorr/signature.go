@@ -85,8 +85,8 @@ func Sign(opriv, rpriv *btcec.PrivateKey, m []byte) []byte {
 	return s.Bytes()
 }
 
-// SumSigns sums signs up for a multi-message commitment
-func SumSigns(signs [][]byte) []byte {
+// SumSigs sums signs up for a multi-message commitment
+func SumSigs(signs [][]byte) []byte {
 	sum := new(big.Int)
 	for _, sign := range signs {
 		sb := new(big.Int).SetBytes(sign)

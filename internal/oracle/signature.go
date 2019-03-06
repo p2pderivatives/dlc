@@ -7,27 +7,27 @@ import (
 	"github.com/dgarage/dlc/pkg/schnorr"
 )
 
-// SignSet is an alias of oracle.SignSet
-type SignSet = oracle.SignSet
+// SignedMsg is an alias of oracle.SignedMsg
+type SignedMsg = oracle.SignedMsg
 
-// SignSet returns SignSet for given fixing time
-func (oracle *Oracle) SignSet(ftime time.Time) (SignSet, error) {
+// SignMsg returns FixedMsg for given fixing time
+func (oracle *Oracle) SignMsg(ftime time.Time) (SignedMsg, error) {
 	msgs, err := oracle.msgsAt(ftime)
 	if err != nil {
-		return SignSet{}, err
+		return SignedMsg{}, err
 	}
 
 	extKey, err := oracle.extKeyForFixingTime(ftime)
 	if err != nil {
-		return SignSet{}, err
+		return SignedMsg{}, err
 	}
 
-	signs, err := signMsgs(msgs, extKey)
+	sigs, err := signMsgs(msgs, extKey)
 	if err != nil {
-		return SignSet{}, err
+		return SignedMsg{}, err
 	}
 
-	return SignSet{Msgs: msgs, Signs: signs}, nil
+	return SignedMsg{Msgs: msgs, Sigs: sigs}, nil
 }
 
 func signMsgs(msgs [][]byte, extKey *privExtKey) ([][]byte, error) {
@@ -36,7 +36,7 @@ func signMsgs(msgs [][]byte, extKey *privExtKey) ([][]byte, error) {
 		return [][]byte{}, err
 	}
 
-	signs := [][]byte{}
+	sigs := [][]byte{}
 
 	for i, m := range msgs {
 		k, err := extKey.derive(i)
@@ -51,8 +51,8 @@ func signMsgs(msgs [][]byte, extKey *privExtKey) ([][]byte, error) {
 		// Schnorr signature
 		sign := schnorr.Sign(opriv, rpriv, m)
 
-		signs = append(signs, sign)
+		sigs = append(sigs, sign)
 	}
 
-	return signs, nil
+	return sigs, nil
 }

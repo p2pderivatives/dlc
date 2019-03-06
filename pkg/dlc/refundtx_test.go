@@ -36,8 +36,8 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	rs2, _ := b2.SignRefundTx()
 
 	// exchange refund signs
-	b1.AcceptRefundTxSign(rs2)
-	b2.AcceptRefundTxSign(rs1)
+	b1.AcceptRefundTxSignature(rs2)
+	b2.AcceptRefundTxSignature(rs1)
 
 	d = b1.DLC()
 
@@ -51,8 +51,8 @@ func TestVerifyRefundTxBadRefund(t *testing.T) {
 	_, _, d := setupDLCRefund()
 
 	// VerifyRefundTX should return false bc the given signature and pubkey don't match
-	testBadSign := []byte{'b', 'a', 'd'} // make a known bad signature
-	err := d.VerifyRefundTx(testBadSign, d.pubs[FirstParty])
+	testBadSig := []byte{'b', 'a', 'd'} // make a known bad signature
+	err := d.VerifyRefundTx(testBadSig, d.Pubs[FirstParty])
 	assert.NotNil(err)
 }
 
@@ -62,7 +62,7 @@ func TestVerifyRefundTx(t *testing.T) {
 
 	_, _, d := setupDLCRefund()
 
-	err := d.VerifyRefundTx(d.refundSigns[FirstParty], d.pubs[FirstParty])
+	err := d.VerifyRefundTx(d.RefundSigs[FirstParty], d.Pubs[FirstParty])
 	assert.Nil(err)
 }
 

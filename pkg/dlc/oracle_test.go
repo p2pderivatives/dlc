@@ -20,7 +20,7 @@ func TestSetOraclePubkeySet(t *testing.T) {
 	b.SetOraclePubkeySet(pubset)
 	d := b.DLC()
 
-	assert.NotNil(t, d.oracleReqs.commitments[dID])
+	assert.NotNil(t, d.OracleReqs.commitments[dID])
 }
 
 func TestFixDeal(t *testing.T) {
@@ -30,20 +30,20 @@ func TestFixDeal(t *testing.T) {
 	// setup
 	b, deal, dID := setupContractorForOracleTest()
 	privkey, C := test.RandKeys()
-	b.dlc.oracleReqs.commitments[dID] = C
+	b.dlc.OracleReqs.commitments[dID] = C
 
-	// fail with invalid sign
+	// fail with invalid signature
 	privInvalid, _ := test.RandKeys()
-	osignsInvalid := [][]byte{privInvalid.D.Bytes()}
-	osignsetInvalid := &oracle.SignSet{Msgs: deal.Msgs, Signs: osignsInvalid}
+	osigsInvalid := [][]byte{privInvalid.D.Bytes()}
+	osigsetInvalid := &oracle.SignedMsg{Msgs: deal.Msgs, Sigs: osigsInvalid}
 
-	err = b.FixDeal(osignsetInvalid, []int{0})
+	err = b.FixDeal(osigsetInvalid, []int{0})
 	assert.Error(err)
 
-	// success with valid sign and message set
-	osigns := [][]byte{privkey.D.Bytes()}
-	osignset := &oracle.SignSet{Msgs: deal.Msgs, Signs: osigns}
-	err = b.FixDeal(osignset, []int{0})
+	// success with valid signature and message set
+	osigs := [][]byte{privkey.D.Bytes()}
+	ofixedMsg := &oracle.SignedMsg{Msgs: deal.Msgs, Sigs: osigs}
+	err = b.FixDeal(ofixedMsg, []int{0})
 	assert.NoError(err)
 
 	// retrieve fixed deal
