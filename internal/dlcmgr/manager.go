@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/btcsuite/btcwallet/walletdb"
-	"github.com/dgarage/dlc/pkg/dlc"
+	"github.com/p2pderivatives/dlc/pkg/dlc"
 )
 
 type Manager struct {

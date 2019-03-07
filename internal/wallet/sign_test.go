@@ -5,9 +5,9 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/mocks/rpcmock"
-	"github.com/dgarage/dlc/internal/test"
-	"github.com/dgarage/dlc/pkg/script"
+	"github.com/p2pderivatives/dlc/internal/mocks/rpcmock"
+	"github.com/p2pderivatives/dlc/internal/test"
+	"github.com/p2pderivatives/dlc/pkg/script"
 	"github.com/stretchr/testify/assert"
 )
 

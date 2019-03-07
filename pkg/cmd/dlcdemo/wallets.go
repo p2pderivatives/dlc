@@ -10,8 +10,8 @@ import (
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/spf13/cobra"
 
-	_wallet "github.com/dgarage/dlc/internal/wallet"
-	"github.com/dgarage/dlc/pkg/wallet"
+	_wallet "github.com/p2pderivatives/dlc/internal/wallet"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
 // var seed []byte

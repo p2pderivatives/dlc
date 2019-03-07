@@ -5,8 +5,8 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/oracle"
-	"github.com/dgarage/dlc/internal/rpc"
+	"github.com/p2pderivatives/dlc/internal/oracle"
+	"github.com/p2pderivatives/dlc/internal/rpc"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -12,8 +12,8 @@ import (
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
-	"github.com/dgarage/dlc/internal/rpc"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/internal/rpc"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
 // Namespace bucket keys.

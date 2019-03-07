@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/pkg/utils"
+	"github.com/p2pderivatives/dlc/pkg/utils"
 )
 
 // ConditionsJSON is contract conditions in JSON format

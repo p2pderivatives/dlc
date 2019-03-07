@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/dgarage/dlc/internal/oracle"
-	"github.com/dgarage/dlc/internal/test"
+	"github.com/p2pderivatives/dlc/internal/oracle"
+	"github.com/p2pderivatives/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
 )
 

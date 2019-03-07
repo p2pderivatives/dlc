@@ -2,7 +2,7 @@ package integration
 
 import (
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/dgarage/dlc/internal/oracle"
+	"github.com/p2pderivatives/dlc/internal/oracle"
 )
 
 // NewOracle creates an oracle for integration tests

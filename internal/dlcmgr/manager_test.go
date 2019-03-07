@@ -11,8 +11,8 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
-	"github.com/dgarage/dlc/internal/test"
-	"github.com/dgarage/dlc/pkg/dlc"
+	"github.com/p2pderivatives/dlc/internal/test"
+	"github.com/p2pderivatives/dlc/pkg/dlc"
 	"github.com/stretchr/testify/assert"
 )
 

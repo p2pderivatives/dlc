@@ -6,8 +6,8 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/test"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/internal/test"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

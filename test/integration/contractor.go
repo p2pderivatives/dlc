@@ -2,8 +2,8 @@ package integration
 
 import (
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/pkg/dlc"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/pkg/dlc"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
 // Contractor is a contractor

@@ -31,6 +31,15 @@ Olivia publishes a various weather information, but Alice uses only some of the 
 
 ## Development
 
+### Setup
+```
+# simplify installation after merging the feature branch
+go get -u github.com/p2pderivatives/dlc
+cd $GOPATH/src/github.com/p2pderivatives/dlc
+git checkout feature/command-lines
+make 
+```
+
 ### Install dependencies
 
 ```
@@ -44,4 +53,4 @@ go test ./...
 ```
 
 ## License
-[MIT License](https://github.com/dgarage/dlc/blob/master/LICENSE)
+[MIT License](https://github.com/p2pderivatives/dlc/blob/master/LICENSE)

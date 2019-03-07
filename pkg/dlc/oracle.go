@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/dgarage/dlc/pkg/oracle"
-	"github.com/dgarage/dlc/pkg/schnorr"
+	"github.com/p2pderivatives/dlc/pkg/oracle"
+	"github.com/p2pderivatives/dlc/pkg/schnorr"
 )
 
 // OracleRequirements contains pubkeys and commitments and signature received from oracle

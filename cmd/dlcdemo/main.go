@@ -1,6 +1,6 @@
 package main
 
-import "github.com/dgarage/dlc/pkg/cmd/dlcdemo"
+import "github.com/p2pderivatives/dlc/pkg/cmd/dlcdemo"
 
 func main() {
 	dlccli.Execute()

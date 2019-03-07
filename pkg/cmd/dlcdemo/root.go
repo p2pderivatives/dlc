@@ -29,7 +29,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/dgarage/dlc/internal/rpc"
+	"github.com/p2pderivatives/dlc/internal/rpc"
 	"github.com/spf13/cobra"
 )
 

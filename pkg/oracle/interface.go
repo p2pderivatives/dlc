@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/dgarage/dlc/pkg/utils"
+	"github.com/p2pderivatives/dlc/pkg/utils"
 )
 
 // PubkeySet contains oracle's pub key and keys for all rate

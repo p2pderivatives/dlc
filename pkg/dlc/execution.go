@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/dgarage/dlc/pkg/script"
+	"github.com/p2pderivatives/dlc/pkg/script"
 )
 
 // ContractExecutionTx constructs a contract execution tx (CET) using pubkeys and given condition.

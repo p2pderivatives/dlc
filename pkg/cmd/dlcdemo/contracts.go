@@ -11,9 +11,9 @@ import (
 	"strconv"
 
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/pkg/dlc"
-	"github.com/dgarage/dlc/pkg/oracle"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/pkg/dlc"
+	"github.com/p2pderivatives/dlc/pkg/oracle"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 	"github.com/spf13/cobra"
 )
 

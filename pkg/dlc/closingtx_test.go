@@ -5,9 +5,9 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/mocks/walletmock"
-	"github.com/dgarage/dlc/internal/oracle"
-	"github.com/dgarage/dlc/internal/test"
+	"github.com/p2pderivatives/dlc/internal/mocks/walletmock"
+	"github.com/p2pderivatives/dlc/internal/oracle"
+	"github.com/p2pderivatives/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,8 +3,8 @@ package oracle
 import (
 	"time"
 
-	"github.com/dgarage/dlc/pkg/oracle"
-	"github.com/dgarage/dlc/pkg/schnorr"
+	"github.com/p2pderivatives/dlc/pkg/oracle"
+	"github.com/p2pderivatives/dlc/pkg/schnorr"
 )
 
 // SignedMsg is an alias of oracle.SignedMsg

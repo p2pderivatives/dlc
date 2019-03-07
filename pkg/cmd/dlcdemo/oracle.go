@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	_oracle "github.com/dgarage/dlc/internal/oracle"
-	"github.com/dgarage/dlc/pkg/oracle"
+	_oracle "github.com/p2pderivatives/dlc/internal/oracle"
+	"github.com/p2pderivatives/dlc/pkg/oracle"
 	"github.com/spf13/cobra"
 )
 
