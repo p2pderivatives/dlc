@@ -7,10 +7,12 @@ import (
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 )
 
+// Manager manages contracts
 type Manager struct {
 	db walletdb.DB
 }
 
+// Create creates manager
 func Create(db walletdb.DB) (*Manager, error) {
 	err := createManager(db)
 	if err != nil {
@@ -19,14 +21,17 @@ func Create(db walletdb.DB) (*Manager, error) {
 	return openManager(db), nil
 }
 
+// Open opens manager
 func Open(db walletdb.DB) (*Manager, error) {
 	return openManager(db), nil
 }
 
+// Close closes manager
 func (m *Manager) Close() error {
 	return m.db.Close()
 }
 
+// StoreContract persists DLC
 func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
 	storeFunc := func(b walletdb.ReadWriteBucket) error {
 		var e error
@@ -59,6 +64,7 @@ func storePublicKeys(
 	return b.Put(nsPubkeys, serializedPubs)
 }
 
+// RetrieveContract retrieves stored DLC
 func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 	var d *dlc.DLC
 	retrieveFunc := func(b walletdb.ReadBucket) error {

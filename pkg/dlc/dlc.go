@@ -172,12 +172,12 @@ func txToHex(tx *wire.MsgTx) (string, error) {
 	return h, nil
 }
 
-func hexToTx(txHex string) (tx *wire.MsgTx, err error) {
-	txbin, err := hex.DecodeString(txHex)
-	if err != nil {
-		return nil, err
-	}
-	bufr := bytes.NewReader(txbin)
-	err = tx.Deserialize(bufr)
-	return
-}
+// func hexToTx(txHex string) (tx *wire.MsgTx, err error) {
+// 	txbin, err := hex.DecodeString(txHex)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	bufr := bytes.NewReader(txbin)
+// 	err = tx.Deserialize(bufr)
+// 	return
+// }

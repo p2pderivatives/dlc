@@ -47,6 +47,7 @@ func (m *Manager) updateContractBucket(
 	return walletdb.Update(m.db, updateFunc)
 }
 
+// ContractNotExistsError gets raised when contract doesn't exist
 type ContractNotExistsError struct {
 	error
 }

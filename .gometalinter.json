@@ -4,9 +4,10 @@
     "internal/test/.*",
     "internal/mocks/.*",
     ".*/test_util.go",
-    "test/integration/.*"
+    "test/integration/.*",
+    "pkg/cmd/dlccli/.*"
   ],
   "EnableAll": true,
-  "Disable": ["unparam"],
+  "Disable": ["unparam", "gochecknoglobals"],
   "LineLength": 120
 }

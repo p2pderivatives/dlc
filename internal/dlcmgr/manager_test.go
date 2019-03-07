@@ -143,8 +143,8 @@ func newDeals() []*dlc.Deal {
 	return deals
 }
 
-func testFundTxReqs() *dlc.FundTxRequirements {
-	reqs := dlc.NewFundTxReqs()
-
-	return reqs
-}
+// func testFundTxReqs() *dlc.FundTxRequirements {
+// 	reqs := dlc.NewFundTxReqs()
+//
+// 	return reqs
+// }

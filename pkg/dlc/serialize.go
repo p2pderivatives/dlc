@@ -24,6 +24,7 @@ type DealJSON struct {
 	Msgs [][]byte           `json:"msgs"`
 }
 
+// PublicKeys is public keys in hex string format
 type PublicKeys map[Contractor]string
 
 // MarshalJSON implements json.Marshaler
