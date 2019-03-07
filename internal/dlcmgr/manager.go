@@ -2,7 +2,6 @@ package dlcmgr
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/dgarage/dlc/pkg/dlc"
@@ -29,41 +28,71 @@ func (m *Manager) Close() error {
 }
 
 func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
-	storeFunc := func(bucket walletdb.ReadWriteBucket) error {
-		serializedConds, e := json.Marshal(d.Conds)
-		if e != nil {
+	storeFunc := func(b walletdb.ReadWriteBucket) error {
+		var e error
+		if e = storeConditions(b, d.Conds); e != nil {
 			return e
 		}
-		return bucket.Put(k, serializedConds)
+		if e = storePublicKeys(b, d.PublicKeys()); e != nil {
+			return e
+		}
+		return nil
 	}
-	return m.updateBucket(nsContracts, storeFunc)
+	return m.updateContractBucket(k, storeFunc)
+}
+
+func storeConditions(
+	b walletdb.ReadWriteBucket, conds *dlc.Conditions) error {
+	serializedConds, e := json.Marshal(conds)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsConditions, serializedConds)
+}
+
+func storePublicKeys(
+	b walletdb.ReadWriteBucket, pubs dlc.PublicKeys) error {
+	serializedPubs, e := json.Marshal(pubs)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsPubkeys, serializedPubs)
 }
 
 func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 	var d *dlc.DLC
-	retrieveFunc := func(bucket walletdb.ReadBucket) error {
-		data := bucket.Get(k)
-
-		conds := &dlc.Conditions{}
-		e := json.Unmarshal(data, conds)
-		fmt.Println(conds)
-
-		d = &dlc.DLC{
-			Conds: conds,
+	retrieveFunc := func(b walletdb.ReadBucket) error {
+		conds, e := retrieveConditions(b)
+		if e != nil {
+			return e
 		}
+
+		d = dlc.NewDLC(conds)
+
+		pubs, e := retrievePublicKeys(b)
+		if e != nil {
+			return e
+		}
+		if e = d.ParsePublicKeys(pubs); e != nil {
+			return e
+		}
+
 		return e
 	}
-	err := m.viewBucket(nsContracts, retrieveFunc)
+	err := m.viewContractBucket(k, retrieveFunc)
 	return d, err
 }
 
-func (m *Manager) ListContracts() error {
-	forEachFunc := func(k, v []byte) error {
-		fmt.Println(k, v)
-		return nil
-	}
-	listFunc := func(bucket walletdb.ReadBucket) error {
-		return bucket.ForEach(forEachFunc)
-	}
-	return m.viewBucket(nsContracts, listFunc)
+func retrieveConditions(b walletdb.ReadBucket) (*dlc.Conditions, error) {
+	data := b.Get(nsConditions)
+	conds := &dlc.Conditions{}
+	e := json.Unmarshal(data, conds)
+	return conds, e
+}
+
+func retrievePublicKeys(b walletdb.ReadBucket) (dlc.PublicKeys, error) {
+	data := b.Get(nsPubkeys)
+	pubs := make(dlc.PublicKeys)
+	e := json.Unmarshal(data, &pubs)
+	return pubs, e
 }

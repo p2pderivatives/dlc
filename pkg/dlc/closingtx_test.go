@@ -40,7 +40,7 @@ func TestClosingTx(t *testing.T) {
 }
 
 func setupDLC() *DLC {
-	d := newDLC(newTestConditions())
+	d := NewDLC(newTestConditions())
 	_, pub1 := test.RandKeys()
 	_, pub2 := test.RandKeys()
 	d.Pubs[FirstParty] = pub1

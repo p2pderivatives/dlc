@@ -42,9 +42,9 @@ func TestPrepareFundTx(t *testing.T) {
 	err := b.PrepareFundTxIns()
 	assert.Nil(err)
 
-	txins := b.dlc.FundTxReqs.txIns[b.party]
+	txins := b.dlc.FundTxReqs.TxIns[b.party]
 	assert.NotEmpty(txins, "txins")
-	txout := b.dlc.FundTxReqs.txOut[b.party]
+	txout := b.dlc.FundTxReqs.TxOut[b.party]
 	assert.NotNil(txout, "txout")
 }
 
@@ -63,9 +63,9 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	err := b.PrepareFundTxIns()
 	assert.Nil(err)
 
-	txins := b.dlc.FundTxReqs.txIns[b.party]
+	txins := b.dlc.FundTxReqs.TxIns[b.party]
 	assert.NotEmpty(txins, "txins")
-	txout := b.dlc.FundTxReqs.txOut[b.party]
+	txout := b.dlc.FundTxReqs.TxOut[b.party]
 	assert.Nil(txout, "txout")
 }
 

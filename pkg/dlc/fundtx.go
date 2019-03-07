@@ -11,14 +11,15 @@ import (
 
 // FundTxRequirements contains txins and txouts for fund tx
 type FundTxRequirements struct {
-	txIns map[Contractor][]*wire.TxIn
-	txOut map[Contractor]*wire.TxOut
+	TxIns map[Contractor][]*wire.TxIn
+	TxOut map[Contractor]*wire.TxOut
 }
 
-func newFundTxReqs() *FundTxRequirements {
+// NewFundTxReqs creates fundtx requirements
+func NewFundTxReqs() *FundTxRequirements {
 	return &FundTxRequirements{
-		txIns: make(map[Contractor][]*wire.TxIn),
-		txOut: make(map[Contractor]*wire.TxOut),
+		TxIns: make(map[Contractor][]*wire.TxIn),
+		TxOut: make(map[Contractor]*wire.TxOut),
 	}
 }
 
@@ -36,11 +37,11 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 	tx.AddTxOut(txout)
 
 	for _, p := range []Contractor{FirstParty, SecondParty} {
-		for _, txin := range d.FundTxReqs.txIns[p] {
+		for _, txin := range d.FundTxReqs.TxIns[p] {
 			tx.AddTxIn(txin)
 		}
 		// txout for change
-		txout := d.FundTxReqs.txOut[p]
+		txout := d.FundTxReqs.TxOut[p]
 		if txout != nil {
 			tx.AddTxOut(txout)
 		}
@@ -161,7 +162,7 @@ func (b *Builder) PrepareFundTxIns() error {
 	}
 
 	// set txins to DLC
-	b.dlc.FundTxReqs.txIns[b.party] = txins
+	b.dlc.FundTxReqs.TxIns[b.party] = txins
 
 	if change > 0 {
 		pub, err := b.wallet.NewPubkey()
@@ -177,7 +178,7 @@ func (b *Builder) PrepareFundTxIns() error {
 		txout := wire.NewTxOut(int64(change), pkScript)
 
 		// set change txout to DLC
-		b.dlc.FundTxReqs.txOut[b.party] = txout
+		b.dlc.FundTxReqs.TxOut[b.party] = txout
 	}
 
 	return nil
@@ -239,7 +240,7 @@ func (b *Builder) SignFundTx() ([]wire.TxWitness, error) {
 
 	// set witnesses to txins
 	for i, wit := range wits {
-		b.dlc.FundTxReqs.txIns[b.party][i].Witness = wit
+		b.dlc.FundTxReqs.TxIns[b.party][i].Witness = wit
 	}
 
 	return wits, nil
@@ -268,13 +269,13 @@ func (b *Builder) FundTxHex() (string, error) {
 
 // fundTxInAt returns indices of txin in fundtx by the party
 func (b *Builder) fundTxInAt() (idxs []int) {
-	nTxInMe := len(b.dlc.FundTxReqs.txIns[b.party])
+	nTxInMe := len(b.dlc.FundTxReqs.TxIns[b.party])
 	var txinFrom, txinTo int
 	if b.party == FirstParty {
 		txinFrom = 0
 		txinTo = nTxInMe
 	} else {
-		nTxInCP := len(b.dlc.FundTxReqs.txIns[FirstParty])
+		nTxInCP := len(b.dlc.FundTxReqs.TxIns[FirstParty])
 		txinFrom = nTxInCP
 		txinTo = txinFrom + nTxInMe
 	}
@@ -288,7 +289,7 @@ func (b *Builder) fundTxInAt() (idxs []int) {
 func (b *Builder) AcceptFundWitnesses(fundWits []wire.TxWitness) {
 	cparty := counterparty(b.party)
 	for idx, wit := range fundWits {
-		b.dlc.FundTxReqs.txIns[cparty][idx].Witness = wit
+		b.dlc.FundTxReqs.TxIns[cparty][idx].Witness = wit
 	}
 
 	// TODO: verify

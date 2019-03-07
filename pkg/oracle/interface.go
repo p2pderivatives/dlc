@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/dgarage/dlc/pkg/utils"
 )
 
 // PubkeySet contains oracle's pub key and keys for all rate
@@ -22,10 +23,10 @@ type PubkeySetJSON struct {
 
 // MarshalJSON serialize PubkeySet to JSON
 func (pubset PubkeySet) MarshalJSON() ([]byte, error) {
-	pubkey := pubkeyToStr(pubset.Pubkey)
+	pubkey := utils.PubkeyToStr(pubset.Pubkey)
 	var rpoints []string
 	for _, R := range pubset.CommittedRpoints {
-		rpoints = append(rpoints, pubkeyToStr(R))
+		rpoints = append(rpoints, utils.PubkeyToStr(R))
 	}
 
 	s, err := json.Marshal(&PubkeySetJSON{
@@ -33,10 +34,6 @@ func (pubset PubkeySet) MarshalJSON() ([]byte, error) {
 		CommittedRpoints: rpoints,
 	})
 	return s, err
-}
-
-func pubkeyToStr(pub *btcec.PublicKey) string {
-	return hex.EncodeToString(pub.SerializeCompressed())
 }
 
 // UnmarshalJSON deserialize JSON to PubkeySet
@@ -47,14 +44,14 @@ func (pubset *PubkeySet) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	pubkey, err := strToPubkey(pjson.Pubkey)
+	pubkey, err := utils.ParsePublicKey(pjson.Pubkey)
 	if err != nil {
 		return err
 	}
 
 	var rpoints []*btcec.PublicKey
 	for _, rstr := range pjson.CommittedRpoints {
-		r, err := strToPubkey(rstr)
+		r, err := utils.ParsePublicKey(rstr)
 		if err != nil {
 			return err
 		}
@@ -65,14 +62,6 @@ func (pubset *PubkeySet) UnmarshalJSON(data []byte) error {
 	pubset.CommittedRpoints = rpoints
 
 	return nil
-}
-
-func strToPubkey(str string) (*btcec.PublicKey, error) {
-	b, err := hex.DecodeString(str)
-	if err != nil {
-		return nil, err
-	}
-	return btcec.ParsePubKey(b, btcec.S256())
 }
 
 // SignedMsg contains fixed messages and signatures

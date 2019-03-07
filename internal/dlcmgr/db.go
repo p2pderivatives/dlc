@@ -1,11 +1,17 @@
 package dlcmgr
 
-import "github.com/btcsuite/btcwallet/walletdb"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/btcsuite/btcwallet/walletdb"
+)
 
 var (
 	nsTop        = []byte("dlcmgr")
 	nsContracts  = []byte("contracts")
 	nsConditions = []byte("conds")
+	nsPubkeys    = []byte("pubkeys")
 )
 
 func createManager(db walletdb.DB) error {
@@ -15,13 +21,8 @@ func createManager(db walletdb.DB) error {
 			return e
 		}
 
-		if _, e = ns.CreateBucket(nsContracts); e != nil {
-			return e
-		}
-		if _, e = ns.CreateBucket(nsConditions); e != nil {
-			return e
-		}
-		return nil
+		_, e = ns.CreateBucket(nsContracts)
+		return e
 	})
 
 	return err
@@ -32,21 +33,39 @@ func openManager(db walletdb.DB) *Manager {
 	return mgr
 }
 
-func (m *Manager) updateBucket(
-	bucketName []byte, f func(walletdb.ReadWriteBucket) error) error {
+func (m *Manager) updateContractBucket(
+	k []byte, f func(walletdb.ReadWriteBucket) error) error {
 	updateFunc := func(tx walletdb.ReadWriteTx) error {
 		ns := tx.ReadWriteBucket(nsTop)
-		bucket := ns.NestedReadWriteBucket(bucketName)
+		contractsNS := ns.NestedReadWriteBucket(nsContracts)
+		bucket, e := contractsNS.CreateBucketIfNotExists(k)
+		if e != nil {
+			return e
+		}
 		return f(bucket)
 	}
 	return walletdb.Update(m.db, updateFunc)
 }
 
-func (m *Manager) viewBucket(
-	bucketName []byte, f func(walletdb.ReadBucket) error) error {
+type ContractNotExistsError struct {
+	error
+}
+
+func newContractNotExistsError(
+	k []byte) *ContractNotExistsError {
+	msg := fmt.Sprintf("Contract not exists. key: %s", k)
+	return &ContractNotExistsError{error: errors.New(msg)}
+}
+
+func (m *Manager) viewContractBucket(
+	k []byte, f func(walletdb.ReadBucket) error) error {
 	viewFunc := func(tx walletdb.ReadTx) error {
 		ns := tx.ReadBucket(nsTop)
-		bucket := ns.NestedReadBucket(bucketName)
+		contractsNS := ns.NestedReadBucket(nsContracts)
+		bucket := contractsNS.NestedReadBucket(k)
+		if bucket == nil {
+			return newContractNotExistsError(k)
+		}
 		return f(bucket)
 	}
 	return walletdb.View(m.db, viewFunc)

@@ -27,12 +27,13 @@ type DLC struct {
 	ExecSigs   [][]byte              // counterparty's signatures for CETxs
 }
 
-func newDLC(conds *Conditions) *DLC {
+// NewDLC initializes DLC
+func NewDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
 		Conds:      conds,
 		Pubs:       make(map[Contractor]*btcec.PublicKey),
-		FundTxReqs: newFundTxReqs(),
+		FundTxReqs: NewFundTxReqs(),
 		OracleReqs: newOracleReqs(nDeal),
 		RefundSigs: make(map[Contractor][]byte),
 		ExecSigs:   make([][]byte, nDeal),
@@ -127,7 +128,7 @@ type Builder struct {
 func NewBuilder(
 	p Contractor, w wallet.Wallet, conds *Conditions) *Builder {
 	return &Builder{
-		dlc:    newDLC(conds),
+		dlc:    NewDLC(conds),
 		party:  p,
 		wallet: w,
 	}
@@ -157,8 +158,8 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 
 	// fund requirements
 	fundReqs := d.FundTxReqs
-	b.dlc.FundTxReqs.txIns[p] = fundReqs.txIns[p]
-	b.dlc.FundTxReqs.txOut[p] = fundReqs.txOut[p]
+	b.dlc.FundTxReqs.TxIns[p] = fundReqs.TxIns[p]
+	b.dlc.FundTxReqs.TxOut[p] = fundReqs.TxOut[p]
 }
 
 func txToHex(tx *wire.MsgTx) (string, error) {
@@ -169,4 +170,14 @@ func txToHex(tx *wire.MsgTx) (string, error) {
 	}
 	h := hex.EncodeToString(buf.Bytes())
 	return h, nil
+}
+
+func hexToTx(txHex string) (tx *wire.MsgTx, err error) {
+	txbin, err := hex.DecodeString(txHex)
+	if err != nil {
+		return nil, err
+	}
+	bufr := bytes.NewReader(txbin)
+	err = tx.Deserialize(bufr)
+	return
 }

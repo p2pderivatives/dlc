@@ -5,8 +5,10 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil"
+	"github.com/dgarage/dlc/pkg/utils"
 )
 
+// ConditionsJSON is contract conditions in JSON format
 type ConditionsJSON struct {
 	FixingTime     int64              `json:"fixing_time"`
 	FundAmts       map[Contractor]int `json:"fund_amts"`
@@ -16,11 +18,15 @@ type ConditionsJSON struct {
 	Deals          []*DealJSON        `json:"deals"`
 }
 
+// DealJSON is DLC deals in JSON format
 type DealJSON struct {
-	Amts map[Contractor]int
-	Msgs [][]byte
+	Amts map[Contractor]int `json:"amts"`
+	Msgs [][]byte           `json:"msgs"`
 }
 
+type PublicKeys map[Contractor]string
+
+// MarshalJSON implements json.Marshaler
 func (conds *Conditions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&ConditionsJSON{
 		FixingTime:     conds.FixingTime.Unix(),
@@ -33,63 +39,85 @@ func (conds *Conditions) MarshalJSON() ([]byte, error) {
 }
 
 func amtsToJSON(amts map[Contractor]btcutil.Amount) map[Contractor]int {
-	amtsJson := make(map[Contractor]int)
+	amtsJSON := make(map[Contractor]int)
 	for c, amt := range amts {
-		amtsJson[c] = int(amt)
+		amtsJSON[c] = int(amt)
 	}
 
-	return amtsJson
+	return amtsJSON
 }
 
 func dealsToJSON(deals []*Deal) []*DealJSON {
-	dealsJson := []*DealJSON{}
+	dealsJSON := []*DealJSON{}
 	for _, d := range deals {
 		damts := make(map[Contractor]int)
 		for c, amt := range d.Amts {
 			damts[c] = int(amt)
 		}
-		dJson := &DealJSON{Amts: damts, Msgs: d.Msgs}
-		dealsJson = append(dealsJson, dJson)
+		dJSON := &DealJSON{Amts: damts, Msgs: d.Msgs}
+		dealsJSON = append(dealsJSON, dJSON)
 	}
 
-	return dealsJson
+	return dealsJSON
 }
 
+// UnmarshalJSON implements json.Unmarshaler
 func (conds *Conditions) UnmarshalJSON(data []byte) error {
-	condsJson := &ConditionsJSON{}
-	err := json.Unmarshal(data, condsJson)
+	condsJSON := &ConditionsJSON{}
+	err := json.Unmarshal(data, condsJSON)
 	if err != nil {
 		return err
 	}
 
-	conds.FixingTime = time.Unix(condsJson.FixingTime, 0).UTC()
+	conds.FixingTime = time.Unix(condsJSON.FixingTime, 0).UTC()
 
-	conds.FundAmts = jsonToAmts(condsJson.FundAmts)
-	conds.FundFeerate = btcutil.Amount(condsJson.FundFeerate)
-	conds.RedeemFeerate = btcutil.Amount(condsJson.RedeemFeerate)
-	conds.RefundLockTime = condsJson.RefundLockTime
-	conds.Deals = jsonToDeals(condsJson.Deals)
+	conds.FundAmts = jsonToAmts(condsJSON.FundAmts)
+	conds.FundFeerate = btcutil.Amount(condsJSON.FundFeerate)
+	conds.RedeemFeerate = btcutil.Amount(condsJSON.RedeemFeerate)
+	conds.RefundLockTime = condsJSON.RefundLockTime
+	conds.Deals = jsonToDeals(condsJSON.Deals)
 
 	return nil
 }
 
-func jsonToAmts(amtsJson map[Contractor]int) map[Contractor]btcutil.Amount {
+func jsonToAmts(amtsJSON map[Contractor]int) map[Contractor]btcutil.Amount {
 	amts := make(map[Contractor]btcutil.Amount)
-	for c, amt := range amtsJson {
+	for c, amt := range amtsJSON {
 		amts[c] = btcutil.Amount(amt)
 	}
 	return amts
 }
 
-func jsonToDeals(dealsJson []*DealJSON) []*Deal {
+func jsonToDeals(dealsJSON []*DealJSON) []*Deal {
 	deals := []*Deal{}
-	for _, dJson := range dealsJson {
+	for _, dJSON := range dealsJSON {
 		deal := &Deal{
-			Amts: jsonToAmts(dJson.Amts),
-			Msgs: dJson.Msgs,
+			Amts: jsonToAmts(dJSON.Amts),
+			Msgs: dJSON.Msgs,
 		}
 		deals = append(deals, deal)
 	}
 
 	return deals
+}
+
+// PublicKeys converts btcec.PublicKey to hex string
+func (d *DLC) PublicKeys() PublicKeys {
+	pubs := make(PublicKeys)
+	for c, p := range d.Pubs {
+		pubs[c] = utils.PubkeyToStr(p)
+	}
+	return pubs
+}
+
+// ParsePublicKeys parses public key hex strings
+func (d *DLC) ParsePublicKeys(pubs PublicKeys) error {
+	for c, p := range pubs {
+		pub, err := utils.ParsePublicKey(p)
+		if err != nil {
+			return err
+		}
+		d.Pubs[c] = pub
+	}
+	return nil
 }

@@ -7,9 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
+	"github.com/dgarage/dlc/internal/test"
 	"github.com/dgarage/dlc/pkg/dlc"
 	"github.com/stretchr/testify/assert"
 )
@@ -37,7 +39,7 @@ func TestCreateAndOpen(t *testing.T) {
 func TestStoreContract(t *testing.T) {
 	assert := assert.New(t)
 
-	// create new db
+	// create new manager
 	db, closeFunc := newWalletDB()
 	defer closeFunc()
 	manager, _ := Create(db)
@@ -51,8 +53,22 @@ func TestStoreContract(t *testing.T) {
 	assert.NoError(err)
 	assert.NotNil(d)
 
-	// TODO: serialize all information
-	assert.Equal(d.Conds, dOrig.Conds)
+	// assert.Equal(dOrig, d)
+}
+
+func TestRetrieveContractNotExists(t *testing.T) {
+	assert := assert.New(t)
+
+	// create new manager
+	db, closeFunc := newWalletDB()
+	defer closeFunc()
+	manager, _ := Create(db)
+
+	key := []byte("not_exists")
+	d, err := manager.RetrieveContract(key)
+	assert.Nil(d)
+	assert.Error(err)
+	assert.IsType(err, &ContractNotExistsError{})
 }
 
 func newWalletDB() (walletdb.DB, func()) {
@@ -72,20 +88,43 @@ func testDBPath() string {
 }
 
 func newDLC() *dlc.DLC {
-	ftime := fixingTime()
+	return &dlc.DLC{
+		Conds: testConditions(),
+		Pubs:  testPubkeys(),
+		// FundTxReqs: testFundTxReqs(),
+	}
+}
+
+func testConditions() *dlc.Conditions {
+	ftime := testFixingTime()
 	famt1, _ := btcutil.NewAmount(1)
 	famt2, _ := btcutil.NewAmount(1)
 	feerate := btcutil.Amount(10)
 	refundlc := uint32(1)
-	deals := testDeals()
+	deals := newDeals()
 
 	conds, _ := dlc.NewConditions(
 		ftime, famt1, famt2, feerate, feerate, refundlc, deals)
 
-	return &dlc.DLC{Conds: conds}
+	return conds
 }
 
-func testDeals() []*dlc.Deal {
+func testPubkeys() map[dlc.Contractor]*btcec.PublicKey {
+	pubs := make(map[dlc.Contractor]*btcec.PublicKey)
+	_, pub1 := test.RandKeys()
+	_, pub2 := test.RandKeys()
+	pubs[dlc.FirstParty] = pub1
+	pubs[dlc.SecondParty] = pub2
+	return pubs
+}
+
+func testFixingTime() time.Time {
+	t := time.Now().AddDate(0, 0, 1)
+	y, m, d := t.Date()
+	return time.Date(y, m, d, 12, 0, 0, 0, time.UTC)
+}
+
+func newDeals() []*dlc.Deal {
 	deals := []*dlc.Deal{}
 
 	total := 5
@@ -104,8 +143,8 @@ func testDeals() []*dlc.Deal {
 	return deals
 }
 
-func fixingTime() time.Time {
-	t := time.Now().AddDate(0, 0, 1)
-	y, m, d := t.Date()
-	return time.Date(y, m, d, 12, 0, 0, 0, time.UTC)
+func testFundTxReqs() *dlc.FundTxRequirements {
+	reqs := dlc.NewFundTxReqs()
+
+	return reqs
 }
