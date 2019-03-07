@@ -104,8 +104,8 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 
 	fmt.Println("Contract created")
-	fmt.Printf("FundTx hex:\n%s\n", fundtx)
-	fmt.Printf("RefundTx hex:\n%s\n", refundtx)
+	fmt.Printf("\nFundTx hex:\n%s\n", fundtx)
+	fmt.Printf("\nRefundTx hex:\n%s\n", refundtx)
 }
 
 func initCreateContractCmd() *cobra.Command {
