@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/dgarage/dlc/pkg/script"
+	"github.com/p2pderivatives/dlc/pkg/script"
 )
 
 // ContractExecutionTx constructs a contract execution tx (CET) using pubkeys and given condition.
@@ -36,16 +36,16 @@ func (d *DLC) ContractExecutionTx(
 	}
 
 	// txout1: contract execution script
-	pub1 := d.pubs[party]
+	pub1 := d.Pubs[party]
 	if pub1 == nil {
 		return nil, errors.New("missing pubkey")
 	}
-	pub2 := d.pubs[cparty]
+	pub2 := d.Pubs[cparty]
 	if pub2 == nil {
 		return nil, errors.New("missing pubkey")
 	}
 
-	C := d.oracleReqs.commitments[dID]
+	C := d.OracleReqs.commitments[dID]
 	if C == nil {
 		return nil, errors.New("missing oracle's commitment")
 	}
@@ -75,15 +75,15 @@ func (d *DLC) ContractExecutionTx(
 
 // SignContractExecutionTxs signs contract execution txs for all deals
 func (b *Builder) SignContractExecutionTxs() ([][]byte, error) {
-	var signs [][]byte
+	var sigs [][]byte
 	for idx, deal := range b.dlc.Conds.Deals {
 		sign, err := b.SignContractExecutionTx(deal, idx)
 		if err != nil {
 			return nil, err
 		}
-		signs = append(signs, sign)
+		sigs = append(sigs, sign)
 	}
-	return signs, nil
+	return sigs, nil
 }
 
 // SignContractExecutionTx signs a contract execution tx for a given party
@@ -98,10 +98,10 @@ func (b *Builder) SignContractExecutionTx(deal *Deal, idx int) ([]byte, error) {
 	return b.witsigForFundScript(tx)
 }
 
-// AcceptCETxSigns accepts CETx signs received from the counterparty
-func (b *Builder) AcceptCETxSigns(signs [][]byte) error {
-	for idx, sign := range signs {
-		err := b.dlc.AcceptCETxSign(b.party, idx, sign)
+// AcceptCETxSignatures accepts CETx signatures received from the counterparty
+func (b *Builder) AcceptCETxSignatures(sigs [][]byte) error {
+	for idx, sig := range sigs {
+		err := b.dlc.AcceptCETxSignature(b.party, idx, sig)
 		if err != nil {
 			return err
 		}
@@ -109,8 +109,8 @@ func (b *Builder) AcceptCETxSigns(signs [][]byte) error {
 	return nil
 }
 
-// AcceptCETxSign sets a sign if it's valid for an identified CETx
-func (d *DLC) AcceptCETxSign(party Contractor, idx int, sign []byte) error {
+// AcceptCETxSignature sets a signature if it's valid for an identified CETx
+func (d *DLC) AcceptCETxSignature(party Contractor, idx int, sig []byte) error {
 	deal, err := d.Deal(idx)
 	if err != nil {
 		return err
@@ -121,17 +121,17 @@ func (d *DLC) AcceptCETxSign(party Contractor, idx int, sign []byte) error {
 		return err
 	}
 
-	err = d.verifyCETxSign(party, tx, sign)
+	err = d.verifyCETxSignature(party, tx, sig)
 	if err != nil {
 		return err
 	}
 
-	d.cetxSigns[idx] = sign
+	d.ExecSigs[idx] = sig
 	return nil
 }
 
-func (d *DLC) verifyCETxSign(
-	p Contractor, tx *wire.MsgTx, sign []byte) error {
+func (d *DLC) verifyCETxSignature(
+	p Contractor, tx *wire.MsgTx, sig []byte) error {
 
 	cparty := counterparty(p)
 
@@ -155,12 +155,12 @@ func (d *DLC) verifyCETxSign(
 		return err
 	}
 
-	s, err := btcec.ParseDERSignature(sign, btcec.S256())
+	s, err := btcec.ParseDERSignature(sig, btcec.S256())
 	if err != nil {
 		return err
 	}
 
-	if !s.Verify(hash, d.pubs[cparty]) {
+	if !s.Verify(hash, d.Pubs[cparty]) {
 		return errors.New("failed to verify")
 	}
 
@@ -183,22 +183,22 @@ func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
 		return nil, err
 	}
 
-	sign, err := b.witsigForFundScript(tx)
+	sig, err := b.witsigForFundScript(tx)
 	if err != nil {
 		return nil, err
 	}
 
-	cpSign := b.dlc.cetxSigns[dID]
+	cpSig := b.dlc.ExecSigs[dID]
 
-	var sign1, sign2 []byte
+	var sig1, sig2 []byte
 	switch b.party {
 	case FirstParty:
-		sign1, sign2 = sign, cpSign
+		sig1, sig2 = sig, cpSig
 	case SecondParty:
-		sign1, sign2 = cpSign, sign
+		sig1, sig2 = cpSig, sig
 	}
 
-	wit, err := b.dlc.witnessForFundScript(sign1, sign2)
+	wit, err := b.dlc.witnessForFundScript(sig1, sig2)
 	if err != nil {
 		return nil, err
 	}

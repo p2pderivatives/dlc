@@ -9,8 +9,8 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
-	"github.com/dgarage/dlc/pkg/script"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/pkg/script"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
 // WitnessSignature returns witness signature

@@ -12,8 +12,8 @@ import (
 	"github.com/btcsuite/btcwallet/waddrmgr"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
-	"github.com/dgarage/dlc/internal/rpc"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/internal/rpc"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
 // Namespace bucket keys.
@@ -41,10 +41,9 @@ var _ wallet.Wallet = (*Wallet)(nil)
 func CreateWallet(
 	params *chaincfg.Params,
 	seed, pubPass, privPass []byte,
-	dbFilePath, walletName string) (wallet.Wallet, error) {
+	walletDir, walletName string) (wallet.Wallet, error) {
 
-	dbDirPath := filepath.Join(dbFilePath, params.Name)
-	db, err := createDB(dbDirPath, walletName+".db")
+	db, err := createDB(walletDir, walletName+".db")
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +54,7 @@ func CreateWallet(
 // createDB creates a new db at specified path
 func createDB(dbDirPath, dbname string) (walletdb.DB, error) {
 	dbPath := filepath.Join(dbDirPath, dbname)
-	exists, err := fileExists(dbPath)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, errors.New("something already exists on this filepath")
-	}
-	err = os.MkdirAll(dbDirPath, 0700)
+	err := os.MkdirAll(dbDirPath, 0700)
 	if err != nil {
 		return nil, err
 	}

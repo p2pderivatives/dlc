@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/wire"
-	"github.com/dgarage/dlc/internal/test"
+	"github.com/p2pderivatives/dlc/internal/test"
 	"github.com/stretchr/testify/assert"
 )
 

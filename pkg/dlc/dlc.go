@@ -1,14 +1,16 @@
 package dlc
 
 import (
+	"bytes"
+	"encoding/hex"
 	"errors"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/pkg/script"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/pkg/script"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
@@ -18,22 +20,23 @@ type DLC struct {
 	Conds *Conditions
 
 	// requirements
-	pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
-	fundTxReqs  *FundTxRequirements             // fund txins/outs
-	oracleReqs  *OracleRequirements
-	refundSigns map[Contractor][]byte // counterparty's sign for refund tx
-	cetxSigns   [][]byte              // counterparty's signs for CETs
+	Pubs       map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
+	FundTxReqs *FundTxRequirements             // fund txins/outs
+	OracleReqs *OracleRequirements
+	RefundSigs map[Contractor][]byte // signatures for refund tx
+	ExecSigs   [][]byte              // counterparty's signatures for CETxs
 }
 
-func newDLC(conds *Conditions) *DLC {
+// NewDLC initializes DLC
+func NewDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
-		Conds:       conds,
-		pubs:        make(map[Contractor]*btcec.PublicKey),
-		fundTxReqs:  newFundTxReqs(),
-		oracleReqs:  newOracleReqs(nDeal),
-		refundSigns: make(map[Contractor][]byte),
-		cetxSigns:   make([][]byte, nDeal),
+		Conds:      conds,
+		Pubs:       make(map[Contractor]*btcec.PublicKey),
+		FundTxReqs: NewFundTxReqs(),
+		OracleReqs: newOracleReqs(nDeal),
+		RefundSigs: make(map[Contractor][]byte),
+		ExecSigs:   make([][]byte, nDeal),
 	}
 }
 
@@ -77,7 +80,7 @@ func NewConditions(
 // ClosingTxOut returns a final txout owned only by a given party
 func (d *DLC) ClosingTxOut(
 	p Contractor, amt btcutil.Amount) (*wire.TxOut, error) {
-	pub := d.pubs[p]
+	pub := d.Pubs[p]
 	if pub == nil {
 		return nil, errors.New("missing pubkey")
 	}
@@ -125,7 +128,7 @@ type Builder struct {
 func NewBuilder(
 	p Contractor, w wallet.Wallet, conds *Conditions) *Builder {
 	return &Builder{
-		dlc:    newDLC(conds),
+		dlc:    NewDLC(conds),
 		party:  p,
 		wallet: w,
 	}
@@ -142,7 +145,7 @@ func (b *Builder) PreparePubkey() error {
 	if err != nil {
 		return err
 	}
-	b.dlc.pubs[b.party] = pub
+	b.dlc.Pubs[b.party] = pub
 	return nil
 }
 
@@ -151,10 +154,30 @@ func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
 	p := counterparty(b.party)
 
 	// pubkey
-	b.dlc.pubs[p] = d.pubs[p]
+	b.dlc.Pubs[p] = d.Pubs[p]
 
 	// fund requirements
-	fundReqs := d.fundTxReqs
-	b.dlc.fundTxReqs.txIns[p] = fundReqs.txIns[p]
-	b.dlc.fundTxReqs.txOut[p] = fundReqs.txOut[p]
+	fundReqs := d.FundTxReqs
+	b.dlc.FundTxReqs.TxIns[p] = fundReqs.TxIns[p]
+	b.dlc.FundTxReqs.TxOut[p] = fundReqs.TxOut[p]
 }
+
+func txToHex(tx *wire.MsgTx) (string, error) {
+	// Serialize the transaction and convert to hex string.
+	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+	if err := tx.Serialize(buf); err != nil {
+		return "", err
+	}
+	h := hex.EncodeToString(buf.Bytes())
+	return h, nil
+}
+
+// func hexToTx(txHex string) (tx *wire.MsgTx, err error) {
+// 	txbin, err := hex.DecodeString(txHex)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	bufr := bytes.NewReader(txbin)
+// 	err = tx.Deserialize(bufr)
+// 	return
+// }

@@ -50,14 +50,14 @@ func (b *Builder) SignRefundTx() ([]byte, error) {
 		return nil, err
 	}
 
-	sign, err := b.witsigForFundScript(tx)
+	sig, err := b.witsigForFundScript(tx)
 	if err != nil {
 		return nil, err
 	}
 
-	b.dlc.refundSigns[b.party] = sign
+	b.dlc.RefundSigs[b.party] = sig
 
-	return sign, nil
+	return sig, nil
 }
 
 // SignedRefundTx returns a refund tx with its witness signature
@@ -82,40 +82,40 @@ func (d *DLC) witnessForRefundTx() (wire.TxWitness, error) {
 		return nil, err
 	}
 
-	sign1 := d.refundSigns[FirstParty]
-	if sign1 == nil {
+	sig1 := d.RefundSigs[FirstParty]
+	if sig1 == nil {
 		return nil, errors.New("First party must sign refund tx")
 	}
 
-	sign2 := d.refundSigns[SecondParty]
-	if sign2 == nil {
+	sig2 := d.RefundSigs[SecondParty]
+	if sig2 == nil {
 		return nil, errors.New("Second party must sign refund tx")
 	}
 
-	wt := wire.TxWitness{[]byte{}, sign1, sign2, sc}
+	wt := wire.TxWitness{[]byte{}, sig1, sig2, sc}
 	return wt, nil
 }
 
-// AcceptRefundTxSign verifies couterparty's given sign is valid and then
-func (b *Builder) AcceptRefundTxSign(sign []byte) error {
+// AcceptRefundTxSignature verifies couterparty's given signature is valid and then
+func (b *Builder) AcceptRefundTxSignature(sig []byte) error {
 	p := counterparty(b.party)
 
-	err := b.dlc.VerifyRefundTx(sign, b.dlc.pubs[p])
+	err := b.dlc.VerifyRefundTx(sig, b.dlc.Pubs[p])
 	if err != nil {
 		return fmt.Errorf("counterparty's signature didn't pass verification, had error: %v", err)
 	}
 
 	// sign passed verification, accept it
-	b.dlc.refundSigns[p] = sign
+	b.dlc.RefundSigs[p] = sig
 	return nil
 }
 
 // VerifyRefundTx verifies the refund transaction signature.
-// Returns nil if the passed in sign is valid and corresponds to the passed
+// Returns nil if the passed signature is valid and corresponds to the passed
 // in public key, and an error if it isnt.
-func (d *DLC) VerifyRefundTx(sign []byte, pub *btcec.PublicKey) error {
+func (d *DLC) VerifyRefundTx(sig []byte, pub *btcec.PublicKey) error {
 	// parse signature
-	s, err := btcec.ParseDERSignature(sign, btcec.S256())
+	s, err := btcec.ParseDERSignature(sig, btcec.S256())
 	if err != nil {
 		return err
 	}
@@ -163,4 +163,14 @@ func (b *Builder) SendRefundTx() error {
 
 	_, err = b.wallet.SendRawTransaction(tx)
 	return err
+}
+
+// RefundTxHex return hex string of refund tx
+func (b *Builder) RefundTxHex() (string, error) {
+	tx, err := b.dlc.SignedRefundTx()
+	if err != nil {
+		return "", err
+	}
+
+	return txToHex(tx)
 }

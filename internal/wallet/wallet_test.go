@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil/hdkeychain"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 	"github.com/stretchr/testify/assert"
 )
 

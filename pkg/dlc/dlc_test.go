@@ -55,5 +55,5 @@ func TestNewBuilder(t *testing.T) {
 
 	dlc := builder.DLC()
 	assert.NotNil(dlc)
-	assert.NotNil(dlc.fundTxReqs, "fundTxReqs must exist")
+	assert.NotNil(dlc.FundTxReqs, "fundTxReqs must exist")
 }

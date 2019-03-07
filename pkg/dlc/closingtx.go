@@ -6,8 +6,8 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/pkg/script"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/pkg/script"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
 // closingTxSize is size of closing tx
@@ -54,7 +54,7 @@ func (b *Builder) SignedClosingTx(cetx *wire.MsgTx) (*wire.MsgTx, error) {
 	if err != nil {
 		return nil, err
 	}
-	C := b.dlc.oracleReqs.commitments[dID]
+	C := b.dlc.OracleReqs.commitments[dID]
 
 	tx, err := b.dlc.ClosingTx(b.party, cetx)
 	if err != nil {
@@ -76,7 +76,7 @@ func (b *Builder) witnessForCEScript(
 	amt := btcutil.Amount(cetxout.Value)
 
 	cparty := counterparty(b.party)
-	pub1, pub2 := b.dlc.pubs[b.party], b.dlc.pubs[cparty]
+	pub1, pub2 := b.dlc.Pubs[b.party], b.dlc.Pubs[cparty]
 
 	sc, err := script.ContractExecutionScript(
 		pub1, pub2, C)
@@ -84,24 +84,24 @@ func (b *Builder) witnessForCEScript(
 		return nil, err
 	}
 
-	// callback function that adds message sign to private key
-	osign := b.dlc.oracleReqs.sign
-	privkeyConverter := genAddSignToPrivkeyFunc(osign)
+	// callback function that adds message sig to private key
+	osig := b.dlc.OracleReqs.sig
+	privkeyConverter := genAddSigToPrivkeyFunc(osig)
 
-	sign, err := b.wallet.WitnessSignatureWithCallback(
+	sig, err := b.wallet.WitnessSignatureWithCallback(
 		tx, closingTxOutAt, amt, sc, pub1, privkeyConverter)
 	if err != nil {
 		return nil, err
 	}
 
-	wit := script.WitnessForCEScript(sign, sc)
+	wit := script.WitnessForCEScript(sig, sc)
 	return wit, nil
 }
 
-func genAddSignToPrivkeyFunc(
-	sign []byte) wallet.PrivateKeyConverter {
+func genAddSigToPrivkeyFunc(
+	sig []byte) wallet.PrivateKeyConverter {
 	return func(priv *btcec.PrivateKey) (*btcec.PrivateKey, error) {
-		n := new(big.Int).Add(priv.D, new(big.Int).SetBytes(sign))
+		n := new(big.Int).Add(priv.D, new(big.Int).SetBytes(sig))
 		n = new(big.Int).Mod(n, btcec.S256().N)
 		p, _ := btcec.PrivKeyFromBytes(btcec.S256(), n.Bytes())
 		return p, nil

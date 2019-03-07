@@ -29,7 +29,12 @@ In the tese, the following scenarios are tested.
 Olivia publishes a various weather information, but Alice uses only some of the info. Contractors can choose which messages to use, and oracle doesn't know which messages are used in contracts (conditions of contracts).
 
 
+## Try DLC contract using CLI
+You can create DLC contract using CLI. See [this tutorial](./docs/How-to-create-DLC.md) for detailed steps.
+
 ## Development
+
+### Setup
 
 ### Install dependencies
 
@@ -44,4 +49,4 @@ go test ./...
 ```
 
 ## License
-[MIT License](https://github.com/dgarage/dlc/blob/master/LICENSE)
+[MIT License](https://github.com/p2pderivatives/dlc/blob/master/LICENSE)

@@ -8,9 +8,9 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil/hdkeychain"
-	"github.com/dgarage/dlc/internal/rpc"
-	_wallet "github.com/dgarage/dlc/internal/wallet"
-	"github.com/dgarage/dlc/pkg/wallet"
+	"github.com/p2pderivatives/dlc/internal/rpc"
+	_wallet "github.com/p2pderivatives/dlc/internal/wallet"
+	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
 func newWallet(name string, pubpass, privpass []byte) (wallet.Wallet, error) {

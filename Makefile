@@ -6,4 +6,3 @@ stop_bitcoind:
 
 generate_mocks:
 	./scripts/generate_mocks.sh
-

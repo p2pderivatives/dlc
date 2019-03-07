@@ -3,7 +3,7 @@ package wallet
 import (
 	"testing"
 
-	"github.com/dgarage/dlc/internal/mocks/rpcmock"
+	"github.com/p2pderivatives/dlc/internal/mocks/rpcmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

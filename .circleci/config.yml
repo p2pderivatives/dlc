@@ -7,7 +7,7 @@ jobs:
   build-and-test:
     docker:
       - image: circleci/golang:1.11
-    working_directory: /go/src/github.com/dgarage/dlc
+    working_directory: /go/src/github.com/p2pderivatives/dlc
     steps:
       - run:
           name: add-localbin
@@ -44,7 +44,7 @@ jobs:
   lint:
     docker:
       - image: circleci/golang:1.11
-    working_directory: /go/src/github.com/dgarage/dlc
+    working_directory: /go/src/github.com/p2pderivatives/dlc
     steps:
       - checkout
       - run:
@@ -61,7 +61,7 @@ jobs:
           name: linter
           command: |
             set +o pipefail
-            gometalinter --vendor --enable-all ./... |& revgrep origin/master
+            gometalinter ./... |& revgrep origin/master
 
 workflows:
   version: 2

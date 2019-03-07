@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/dgarage/dlc/pkg/oracle"
+	"github.com/p2pderivatives/dlc/pkg/oracle"
 )
 
 // PubkeySet is an alias of oracle.PubkeySet

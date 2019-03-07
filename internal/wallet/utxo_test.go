@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil"
-	"github.com/dgarage/dlc/internal/rpc"
+	"github.com/p2pderivatives/dlc/internal/rpc"
 	"github.com/stretchr/testify/assert"
 )
 
