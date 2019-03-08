@@ -4,5 +4,9 @@ run_bitcoind:
 stop_bitcoind:
 	./scripts/stop_bitcoind.sh
 
+clean_bitcoind:
+	./scripts/stop_bitcoind.sh &> /dev/null || true
+	rm -rf ./bitcoind/regtest
+
 generate_mocks:
 	./scripts/generate_mocks.sh
