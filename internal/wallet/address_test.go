@@ -3,6 +3,7 @@ package wallet
 import (
 	"testing"
 
+	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/internal/mocks/rpcmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,6 +22,19 @@ func TestNewPubkey(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, pub)
+}
+
+func TestNewAddress(t *testing.T) {
+	w, tearDownFunc := setupWallet(t)
+	defer tearDownFunc()
+
+	rpcc := &rpcmock.Client{}
+	rpcc = mockImportAddress(rpcc, nil)
+	w.SetRPCClient(rpcc)
+
+	addr, err := w.NewAddress()
+	assert.NoError(t, err)
+	assert.Implements(t, (*btcutil.Address)(nil), addr)
 }
 
 func mockImportAddress(c *rpcmock.Client, err error) *rpcmock.Client {

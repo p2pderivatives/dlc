@@ -10,9 +10,6 @@ import (
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
-// closingTxSize is size of closing tx
-const closingTxSize = 216
-
 // closingTxOutAt is a txout index of contract execution tx
 const closingTxOutAt = 0
 

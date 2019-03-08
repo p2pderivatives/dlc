@@ -1,7 +1,6 @@
 package dlccli
 
 import (
-	"encoding/hex"
 	"fmt"
 	"path/filepath"
 
@@ -34,7 +33,6 @@ var walletsCreateCmd = &cobra.Command{
 		// TODO: give seed as command line parameter
 		seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 		errorHandler(err)
-		fmt.Printf("Seed: %s\n", hex.EncodeToString(seed))
 
 		w, err := _wallet.CreateWallet(chainParams,
 			seed, []byte(pubpass), []byte(privpass),

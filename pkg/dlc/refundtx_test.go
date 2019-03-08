@@ -15,21 +15,21 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 
 	// init first party
 	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	w1 = mockSelectUnspent(w1, 1000, 1, nil)
 	b1 := NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
-	b1.PrepareFundTxIns()
+	b1.PrepareFundTx()
 
 	// init second party
 	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	w2 = mockSelectUnspent(w2, 1000, 1, nil)
 	b2 := NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
-	b2.PrepareFundTxIns()
+	b2.PrepareFundTx()
 
 	// exchange pubkeys
-	b1.CopyReqsFromCounterparty(b2.DLC())
-	b2.CopyReqsFromCounterparty(b1.DLC())
+	stepSendRequirments(b1, b2)
+	stepSendRequirments(b2, b1)
 
 	// sign refundtx
 	rs1, _ := b1.SignRefundTx()
@@ -45,7 +45,7 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 }
 
 // VerifyRefundTx should return false if given RefundTx isnt valid
-func TestVerifyRefundTxBadRefund(t *testing.T) {
+func TestVerifyRefundTxInvalidSig(t *testing.T) {
 	assert := assert.New(t)
 
 	_, _, d := setupDLCRefund()

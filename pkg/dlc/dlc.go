@@ -1,12 +1,11 @@
 package dlc
 
 import (
-	"bytes"
-	"encoding/hex"
 	"errors"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/script"
@@ -17,26 +16,33 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	Conds *Conditions
-
-	// requirements
-	Pubs       map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
-	FundTxReqs *FundTxRequirements             // fund txins/outs
-	OracleReqs *OracleRequirements
-	RefundSigs map[Contractor][]byte // signatures for refund tx
-	ExecSigs   [][]byte              // counterparty's signatures for CETxs
+	Conds       *Conditions
+	Pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
+	Addrs       map[Contractor]btcutil.Address  // addresses used to distribute funds after fixing deal
+	ChangeAddrs map[Contractor]btcutil.Address  // addresses used to send change
+	Utxos       map[Contractor][]*Utxo
+	FundWits    map[Contractor][]wire.TxWitness // TODO: change to fund signatures
+	OracleReqs  *OracleRequirements
+	RefundSigs  map[Contractor][]byte // signatures for refund tx
+	ExecSigs    [][]byte              // counterparty's signatures for CETxs
 }
+
+// Utxo is alias of btcjson.ListUnspentResult
+type Utxo = btcjson.ListUnspentResult
 
 // NewDLC initializes DLC
 func NewDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
-		Conds:      conds,
-		Pubs:       make(map[Contractor]*btcec.PublicKey),
-		FundTxReqs: NewFundTxReqs(),
-		OracleReqs: newOracleReqs(nDeal),
-		RefundSigs: make(map[Contractor][]byte),
-		ExecSigs:   make([][]byte, nDeal),
+		Conds:       conds,
+		Pubs:        make(map[Contractor]*btcec.PublicKey),
+		Addrs:       make(map[Contractor]btcutil.Address),
+		ChangeAddrs: make(map[Contractor]btcutil.Address),
+		Utxos:       make(map[Contractor][]*Utxo),
+		FundWits:    make(map[Contractor][]wire.TxWitness),
+		OracleReqs:  newOracleReqs(nDeal),
+		RefundSigs:  make(map[Contractor][]byte),
+		ExecSigs:    make([][]byte, nDeal),
 	}
 }
 
@@ -106,6 +112,17 @@ const (
 	SecondParty Contractor = 1
 )
 
+// String represents contractor in string format
+func (p Contractor) String() string {
+	switch p {
+	case FirstParty:
+		return "first party"
+	case SecondParty:
+		return "second party"
+	}
+	return ""
+}
+
 // counterparty returns the counterparty
 func counterparty(p Contractor) (cp Contractor) {
 	switch p {
@@ -149,35 +166,24 @@ func (b *Builder) PreparePubkey() error {
 	return nil
 }
 
-// CopyReqsFromCounterparty copies requirements from counterparty
-func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
-	p := counterparty(b.party)
+// AcceptPubkey accepts counter party's public key
+func (b *Builder) AcceptPubkey(pub []byte) error {
+	p, err := btcec.ParsePubKey(pub, btcec.S256())
+	c := counterparty(b.party)
 
-	// pubkey
-	b.dlc.Pubs[p] = d.Pubs[p]
+	b.dlc.Pubs[c] = p
 
-	// fund requirements
-	fundReqs := d.FundTxReqs
-	b.dlc.FundTxReqs.TxIns[p] = fundReqs.TxIns[p]
-	b.dlc.FundTxReqs.TxOut[p] = fundReqs.TxOut[p]
+	return err
 }
 
-func txToHex(tx *wire.MsgTx) (string, error) {
-	// Serialize the transaction and convert to hex string.
-	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
-	if err := tx.Serialize(buf); err != nil {
-		return "", err
+// PubkeyNotExistsError is error when either public key doesn't exist
+type PubkeyNotExistsError struct{ error }
+
+// PublicKey returns serialized public key (compressed)
+func (b *Builder) PublicKey() ([]byte, error) {
+	pub, ok := b.dlc.Pubs[b.party]
+	if !ok {
+		return nil, &PubkeyNotExistsError{}
 	}
-	h := hex.EncodeToString(buf.Bytes())
-	return h, nil
+	return pub.SerializeCompressed(), nil
 }
-
-// func hexToTx(txHex string) (tx *wire.MsgTx, err error) {
-// 	txbin, err := hex.DecodeString(txHex)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	bufr := bytes.NewReader(txbin)
-// 	err = tx.Deserialize(bufr)
-// 	return
-// }

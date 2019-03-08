@@ -61,7 +61,9 @@ func TestSignedClosingTx(t *testing.T) {
 	b1, b2 := setupContractorsUntilSignExchange()
 
 	// first party
-	cetx1, _ := b1.SignedContractExecutionTx()
+	cetx1, err := b1.SignedContractExecutionTx()
+	assert.NoError(err)
+	assert.NotEmpty(cetx1)
 	tx1, err := b1.SignedClosingTx(cetx1)
 	assert.NoError(err)
 
@@ -100,17 +102,17 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 	w1 := setupTestWalletForTestSignedClosingTx(osig)
 	b1 = NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
-	b1.PrepareFundTxIns()
+	b1.PrepareFundTx()
 
 	// init second party
 	w2 := setupTestWalletForTestSignedClosingTx(osig)
 	b2 = NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
-	b2.PrepareFundTxIns()
+	b2.PrepareFundTx()
 
-	// exchange pubkeys
-	b1.CopyReqsFromCounterparty(b2.DLC())
-	b2.CopyReqsFromCounterparty(b1.DLC())
+	// exchange pubkeys and utxos
+	stepSendRequirments(b1, b2)
+	stepSendRequirments(b2, b1)
 
 	dID, _, _ := b1.dlc.DealByMsgs(msgs)
 
@@ -134,12 +136,15 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 // setup mocke wallet
 func setupTestWalletForTestSignedClosingTx(msgSig []byte) *walletmock.Wallet {
 	w := &walletmock.Wallet{}
+	w = mockNewAddress(w)
+	w = mockSelectUnspent(w, 1000, 1, nil)
+
 	priv, pub := test.RandKeys()
 	w.On("NewPubkey").Return(pub, nil)
 	w = mockWitnessSignature(w, pub, priv)
-	w = mockSelectUnspent(w, 1, 1, nil)
 	w = mockWitnessSignatureWithCallback(
 		w, pub, priv, genAddSigToPrivkeyFunc(msgSig))
+
 	return w
 }
 

@@ -54,17 +54,22 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 
 	// FirstParty prepares draft
-	err = party1.builder.PrepareFundTxIns()
+	err = party1.builder.PrepareFundTx()
 	errorHandler(err)
 
 	// First Party sends offer to Second Party
-	dlc1 := *party1.builder.DLC()
-	party2.builder.CopyReqsFromCounterparty(&dlc1)
+	p1, err := party1.builder.PublicKey()
+	errorHandler(err)
+	u1 := party1.builder.Utxos()
+	err = party2.builder.AcceptPubkey(p1)
+	errorHandler(err)
+	err = party2.builder.AcceptUtxos(u1)
+	errorHandler(err)
 
 	// Second Party signs CETxs and RefundTx
 	err = party2.builder.PreparePubkey()
 	errorHandler(err)
-	err = party2.builder.PrepareFundTxIns()
+	err = party2.builder.PrepareFundTx()
 	errorHandler(err)
 	ceSigs2, err := party2.builder.SignContractExecutionTxs()
 	errorHandler(err)
@@ -72,8 +77,12 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 
 	// FirstParty accepts sigs
-	dlc2 := *party2.builder.DLC()
-	party1.builder.CopyReqsFromCounterparty(&dlc2)
+	p2, err := party2.builder.PublicKey()
+	errorHandler(err)
+	u2 := party2.builder.Utxos()
+	err = party1.builder.AcceptPubkey(p2)
+	errorHandler(err)
+	err = party1.builder.AcceptUtxos(u2)
 	errorHandler(err)
 	err = party1.builder.AcceptCETxSignatures(ceSigs2)
 	errorHandler(err)

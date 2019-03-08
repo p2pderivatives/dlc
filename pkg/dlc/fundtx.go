@@ -2,26 +2,12 @@ package dlc
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/script"
-	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
-
-// FundTxRequirements contains txins and txouts for fund tx
-type FundTxRequirements struct {
-	TxIns map[Contractor][]*wire.TxIn
-	TxOut map[Contractor]*wire.TxOut
-}
-
-// NewFundTxReqs creates fundtx requirements
-func NewFundTxReqs() *FundTxRequirements {
-	return &FundTxRequirements{
-		TxIns: make(map[Contractor][]*wire.TxIn),
-		TxOut: make(map[Contractor]*wire.TxOut),
-	}
-}
 
 const fundTxOutAt = 0 // fund txout is always at 0 in fund tx
 const fundTxInAt = 0  // fund txin is always at 0 in redeem tx
@@ -37,17 +23,42 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 	tx.AddTxOut(txout)
 
 	for _, p := range []Contractor{FirstParty, SecondParty} {
-		for _, txin := range d.FundTxReqs.TxIns[p] {
+		// txins
+		total := btcutil.Amount(0)
+		for _, utxo := range d.Utxos[p] {
+			txin, err := utxoToTxIn(utxo)
+			if err != nil {
+				return nil, err
+			}
 			tx.AddTxIn(txin)
+			amt, err := btcutil.NewAmount(utxo.Amount)
+			if err != nil {
+				return nil, err
+			}
+			total += amt
 		}
+
 		// txout for change
-		txout := d.FundTxReqs.TxOut[p]
-		if txout != nil {
-			tx.AddTxOut(txout)
+		change := total - d.DepositAmt(p)
+
+		if change < 0 {
+			msg := fmt.Sprintf("Not enough utxos from %s", p)
+			return nil, errors.New(msg)
+		}
+
+		if change > 0 {
+			addr := d.ChangeAddrs[p]
+			if addr == nil {
+				msg := fmt.Sprintf("Change address must be provided by %s", p)
+				return nil, errors.New(msg)
+			}
+			sc, err := script.P2WPKHpkScriptFromAddress(addr)
+			if err != nil {
+				return nil, err
+			}
+			tx.AddTxOut(wire.NewTxOut(int64(change), sc))
 		}
 	}
-
-	// TODO: verify fundtx
 
 	return tx, nil
 }
@@ -116,35 +127,20 @@ func (d *DLC) fundAmount() (btcutil.Amount, error) {
 	return amt1 + amt2, nil
 }
 
-// FundAmt returns amt funded by the party
+// DepositAmt calculates fund amount + fees
+func (d *DLC) DepositAmt(p Contractor) btcutil.Amount {
+	famt := d.Conds.FundAmts[p]
+	fee := d.totalFee(p)
+	return famt + fee
+}
+
+// FundAmt returns fund amount
 func (b *Builder) FundAmt() btcutil.Amount {
 	return b.dlc.Conds.FundAmts[b.party]
 }
 
-// Tx sizes for fee estimation
-const fundTxBaseSize = int64(55)
-const fundTxInSize = int64(149)
-const fundTxOutSize = int64(31)
-const cetxSize = int64(345) // context execution tx size
-
-func (d *DLC) fundTxFeeBase() btcutil.Amount {
-	return d.Conds.FundFeerate.MulF64(float64(fundTxBaseSize))
-}
-
-func (d *DLC) fundTxFeePerTxIn() btcutil.Amount {
-	return d.Conds.FundFeerate.MulF64(float64(fundTxInSize))
-}
-
-func (d *DLC) fundTxFeePerTxOut() btcutil.Amount {
-	return d.Conds.FundFeerate.MulF64(float64(fundTxOutSize))
-}
-
-func (d *DLC) redeemTxFee(size int64) btcutil.Amount {
-	return d.Conds.RedeemFeerate.MulF64(float64(size))
-}
-
-// PrepareFundTxIns prepares utxos for fund tx by calculating fees
-func (b *Builder) PrepareFundTxIns() error {
+// PrepareFundTx prepares fundtx ins and out
+func (b *Builder) PrepareFundTx() error {
 	famt := b.dlc.Conds.FundAmts[b.party]
 	feeBase := b.dlc.fundTxFeeBase()
 	redeemTxFee := b.dlc.redeemTxFee(cetxSize)
@@ -156,32 +152,59 @@ func (b *Builder) PrepareFundTxIns() error {
 		return err
 	}
 
-	txins, err := wallet.UtxosToTxIns(utxos)
-	if err != nil {
-		return err
+	// set utxos to DLC
+	_utxos := []*Utxo{}
+	for _, utxo := range utxos {
+		_utxos = append(_utxos, &utxo)
 	}
-
-	// set txins to DLC
-	b.dlc.FundTxReqs.TxIns[b.party] = txins
+	b.dlc.Utxos[b.party] = _utxos
 
 	if change > 0 {
-		pub, err := b.wallet.NewPubkey()
+		addr, err := b.wallet.NewAddress()
 		if err != nil {
 			return err
 		}
 
-		pkScript, err := script.P2WPKHpkScript(pub)
-		if err != nil {
-			return err
-		}
-
-		txout := wire.NewTxOut(int64(change), pkScript)
-
-		// set change txout to DLC
-		b.dlc.FundTxReqs.TxOut[b.party] = txout
+		// set change addr to DLC
+		b.dlc.ChangeAddrs[b.party] = addr
 	}
 
 	return nil
+}
+
+// Utxos returns utxos
+func (b *Builder) Utxos() []Utxo {
+	utxos := []Utxo{}
+	for _, utxo := range b.dlc.Utxos[b.party] {
+		utxos = append(utxos, *utxo)
+	}
+	return utxos
+}
+
+// AcceptUtxos accepts utxos
+func (b *Builder) AcceptUtxos(utxos []Utxo) error {
+	cp := counterparty(b.party)
+
+	// TODO: validate if total amount is enough
+
+	_utxos := []*Utxo{}
+	for _, utxo := range utxos {
+		_utxos = append(_utxos, &utxo)
+	}
+	b.dlc.Utxos[cp] = _utxos
+
+	return nil
+}
+
+// ChangeAddress returns address to send change
+func (b *Builder) ChangeAddress() btcutil.Address {
+	return b.dlc.ChangeAddrs[b.party]
+}
+
+// AcceptsChangeAdderss accepts change address from the counterparty
+func (b *Builder) AcceptsChangeAdderss(addr btcutil.Address) {
+	cp := counterparty(b.party)
+	b.dlc.ChangeAddrs[cp] = addr
 }
 
 // newRedeemTx creates a new tx to redeem fundtx
@@ -193,6 +216,8 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: verify if fund tx is completed
 
 	tx := wire.NewMsgTx(txVersion)
 
@@ -232,23 +257,47 @@ func (b *Builder) SignFundTx() ([]wire.TxWitness, error) {
 	}
 
 	// get witnesses
-	idxs := b.fundTxInAt()
+	idxs := b.dlc.fundTxInsIdxs(b.party)
 	wits, err := b.wallet.WitnessSignTxByIdxs(fundtx, idxs)
 	if err != nil {
 		return nil, err
 	}
 
-	// set witnesses to txins
-	for i, wit := range wits {
-		b.dlc.FundTxReqs.TxIns[b.party][i].Witness = wit
-	}
+	// set witnesses to dlc
+	b.dlc.FundWits[b.party] = wits
 
 	return wits, nil
 }
 
+// SignedFundTx constructs signed fundtx
+func (d *DLC) SignedFundTx() (*wire.MsgTx, error) {
+	tx, err := d.FundTx()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range []Contractor{FirstParty, SecondParty} {
+		wits := d.FundWits[p]
+
+		idxs := d.fundTxInsIdxs(p)
+
+		if len(wits) != len(idxs) {
+			msg := fmt.Sprintf(
+				"Expected %d signatures from %s, but found %d", len(idxs), p, len(wits))
+			return nil, errors.New(msg)
+		}
+
+		for i, idx := range idxs {
+			tx.TxIn[idx].Witness = wits[i]
+		}
+	}
+
+	return tx, nil
+}
+
 // SendFundTx sends fund tx to the network
 func (b *Builder) SendFundTx() error {
-	tx, err := b.dlc.FundTx()
+	tx, err := b.dlc.SignedFundTx()
 	if err != nil {
 		return err
 	}
@@ -259,7 +308,7 @@ func (b *Builder) SendFundTx() error {
 
 // FundTxHex returns hex string of fund tx
 func (b *Builder) FundTxHex() (string, error) {
-	tx, err := b.dlc.FundTx()
+	tx, err := b.dlc.SignedFundTx()
 	if err != nil {
 		return "", err
 	}
@@ -268,14 +317,14 @@ func (b *Builder) FundTxHex() (string, error) {
 }
 
 // fundTxInAt returns indices of txin in fundtx by the party
-func (b *Builder) fundTxInAt() (idxs []int) {
-	nTxInMe := len(b.dlc.FundTxReqs.TxIns[b.party])
+func (d *DLC) fundTxInsIdxs(p Contractor) (idxs []int) {
+	nTxInMe := len(d.Utxos[p])
 	var txinFrom, txinTo int
-	if b.party == FirstParty {
+	if p == FirstParty {
 		txinFrom = 0
 		txinTo = nTxInMe
 	} else {
-		nTxInCP := len(b.dlc.FundTxReqs.TxIns[FirstParty])
+		nTxInCP := len(d.Utxos[FirstParty])
 		txinFrom = nTxInCP
 		txinTo = txinFrom + nTxInMe
 	}
@@ -286,12 +335,9 @@ func (b *Builder) fundTxInAt() (idxs []int) {
 }
 
 // AcceptFundWitnesses accepts witnesses for fund txins owned by the counerparty
-func (b *Builder) AcceptFundWitnesses(fundWits []wire.TxWitness) {
+func (b *Builder) AcceptFundWitnesses(wits []wire.TxWitness) {
 	cparty := counterparty(b.party)
-	for idx, wit := range fundWits {
-		b.dlc.FundTxReqs.TxIns[cparty][idx].Witness = wit
-	}
+	b.dlc.FundWits[cparty] = wits
 
 	// TODO: verify
-
 }

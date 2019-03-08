@@ -35,6 +35,8 @@ func TestContractExecutionTx(t *testing.T) {
 
 // An edge case that a executing party tx takes all funds
 func TestContractExecutionTxTakeAll(t *testing.T) {
+	assert := assert.New(t)
+
 	var damt1, damt2 btcutil.Amount = 1, 0
 	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
 	_, C := test.RandKeys()
@@ -42,9 +44,7 @@ func TestContractExecutionTxTakeAll(t *testing.T) {
 
 	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
 
-	// asserions
-	assert := assert.New(t)
-	assert.Nil(err)
+	assert.NoError(err)
 	assert.Len(tx.TxOut, 1)
 	assert.Equal(int64(damt1), tx.TxOut[0].Value)
 }
@@ -132,21 +132,21 @@ func setupContractorsUntilPubkeyExchange(
 
 	// init first party
 	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	w1 = mockSelectUnspent(w1, 1000, 1, nil)
 	b1 = NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
-	b1.PrepareFundTxIns()
+	b1.PrepareFundTx()
 
 	// init second party
 	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	w2 = mockSelectUnspent(w2, 1000, 1, nil)
 	b2 = NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
-	b2.PrepareFundTxIns()
+	b2.PrepareFundTx()
 
-	// exchange pubkeys
-	b1.CopyReqsFromCounterparty(b2.DLC())
-	b2.CopyReqsFromCounterparty(b1.DLC())
+	// exchange pubkeys and utxos
+	stepSendRequirments(b1, b2)
+	stepSendRequirments(b2, b1)
 
 	dID, deal, _ = b1.dlc.DealByMsgs(msgs)
 

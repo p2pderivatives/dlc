@@ -108,9 +108,6 @@ func createManagers(
 			addrmgrNs, seed, pubPass, privPass, params, nil,
 			birthday,
 		)
-		if e != nil {
-			return e
-		}
 		return e
 	})
 }
@@ -174,10 +171,6 @@ func open(
 			return e
 		}
 		account, e = scopedMgr.LookupAccount(addrmgrNs, accountName)
-		if e != nil {
-			return e
-		}
-
 		return e
 	})
 	if err != nil {
@@ -218,16 +211,4 @@ func (w *Wallet) Unlock(privPass []byte) error {
 func (w *Wallet) Close() error {
 	w.manager.Close()
 	return nil
-}
-
-// Helper function
-func fileExists(filePath string) (bool, error) {
-	_, err := os.Stat(filePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }

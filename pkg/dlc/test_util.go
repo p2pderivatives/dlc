@@ -4,11 +4,12 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/internal/mocks/walletmock"
-	"github.com/p2pderivatives/dlc/pkg/script"
 	"github.com/p2pderivatives/dlc/internal/test"
+	"github.com/p2pderivatives/dlc/pkg/script"
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,9 +17,22 @@ import (
 // setup mocke wallet
 func setupTestWallet() *walletmock.Wallet {
 	w := &walletmock.Wallet{}
+	w = mockNewAddress(w)
+
+	// pubkey for fund script
 	priv, pub := test.RandKeys()
 	w.On("NewPubkey").Return(pub, nil)
 	w = mockWitnessSignature(w, pub, priv)
+
+	return w
+}
+
+func mockNewAddress(w *walletmock.Wallet) *walletmock.Wallet {
+	_, pub := test.RandKeys()
+	pubKeyHash := btcutil.Hash160(pub.SerializeCompressed())
+	addr, _ := btcutil.NewAddressWitnessPubKeyHash(
+		pubKeyHash, &chaincfg.RegressionNetParams)
+	w.On("NewAddress").Return(addr, nil)
 	return w
 }
 
@@ -95,4 +109,17 @@ func mockSelectUnspent(
 func newTestConditions() *Conditions {
 	conds, _ := NewConditions(time.Now(), 1, 1, 1, 1, 1, []*Deal{})
 	return conds
+}
+
+// stepSendRequirments send pubkey, utoxs, change address
+func stepSendRequirments(b1, b2 *Builder) (*Builder, *Builder) {
+	// b1 -> b2
+	p1, _ := b1.PublicKey()
+	u1 := b1.Utxos()
+	caddr1 := b1.ChangeAddress()
+	b2.AcceptPubkey(p1)
+	b2.AcceptUtxos(u1)
+	b2.AcceptsChangeAdderss(caddr1)
+
+	return b1, b2
 }
