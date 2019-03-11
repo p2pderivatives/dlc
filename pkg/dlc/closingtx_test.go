@@ -40,7 +40,7 @@ func TestClosingTx(t *testing.T) {
 }
 
 func setupDLC() *DLC {
-	d := NewDLC(newTestConditions())
+	d := NewDLC(newTestConditions(), regtestNetParams)
 	_, pub1 := test.RandKeys()
 	_, pub2 := test.RandKeys()
 	d.Pubs[FirstParty] = pub1
@@ -100,13 +100,13 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 
 	// init first party
 	w1 := setupTestWalletForTestSignedClosingTx(osig)
-	b1 = NewBuilder(FirstParty, w1, conds)
+	b1 = NewBuilder(FirstParty, w1, conds, regtestNetParams)
 	b1.PreparePubkey()
 	b1.PrepareFundTx()
 
 	// init second party
 	w2 := setupTestWalletForTestSignedClosingTx(osig)
-	b2 = NewBuilder(SecondParty, w2, conds)
+	b2 = NewBuilder(SecondParty, w2, conds, regtestNetParams)
 	b2.PreparePubkey()
 	b2.PrepareFundTx()
 

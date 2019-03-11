@@ -21,7 +21,7 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 		[]wallet.Utxo{}, btcutil.Amount(0), errors.New("not enough utxos"))
 
 	conds := newTestConditions()
-	builder := NewBuilder(FirstParty, testWallet, conds)
+	builder := NewBuilder(FirstParty, testWallet, conds, regtestNetParams)
 
 	err := builder.PrepareFundTx()
 	assert.NotNil(t, err) // not enough balance for fee
@@ -38,7 +38,7 @@ func TestPrepareFundTx(t *testing.T) {
 	var balance, change btcutil.Amount = 1, 1
 	mockSelectUnspent(testWallet, balance, change, nil)
 
-	b := NewBuilder(FirstParty, testWallet, conds)
+	b := NewBuilder(FirstParty, testWallet, conds, regtestNetParams)
 
 	err := b.PrepareFundTx()
 	assert.Nil(err)
@@ -61,7 +61,7 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	mockSelectUnspent(testWallet, balance, change, nil)
 
 	conds := newTestConditions()
-	b := NewBuilder(FirstParty, testWallet, conds)
+	b := NewBuilder(FirstParty, testWallet, conds, regtestNetParams)
 
 	err := b.PrepareFundTx()
 	assert.Nil(err)
@@ -79,14 +79,14 @@ func TestFundTx(t *testing.T) {
 	// first party
 	w1 := setupTestWallet()
 	w1 = mockSelectUnspent(w1, 1000, 1, nil)
-	b1 := NewBuilder(FirstParty, w1, conds)
+	b1 := NewBuilder(FirstParty, w1, conds, regtestNetParams)
 	b1.PrepareFundTx()
 	b1.PreparePubkey()
 
 	// second party
 	w2 := setupTestWallet()
 	w2 = mockSelectUnspent(w2, 1000, 1, nil)
-	b2 := NewBuilder(SecondParty, w2, conds)
+	b2 := NewBuilder(SecondParty, w2, conds, regtestNetParams)
 	b2.PrepareFundTx()
 	b2.PreparePubkey()
 
@@ -112,14 +112,14 @@ func TestRedeemFundTx(t *testing.T) {
 	// init first party
 	w1 := setupTestWallet()
 	w1 = mockSelectUnspent(w1, 1000, 1, nil)
-	b1 := NewBuilder(FirstParty, w1, conds)
+	b1 := NewBuilder(FirstParty, w1, conds, regtestNetParams)
 	b1.PreparePubkey()
 	b1.PrepareFundTx()
 
 	// init second party
 	w2 := setupTestWallet()
 	w2 = mockSelectUnspent(w2, 1000, 1, nil)
-	b2 := NewBuilder(SecondParty, w2, conds)
+	b2 := NewBuilder(SecondParty, w2, conds, regtestNetParams)
 	b2.PreparePubkey()
 	b2.PrepareFundTx()
 

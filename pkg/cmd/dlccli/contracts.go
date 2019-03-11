@@ -238,7 +238,8 @@ func initFirstParty() *Contractor {
 	err := w.Unlock([]byte(privpass1))
 	errorHandler(err)
 	conds := loadDLCConditions()
-	b := dlc.NewBuilder(dlc.FirstParty, w, conds)
+	net := loadChainParams(bitcoinConf)
+	b := dlc.NewBuilder(dlc.FirstParty, w, conds, net)
 
 	return &Contractor{
 		wallet:   w,
@@ -253,7 +254,8 @@ func initSecondParty() *Contractor {
 	err := w.Unlock([]byte(privpass2))
 	errorHandler(err)
 	conds := loadDLCConditions()
-	b := dlc.NewBuilder(dlc.SecondParty, w, conds)
+	net := loadChainParams(bitcoinConf)
+	b := dlc.NewBuilder(dlc.SecondParty, w, conds, net)
 
 	return &Contractor{
 		wallet:   w,

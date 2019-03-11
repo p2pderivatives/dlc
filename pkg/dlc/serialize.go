@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"encoding/json"
+	"reflect"
 	"time"
 
 	"github.com/btcsuite/btcutil"
@@ -26,6 +27,9 @@ type DealJSON struct {
 
 // PublicKeys is public keys in hex string format
 type PublicKeys map[Contractor]string
+
+// Addresses is addresses in string
+type Addresses map[Contractor]string
 
 // MarshalJSON implements json.Marshaler
 func (conds *Conditions) MarshalJSON() ([]byte, error) {
@@ -119,6 +123,52 @@ func (d *DLC) ParsePublicKeys(pubs PublicKeys) error {
 			return err
 		}
 		d.Pubs[c] = pub
+	}
+	return nil
+}
+
+// Addresses converts btcutil.Address to string
+func (d *DLC) Addresses() Addresses {
+	addrs := make(Addresses)
+	for c, addr := range d.Addrs {
+		if reflect.ValueOf(addr).IsNil() != true {
+			addrs[c] = addr.EncodeAddress()
+		}
+	}
+	return addrs
+}
+
+// ParseAddresses parses address string
+func (d *DLC) ParseAddresses(addrs Addresses) error {
+	for c, addrStr := range addrs {
+		addr, err := btcutil.DecodeAddress(addrStr, d.NetParams)
+		if err != nil {
+			return err
+		}
+		d.Addrs[c] = addr
+	}
+	return nil
+}
+
+// ChangeAddresses converts btcutil.Address to string
+func (d *DLC) ChangeAddresses() Addresses {
+	addrs := make(Addresses)
+	for c, addr := range d.ChangeAddrs {
+		if reflect.ValueOf(addr).IsNil() != true {
+			addrs[c] = addr.EncodeAddress()
+		}
+	}
+	return addrs
+}
+
+// ParseChangeAddresses parses address string
+func (d *DLC) ParseChangeAddresses(addrs Addresses) error {
+	for c, addrStr := range addrs {
+		addr, err := btcutil.DecodeAddress(addrStr, d.NetParams)
+		if err != nil {
+			return err
+		}
+		d.ChangeAddrs[c] = addr
 	}
 	return nil
 }

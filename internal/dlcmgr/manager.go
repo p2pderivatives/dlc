@@ -3,6 +3,7 @@ package dlcmgr
 import (
 	"encoding/json"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 )
@@ -41,6 +42,12 @@ func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
 		if e = storePublicKeys(b, d.PublicKeys()); e != nil {
 			return e
 		}
+		if e = storeAddrs(b, d.Addresses()); e != nil {
+			return e
+		}
+		if e = storeChangeAddrs(b, d.ChangeAddresses()); e != nil {
+			return e
+		}
 		return nil
 	}
 	return m.updateContractBucket(k, storeFunc)
@@ -64,6 +71,24 @@ func storePublicKeys(
 	return b.Put(nsPubkeys, serializedPubs)
 }
 
+func storeAddrs(
+	b walletdb.ReadWriteBucket, addrs dlc.Addresses) error {
+	serializedAddrs, e := json.Marshal(addrs)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsAddrs, serializedAddrs)
+}
+
+func storeChangeAddrs(
+	b walletdb.ReadWriteBucket, addrs dlc.Addresses) error {
+	serializedAddrs, e := json.Marshal(addrs)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsChangeAddrs, serializedAddrs)
+}
+
 // RetrieveContract retrieves stored DLC
 func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 	var d *dlc.DLC
@@ -73,13 +98,31 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 			return e
 		}
 
-		d = dlc.NewDLC(conds)
+		// TODO: store and retrieve netparam
+		net := &chaincfg.RegressionNetParams
+		d = dlc.NewDLC(conds, net)
 
 		pubs, e := retrievePublicKeys(b)
 		if e != nil {
 			return e
 		}
 		if e = d.ParsePublicKeys(pubs); e != nil {
+			return e
+		}
+
+		addrs, e := retrieveAddrs(b)
+		if e != nil {
+			return e
+		}
+		if e = d.ParseAddresses(addrs); e != nil {
+			return e
+		}
+
+		chaddrs, e := retrieveChangeAddrs(b)
+		if e != nil {
+			return e
+		}
+		if e = d.ParseChangeAddresses(chaddrs); e != nil {
 			return e
 		}
 
@@ -91,6 +134,9 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 
 func retrieveConditions(b walletdb.ReadBucket) (*dlc.Conditions, error) {
 	data := b.Get(nsConditions)
+	if len(data) == 0 {
+		return nil, nil
+	}
 	conds := &dlc.Conditions{}
 	e := json.Unmarshal(data, conds)
 	return conds, e
@@ -98,7 +144,33 @@ func retrieveConditions(b walletdb.ReadBucket) (*dlc.Conditions, error) {
 
 func retrievePublicKeys(b walletdb.ReadBucket) (dlc.PublicKeys, error) {
 	data := b.Get(nsPubkeys)
+	if len(data) == 0 {
+		return nil, nil
+	}
 	pubs := make(dlc.PublicKeys)
 	e := json.Unmarshal(data, &pubs)
+	if e != nil {
+		return nil, e
+	}
 	return pubs, e
+}
+
+func retrieveAddrs(b walletdb.ReadBucket) (dlc.Addresses, error) {
+	data := b.Get(nsAddrs)
+	if len(data) == 0 {
+		return nil, nil
+	}
+	addrs := make(dlc.Addresses)
+	e := json.Unmarshal(data, &addrs)
+	return addrs, e
+}
+
+func retrieveChangeAddrs(b walletdb.ReadBucket) (dlc.Addresses, error) {
+	data := b.Get(nsChangeAddrs)
+	if len(data) == 0 {
+		return nil, nil
+	}
+	addrs := make(dlc.Addresses)
+	e := json.Unmarshal(data, &addrs)
+	return addrs, e
 }

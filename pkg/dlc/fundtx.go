@@ -47,7 +47,7 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 		}
 
 		if change > 0 {
-			addr := d.ChangeAddrs[p]
+			addr := (d.ChangeAddrs[p]).(btcutil.Address)
 			if addr == nil {
 				msg := fmt.Sprintf("Change address must be provided by %s", p)
 				return nil, errors.New(msg)
@@ -198,7 +198,8 @@ func (b *Builder) AcceptUtxos(utxos []Utxo) error {
 
 // ChangeAddress returns address to send change
 func (b *Builder) ChangeAddress() btcutil.Address {
-	return b.dlc.ChangeAddrs[b.party]
+	addr := b.dlc.ChangeAddrs[b.party]
+	return addr.(btcutil.Address)
 }
 
 // AcceptsChangeAdderss accepts change address from the counterparty

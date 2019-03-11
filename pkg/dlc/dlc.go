@@ -6,6 +6,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/script"
@@ -16,31 +17,33 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
+	NetParams   *chaincfg.Params
 	Conds       *Conditions
+	OracleReqs  *OracleRequirements
 	Pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
 	Addrs       map[Contractor]btcutil.Address  // addresses used to distribute funds after fixing deal
 	ChangeAddrs map[Contractor]btcutil.Address  // addresses used to send change
 	Utxos       map[Contractor][]*Utxo
 	FundWits    map[Contractor][]wire.TxWitness // TODO: change to fund signatures
-	OracleReqs  *OracleRequirements
-	RefundSigs  map[Contractor][]byte // signatures for refund tx
-	ExecSigs    [][]byte              // counterparty's signatures for CETxs
+	RefundSigs  map[Contractor][]byte           // signatures for refund tx
+	ExecSigs    [][]byte                        // counterparty's signatures for CETxs
 }
 
 // Utxo is alias of btcjson.ListUnspentResult
 type Utxo = btcjson.ListUnspentResult
 
 // NewDLC initializes DLC
-func NewDLC(conds *Conditions) *DLC {
+func NewDLC(conds *Conditions, net *chaincfg.Params) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
+		NetParams:   net,
 		Conds:       conds,
+		OracleReqs:  newOracleReqs(nDeal),
 		Pubs:        make(map[Contractor]*btcec.PublicKey),
 		Addrs:       make(map[Contractor]btcutil.Address),
 		ChangeAddrs: make(map[Contractor]btcutil.Address),
 		Utxos:       make(map[Contractor][]*Utxo),
 		FundWits:    make(map[Contractor][]wire.TxWitness),
-		OracleReqs:  newOracleReqs(nDeal),
 		RefundSigs:  make(map[Contractor][]byte),
 		ExecSigs:    make([][]byte, nDeal),
 	}
@@ -143,9 +146,10 @@ type Builder struct {
 
 // NewBuilder creates a new Builder for a contractor
 func NewBuilder(
-	p Contractor, w wallet.Wallet, conds *Conditions) *Builder {
+	p Contractor, w wallet.Wallet, conds *Conditions, net *chaincfg.Params,
+) *Builder {
 	return &Builder{
-		dlc:    NewDLC(conds),
+		dlc:    NewDLC(conds, net),
 		party:  p,
 		wallet: w,
 	}

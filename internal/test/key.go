@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcutil/hdkeychain"
 )
 
-// RandKeys generates random key pairs for tests
+// RandKeys generates random key pairs for testing
 func RandKeys() (*btcec.PrivateKey, *btcec.PublicKey) {
 	seed, _ := hdkeychain.GenerateSeed(hdkeychain.MinSeedBytes)
 	extKey, _ := hdkeychain.NewMaster(seed, &chaincfg.RegressionNetParams)

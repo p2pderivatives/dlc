@@ -48,7 +48,8 @@ func TestCondions(t *testing.T) {
 }
 
 func TestNewBuilder(t *testing.T) {
-	builder := NewBuilder(FirstParty, nil, newTestConditions())
+	builder := NewBuilder(
+		FirstParty, nil, newTestConditions(), regtestNetParams)
 
 	assert := assert.New(t)
 	assert.NotNil(builder)

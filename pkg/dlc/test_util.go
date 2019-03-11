@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var regtestNetParams = &chaincfg.RegressionNetParams
+
 // setup mocke wallet
 func setupTestWallet() *walletmock.Wallet {
 	w := &walletmock.Wallet{}

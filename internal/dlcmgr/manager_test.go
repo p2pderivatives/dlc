@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
@@ -46,14 +47,18 @@ func TestStoreContract(t *testing.T) {
 
 	key := []byte("testdlc")
 	dOrig := newDLC()
+
 	err := manager.StoreContract(key, dOrig)
-	assert.NoError(err)
+	if assert.NoError(err) {
+		d, err := manager.RetrieveContract(key)
+		assert.NoError(err)
+		assert.NotNil(d)
 
-	d, err := manager.RetrieveContract(key)
-	assert.NoError(err)
-	assert.NotNil(d)
-
-	// assert.Equal(dOrig, d)
+		assert.Equal(dOrig.Conds, d.Conds)
+		assert.Equal(dOrig.Pubs, d.Pubs)
+		assert.Equal(dOrig.Addrs, d.Addrs)
+		assert.Equal(dOrig.ChangeAddrs, d.ChangeAddrs)
+	}
 }
 
 func TestRetrieveContractNotExists(t *testing.T) {
@@ -75,7 +80,9 @@ func newWalletDB() (walletdb.DB, func()) {
 	path := testDBPath()
 	db, _ := walletdb.Create("bdb", path)
 	closeFunc := func() {
-		db.Close()
+		if db != nil {
+			db.Close()
+		}
 		os.RemoveAll(path)
 	}
 	return db, closeFunc
@@ -89,9 +96,10 @@ func testDBPath() string {
 
 func newDLC() *dlc.DLC {
 	return &dlc.DLC{
-		Conds: testConditions(),
-		Pubs:  testPubkeys(),
-		// FundTxReqs: testFundTxReqs(),
+		Conds:       testConditions(),
+		Pubs:        testPubkeys(),
+		Addrs:       testAddrs(),
+		ChangeAddrs: testAddrs(),
 	}
 }
 
@@ -118,6 +126,22 @@ func testPubkeys() map[dlc.Contractor]*btcec.PublicKey {
 	return pubs
 }
 
+func testAddrs() map[dlc.Contractor]btcutil.Address {
+	randAddr := func() btcutil.Address {
+		_, pub := test.RandKeys()
+		sc := btcutil.Hash160(pub.SerializeCompressed())
+		net := &chaincfg.RegressionNetParams
+		addr, _ := btcutil.NewAddressWitnessPubKeyHash(sc, net)
+		return addr
+	}
+
+	addrs := make(map[dlc.Contractor]btcutil.Address)
+	addrs[dlc.FirstParty] = randAddr()
+	addrs[dlc.SecondParty] = randAddr()
+
+	return addrs
+}
+
 func testFixingTime() time.Time {
 	t := time.Now().AddDate(0, 0, 1)
 	y, m, d := t.Date()
@@ -142,9 +166,3 @@ func newDeals() []*dlc.Deal {
 
 	return deals
 }
-
-// func testFundTxReqs() *dlc.FundTxRequirements {
-// 	reqs := dlc.NewFundTxReqs()
-//
-// 	return reqs
-// }

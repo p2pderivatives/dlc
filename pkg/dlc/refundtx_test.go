@@ -16,14 +16,14 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	// init first party
 	w1 := setupTestWallet()
 	w1 = mockSelectUnspent(w1, 1000, 1, nil)
-	b1 := NewBuilder(FirstParty, w1, conds)
+	b1 := NewBuilder(FirstParty, w1, conds, regtestNetParams)
 	b1.PreparePubkey()
 	b1.PrepareFundTx()
 
 	// init second party
 	w2 := setupTestWallet()
 	w2 = mockSelectUnspent(w2, 1000, 1, nil)
-	b2 := NewBuilder(SecondParty, w2, conds)
+	b2 := NewBuilder(SecondParty, w2, conds, regtestNetParams)
 	b2.PreparePubkey()
 	b2.PrepareFundTx()
 

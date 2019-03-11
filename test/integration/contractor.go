@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 	"github.com/p2pderivatives/dlc/pkg/wallet"
@@ -32,7 +33,8 @@ func (c *Contractor) createWallet() (err error) {
 
 func (c *Contractor) createDLCBuilder(
 	conds *dlc.Conditions, p dlc.Contractor) {
-	c.DLCBuilder = dlc.NewBuilder(p, c.Wallet, conds)
+	net := &chaincfg.RegressionNetParams
+	c.DLCBuilder = dlc.NewBuilder(p, c.Wallet, conds, net)
 }
 
 func (c *Contractor) unlockWallet() {

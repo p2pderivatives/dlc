@@ -8,10 +8,13 @@ import (
 )
 
 var (
-	nsTop        = []byte("dlcmgr")
-	nsContracts  = []byte("contracts")
-	nsConditions = []byte("conds")
-	nsPubkeys    = []byte("pubkeys")
+	nsTop         = []byte("dlcmgr")
+	nsContracts   = []byte("contracts")
+	nsNetParam    = []byte("net")
+	nsConditions  = []byte("conds")
+	nsPubkeys     = []byte("pubkeys")
+	nsAddrs       = []byte("addrs")
+	nsChangeAddrs = []byte("chaddrs")
 )
 
 func createManager(db walletdb.DB) error {
@@ -35,7 +38,12 @@ func openManager(db walletdb.DB) *Manager {
 
 func (m *Manager) updateContractBucket(
 	k []byte, f func(walletdb.ReadWriteBucket) error) error {
-	updateFunc := func(tx walletdb.ReadWriteTx) error {
+	updateFunc := func(tx walletdb.ReadWriteTx) (e error) {
+		defer func() {
+			if r := recover(); r != nil {
+				e = r.(error)
+			}
+		}()
 		ns := tx.ReadWriteBucket(nsTop)
 		contractsNS := ns.NestedReadWriteBucket(nsContracts)
 		bucket, e := contractsNS.CreateBucketIfNotExists(k)
@@ -44,7 +52,8 @@ func (m *Manager) updateContractBucket(
 		}
 		return f(bucket)
 	}
-	return walletdb.Update(m.db, updateFunc)
+	err := walletdb.Update(m.db, updateFunc)
+	return err
 }
 
 // ContractNotExistsError gets raised when contract doesn't exist
@@ -59,8 +68,13 @@ func newContractNotExistsError(
 }
 
 func (m *Manager) viewContractBucket(
-	k []byte, f func(walletdb.ReadBucket) error) error {
+	k []byte, f func(walletdb.ReadBucket) error) (e error) {
 	viewFunc := func(tx walletdb.ReadTx) error {
+		defer func() {
+			if r := recover(); r != nil {
+				e = r.(error)
+			}
+		}()
 		ns := tx.ReadBucket(nsTop)
 		contractsNS := ns.NestedReadBucket(nsContracts)
 		bucket := contractsNS.NestedReadBucket(k)
