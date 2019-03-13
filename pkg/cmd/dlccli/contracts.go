@@ -184,8 +184,9 @@ func loadDLCConditions() *dlc.Conditions {
 
 	deals := loadDeals()
 
+	net := loadChainParams(bitcoinConf)
 	conds, err := dlc.NewConditions(
-		ftime, famt1, famt2, ffrate, rfrate, lc, deals)
+		net, ftime, famt1, famt2, ffrate, rfrate, lc, deals)
 	errorHandler(err)
 
 	return conds
@@ -238,8 +239,7 @@ func initFirstParty() *Contractor {
 	err := w.Unlock([]byte(privpass1))
 	errorHandler(err)
 	conds := loadDLCConditions()
-	net := loadChainParams(bitcoinConf)
-	b := dlc.NewBuilder(dlc.FirstParty, w, conds, net)
+	b := dlc.NewBuilder(dlc.FirstParty, w, conds)
 
 	return &Contractor{
 		wallet:   w,
@@ -254,8 +254,7 @@ func initSecondParty() *Contractor {
 	err := w.Unlock([]byte(privpass2))
 	errorHandler(err)
 	conds := loadDLCConditions()
-	net := loadChainParams(bitcoinConf)
-	b := dlc.NewBuilder(dlc.SecondParty, w, conds, net)
+	b := dlc.NewBuilder(dlc.SecondParty, w, conds)
 
 	return &Contractor{
 		wallet:   w,

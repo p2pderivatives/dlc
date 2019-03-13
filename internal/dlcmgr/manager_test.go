@@ -54,16 +54,7 @@ func TestStoreContract(t *testing.T) {
 		d, err := manager.RetrieveContract(key)
 		assert.NoError(err)
 		assert.NotNil(d)
-
-		assert.Equal(dOrig.Conds, d.Conds)
-		assert.Equal(dOrig.Pubs, d.Pubs)
-		assert.Equal(dOrig.Addrs, d.Addrs)
-		assert.Equal(dOrig.ChangeAddrs, d.ChangeAddrs)
-		assert.Equal(dOrig.Utxos, d.Utxos)
-		assert.Equal(dOrig.FundWits, d.FundWits)
-		assert.Equal(dOrig.RefundSigs, d.RefundSigs)
-		assert.Equal(dOrig.ExecSigs, d.ExecSigs)
-		assert.Equal(dOrig.Oracle, d.Oracle)
+		assert.Equal(dOrig, d)
 	}
 }
 
@@ -117,6 +108,7 @@ func newDLC() *dlc.DLC {
 }
 
 func testConditions() *dlc.Conditions {
+	net := &chaincfg.RegressionNetParams
 	ftime := testFixingTime()
 	famt1, _ := btcutil.NewAmount(1)
 	famt2, _ := btcutil.NewAmount(1)
@@ -125,7 +117,7 @@ func testConditions() *dlc.Conditions {
 	deals := newDeals()
 
 	conds, _ := dlc.NewConditions(
-		ftime, famt1, famt2, feerate, feerate, refundlc, deals)
+		net, ftime, famt1, famt2, feerate, feerate, refundlc, deals)
 
 	return conds
 }

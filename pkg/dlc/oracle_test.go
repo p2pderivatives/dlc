@@ -64,7 +64,7 @@ func setupContractorForOracleTest() (*Builder, *Deal, int) {
 	// init first party
 	w := setupTestWallet()
 	w = mockSelectUnspent(w, 1, 1, nil)
-	b := NewBuilder(FirstParty, w, conds, regtestNetParams)
+	b := NewBuilder(FirstParty, w, conds)
 
 	dID, _, _ := b.dlc.DealByMsgs(msgs)
 

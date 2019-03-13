@@ -17,7 +17,6 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	NetParams   *chaincfg.Params
 	Conds       *Conditions
 	Oracle      *Oracle
 	Pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
@@ -33,10 +32,9 @@ type DLC struct {
 type Utxo = btcjson.ListUnspentResult
 
 // NewDLC initializes DLC
-func NewDLC(conds *Conditions, net *chaincfg.Params) *DLC {
+func NewDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
-		NetParams:   net,
 		Conds:       conds,
 		Oracle:      NewOracle(nDeal),
 		Pubs:        make(map[Contractor]*btcec.PublicKey),
@@ -51,6 +49,7 @@ func NewDLC(conds *Conditions, net *chaincfg.Params) *DLC {
 
 // Conditions contains conditions of a contract
 type Conditions struct {
+	NetParams      *chaincfg.Params              `validate:"required"`
 	FixingTime     time.Time                     `validate:"required,gt=time.Now()"`
 	FundAmts       map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
 	FundFeerate    btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
@@ -61,6 +60,7 @@ type Conditions struct {
 
 // NewConditions creates a new DLC conditions
 func NewConditions(
+	net *chaincfg.Params,
 	ftime time.Time,
 	famt1, famt2 btcutil.Amount,
 	ffeerate, rfeerate btcutil.Amount, // fund feerate and redeem feerate
@@ -72,6 +72,7 @@ func NewConditions(
 	famts[SecondParty] = famt2
 
 	conds := &Conditions{
+		NetParams:      net,
 		FixingTime:     ftime,
 		FundAmts:       famts,
 		FundFeerate:    ffeerate,
@@ -146,10 +147,9 @@ type Builder struct {
 
 // NewBuilder creates a new Builder for a contractor
 func NewBuilder(
-	p Contractor, w wallet.Wallet, conds *Conditions, net *chaincfg.Params,
-) *Builder {
+	p Contractor, w wallet.Wallet, conds *Conditions) *Builder {
 	return &Builder{
-		dlc:    NewDLC(conds, net),
+		dlc:    NewDLC(conds),
 		party:  p,
 		wallet: w,
 	}

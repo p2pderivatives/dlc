@@ -11,7 +11,8 @@ import (
 
 // Manager manages contracts
 type Manager struct {
-	db walletdb.DB
+	db        walletdb.DB
+	netParams *chaincfg.Params
 }
 
 // Create creates manager
@@ -159,9 +160,7 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 			return e
 		}
 
-		// TODO: store and retrieve netparam
-		net := &chaincfg.RegressionNetParams
-		d = dlc.NewDLC(conds, net)
+		d = dlc.NewDLC(conds)
 
 		n := len(conds.Deals)
 		o, e := retrieveOracle(b, n)

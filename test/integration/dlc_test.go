@@ -167,8 +167,9 @@ func contractorsBetOnLottery(
 	var onebtc btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin
 	famta, famtb := onebtc, onebtc
 	deals := randomDealsForAllDigitPatterns(nDigit, int(famta+famtb))
+	net := &chaincfg.RegressionNetParams
 	conds, err := dlc.NewConditions(
-		fixingTime, famta, famtb, 1, 1, refundUnlockAt, deals)
+		net, fixingTime, famta, famtb, 1, 1, refundUnlockAt, deals)
 	assert.NoError(t, err)
 
 	c1.createDLCBuilder(conds, dlc.FirstParty)

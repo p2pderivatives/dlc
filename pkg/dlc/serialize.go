@@ -2,9 +2,11 @@ package dlc
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/oracle"
 	"github.com/p2pderivatives/dlc/pkg/utils"
@@ -20,6 +22,7 @@ type OracleJSON struct {
 
 // ConditionsJSON is contract conditions in JSON format
 type ConditionsJSON struct {
+	Net            string             `json:"network"`
 	FixingTime     int64              `json:"fixing_time"`
 	FundAmts       map[Contractor]int `json:"fund_amts"`
 	FundFeerate    int                `json:"fund_feerate"`
@@ -63,6 +66,7 @@ func (o *Oracle) MarshalJSON() ([]byte, error) {
 // MarshalJSON implements json.Marshaler
 func (conds *Conditions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&ConditionsJSON{
+		Net:            conds.NetParams.Name,
 		FixingTime:     conds.FixingTime.Unix(),
 		FundAmts:       amtsToJSON(conds.FundAmts),
 		FundFeerate:    int(conds.FundFeerate),
@@ -95,6 +99,7 @@ func dealsToJSON(deals []*Deal) []*DealJSON {
 	return dealsJSON
 }
 
+// UnmarshalJSON implements json.Unmarshaler
 func (o *Oracle) UnmarshalJSON(data []byte) error {
 	oJSON := &OracleJSON{}
 	err := json.Unmarshal(data, oJSON)
@@ -133,6 +138,12 @@ func (conds *Conditions) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	net, err := strToNetParams(condsJSON.Net)
+	if err != nil {
+		return err
+	}
+	conds.NetParams = net
+
 	conds.FixingTime = time.Unix(condsJSON.FixingTime, 0).UTC()
 
 	conds.FundAmts = jsonToAmts(condsJSON.FundAmts)
@@ -142,6 +153,29 @@ func (conds *Conditions) UnmarshalJSON(data []byte) error {
 	conds.Deals = jsonToDeals(condsJSON.Deals)
 
 	return nil
+}
+
+// InvalidNetworkNameError is used when invalid network name is given
+type InvalidNetworkNameError struct{ error }
+
+func strToNetParams(str string) (*chaincfg.Params, error) {
+	var net *chaincfg.Params
+	var err error
+	switch str {
+	case chaincfg.MainNetParams.Name:
+		net = &chaincfg.MainNetParams
+	case chaincfg.TestNet3Params.Name:
+		net = &chaincfg.TestNet3Params
+	case chaincfg.RegressionNetParams.Name:
+		net = &chaincfg.RegressionNetParams
+	case chaincfg.SimNetParams.Name:
+		net = &chaincfg.SimNetParams
+	default:
+		msg := fmt.Errorf("Invalid network name. %s", str)
+		err = InvalidNetworkNameError{error: msg}
+	}
+
+	return net, err
 }
 
 func jsonToAmts(amtsJSON map[Contractor]int) map[Contractor]btcutil.Amount {
@@ -200,7 +234,7 @@ func (d *DLC) Addresses() Addresses {
 // ParseAddresses parses address string
 func (d *DLC) ParseAddresses(addrs Addresses) error {
 	for c, addrStr := range addrs {
-		addr, err := btcutil.DecodeAddress(addrStr, d.NetParams)
+		addr, err := btcutil.DecodeAddress(addrStr, d.Conds.NetParams)
 		if err != nil {
 			return err
 		}
@@ -223,7 +257,7 @@ func (d *DLC) ChangeAddresses() Addresses {
 // ParseChangeAddresses parses address string
 func (d *DLC) ParseChangeAddresses(addrs Addresses) error {
 	for c, addrStr := range addrs {
-		addr, err := btcutil.DecodeAddress(addrStr, d.NetParams)
+		addr, err := btcutil.DecodeAddress(addrStr, d.Conds.NetParams)
 		if err != nil {
 			return err
 		}
