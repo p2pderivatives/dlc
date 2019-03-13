@@ -43,7 +43,6 @@ Alice
     --privpass "priv_alice" \
     --pubpass "pub_alice"
 
-Seed: 95c014d35fd476129cbb829b69fc4897808fbcaf70a3cc15465ad6e186614027
 Wallet created
 ```
 
@@ -57,7 +56,6 @@ Bob
     --privpass "priv_bob" \
     --pubpass "pub_bob"
 
-Seed: 452b73e2d6c5de764459aabf8a1ffbecc647a126a858409e5e69ec81ba184f8d
 Wallet created
 ```
 

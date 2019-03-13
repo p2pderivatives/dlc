@@ -30,6 +30,7 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			tx.AddTxIn(txin)
 			amt, err := btcutil.NewAmount(utxo.Amount)
 			if err != nil {
@@ -47,7 +48,7 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 		}
 
 		if change > 0 {
-			addr := (d.ChangeAddrs[p]).(btcutil.Address)
+			addr := d.ChangeAddrs[p]
 			if addr == nil {
 				msg := fmt.Sprintf("Change address must be provided by %s", p)
 				return nil, errors.New(msg)
@@ -217,7 +218,6 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	// TODO: verify if fund tx is completed
 
 	tx := wire.NewMsgTx(txVersion)
