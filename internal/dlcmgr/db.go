@@ -15,6 +15,7 @@ var (
 	nsPubkeys     = []byte("pubkeys")
 	nsAddrs       = []byte("addrs")
 	nsChangeAddrs = []byte("chaddrs")
+	nsUtxos       = []byte("utxos")
 )
 
 func createManager(db walletdb.DB) error {

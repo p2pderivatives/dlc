@@ -58,6 +58,7 @@ func TestStoreContract(t *testing.T) {
 		assert.Equal(dOrig.Pubs, d.Pubs)
 		assert.Equal(dOrig.Addrs, d.Addrs)
 		assert.Equal(dOrig.ChangeAddrs, d.ChangeAddrs)
+		assert.Equal(dOrig.Utxos, d.Utxos)
 	}
 }
 
@@ -100,6 +101,7 @@ func newDLC() *dlc.DLC {
 		Pubs:        testPubkeys(),
 		Addrs:       testAddrs(),
 		ChangeAddrs: testAddrs(),
+		Utxos:       testUtxos(),
 	}
 }
 
@@ -140,6 +142,27 @@ func testAddrs() map[dlc.Contractor]btcutil.Address {
 	addrs[dlc.SecondParty] = randAddr()
 
 	return addrs
+}
+
+func testUtxos() map[dlc.Contractor][]*dlc.Utxo {
+	randUtxos := func() []*dlc.Utxo {
+		return []*dlc.Utxo{
+			{
+				TxID:         "",
+				Vout:         1,
+				Address:      "",
+				Account:      "",
+				ScriptPubKey: "",
+				RedeemScript: "",
+				Amount:       1,
+				Spendable:    true,
+			}}
+	}
+
+	utxos := make(map[dlc.Contractor][]*dlc.Utxo)
+	utxos[dlc.FirstParty] = randUtxos()
+	utxos[dlc.SecondParty] = randUtxos()
+	return utxos
 }
 
 func testFixingTime() time.Time {

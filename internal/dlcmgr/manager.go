@@ -48,6 +48,9 @@ func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
 		if e = storeChangeAddrs(b, d.ChangeAddresses()); e != nil {
 			return e
 		}
+		if e = storeUtxos(b, d.Utxos); e != nil {
+			return e
+		}
 		return nil
 	}
 	return m.updateContractBucket(k, storeFunc)
@@ -89,6 +92,15 @@ func storeChangeAddrs(
 	return b.Put(nsChangeAddrs, serializedAddrs)
 }
 
+func storeUtxos(
+	b walletdb.ReadWriteBucket, utxos map[dlc.Contractor][]*dlc.Utxo) error {
+	serializedUtxos, e := json.Marshal(utxos)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsUtxos, serializedUtxos)
+}
+
 // RetrieveContract retrieves stored DLC
 func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 	var d *dlc.DLC
@@ -125,6 +137,12 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 		if e = d.ParseChangeAddresses(chaddrs); e != nil {
 			return e
 		}
+
+		utxos, e := retrieveUtxos(b)
+		if e != nil {
+			return e
+		}
+		d.Utxos = utxos
 
 		return e
 	}
@@ -173,4 +191,14 @@ func retrieveChangeAddrs(b walletdb.ReadBucket) (dlc.Addresses, error) {
 	addrs := make(dlc.Addresses)
 	e := json.Unmarshal(data, &addrs)
 	return addrs, e
+}
+
+func retrieveUtxos(b walletdb.ReadBucket) (map[dlc.Contractor][]*dlc.Utxo, error) {
+	data := b.Get(nsUtxos)
+	if len(data) == 0 {
+		return nil, nil
+	}
+	utxos := make(map[dlc.Contractor][]*dlc.Utxo)
+	e := json.Unmarshal(data, &utxos)
+	return utxos, e
 }
