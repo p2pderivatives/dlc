@@ -23,17 +23,21 @@ type PubkeySetJSON struct {
 
 // MarshalJSON serialize PubkeySet to JSON
 func (pubset PubkeySet) MarshalJSON() ([]byte, error) {
+	s, err := json.Marshal(pubset.JSON())
+	return s, err
+}
+
+// JSON returns PubkeySetJSON
+func (pubset PubkeySet) JSON() *PubkeySetJSON {
 	pubkey := utils.PubkeyToStr(pubset.Pubkey)
 	var rpoints []string
 	for _, R := range pubset.CommittedRpoints {
 		rpoints = append(rpoints, utils.PubkeyToStr(R))
 	}
-
-	s, err := json.Marshal(&PubkeySetJSON{
+	return &PubkeySetJSON{
 		Pubkey:           pubkey,
 		CommittedRpoints: rpoints,
-	})
-	return s, err
+	}
 }
 
 // UnmarshalJSON deserialize JSON to PubkeySet
@@ -43,7 +47,11 @@ func (pubset *PubkeySet) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+	return pubset.ParseJSON(pjson)
+}
 
+// ParseJSON parses PubkeySetJSON
+func (pubset *PubkeySet) ParseJSON(pjson *PubkeySetJSON) error {
 	pubkey, err := utils.ParsePublicKey(pjson.Pubkey)
 	if err != nil {
 		return err

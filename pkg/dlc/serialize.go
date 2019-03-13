@@ -6,8 +6,17 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil"
+	"github.com/p2pderivatives/dlc/pkg/oracle"
 	"github.com/p2pderivatives/dlc/pkg/utils"
 )
+
+// OracleJSON is oracle information in JSON format
+type OracleJSON struct {
+	PubkeySet   *oracle.PubkeySetJSON `json:"pubkey"`
+	Commitments []string              `json:"commitments"`
+	Sig         []byte                `json:"sig"`
+	SignedMsgs  [][]byte              `json:"signed_msgs"`
+}
 
 // ConditionsJSON is contract conditions in JSON format
 type ConditionsJSON struct {
@@ -30,6 +39,26 @@ type PublicKeys map[Contractor]string
 
 // Addresses is addresses in string
 type Addresses map[Contractor]string
+
+// MarshalJSON implements json.Marshaler
+func (o *Oracle) MarshalJSON() ([]byte, error) {
+	var pubkeyJSON *oracle.PubkeySetJSON
+	if o.PubkeySet != nil {
+		pubkeyJSON = o.PubkeySet.JSON()
+	}
+
+	Cs := []string{}
+	for _, c := range o.Commitments {
+		Cs = append(Cs, utils.PubkeyToStr(c))
+	}
+
+	return json.Marshal(&OracleJSON{
+		PubkeySet:   pubkeyJSON,
+		Commitments: Cs,
+		Sig:         o.Sig,
+		SignedMsgs:  o.SignedMsgs,
+	})
+}
 
 // MarshalJSON implements json.Marshaler
 func (conds *Conditions) MarshalJSON() ([]byte, error) {
@@ -64,6 +93,36 @@ func dealsToJSON(deals []*Deal) []*DealJSON {
 	}
 
 	return dealsJSON
+}
+
+func (o *Oracle) UnmarshalJSON(data []byte) error {
+	oJSON := &OracleJSON{}
+	err := json.Unmarshal(data, oJSON)
+	if err != nil {
+		return err
+	}
+
+	if oJSON.PubkeySet != nil {
+		pubset := &oracle.PubkeySet{}
+		err = pubset.ParseJSON(oJSON.PubkeySet)
+		if err != nil {
+			return err
+		}
+		o.PubkeySet = pubset
+	}
+
+	for k, cstr := range oJSON.Commitments {
+		c, err := utils.ParsePublicKey(cstr)
+		if err != nil {
+			return err
+		}
+		o.Commitments[k] = c
+	}
+
+	o.Sig = oJSON.Sig
+	o.SignedMsgs = oJSON.SignedMsgs
+
+	return nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler

@@ -20,7 +20,7 @@ func TestSetOraclePubkeySet(t *testing.T) {
 	b.SetOraclePubkeySet(pubset)
 	d := b.DLC()
 
-	assert.NotNil(t, d.OracleReqs.commitments[dID])
+	assert.NotNil(t, d.Oracle.Commitments[dID])
 }
 
 func TestFixDeal(t *testing.T) {
@@ -30,7 +30,7 @@ func TestFixDeal(t *testing.T) {
 	// setup
 	b, deal, dID := setupContractorForOracleTest()
 	privkey, C := test.RandKeys()
-	b.dlc.OracleReqs.commitments[dID] = C
+	b.dlc.Oracle.Commitments[dID] = C
 
 	// fail with invalid signature
 	privInvalid, _ := test.RandKeys()

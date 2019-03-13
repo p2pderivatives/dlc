@@ -23,7 +23,7 @@ func TestContractExecutionTx(t *testing.T) {
 
 	// set message commitment
 	_, C := test.RandKeys()
-	b.dlc.OracleReqs.commitments[dID] = C
+	b.dlc.Oracle.Commitments[dID] = C
 
 	// txout should have 2 entries
 	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
@@ -40,7 +40,7 @@ func TestContractExecutionTxTakeAll(t *testing.T) {
 	var damt1, damt2 btcutil.Amount = 1, 0
 	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
 	_, C := test.RandKeys()
-	b.dlc.OracleReqs.commitments[dID] = C
+	b.dlc.Oracle.Commitments[dID] = C
 
 	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
 
@@ -54,7 +54,7 @@ func TestContractExecutionTxTakeNothing(t *testing.T) {
 	var damt1, damt2 btcutil.Amount = 0, 1
 	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
 	_, C := test.RandKeys()
-	b.dlc.OracleReqs.commitments[dID] = C
+	b.dlc.Oracle.Commitments[dID] = C
 
 	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
 
@@ -72,8 +72,8 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	// setup
 	b1, b2, dID, deal := setupContractorsUntilPubkeyExchange(1, 1)
 	privkey, C := test.RandKeys()
-	b1.dlc.OracleReqs.commitments[dID] = C
-	b2.dlc.OracleReqs.commitments[dID] = C
+	b1.dlc.Oracle.Commitments[dID] = C
+	b2.dlc.Oracle.Commitments[dID] = C
 	osigs := [][]byte{privkey.D.Bytes()}
 	oFixedMsg := &oracle.SignedMsg{Msgs: deal.Msgs, Sigs: osigs}
 

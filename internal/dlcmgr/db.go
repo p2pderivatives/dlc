@@ -10,6 +10,7 @@ import (
 var (
 	nsTop         = []byte("dlcmgr")
 	nsContracts   = []byte("contracts")
+	nsOracle      = []byte("oracle")
 	nsNetParam    = []byte("net")
 	nsConditions  = []byte("conds")
 	nsPubkeys     = []byte("pubkeys")
@@ -43,6 +44,7 @@ func openManager(db walletdb.DB) *Manager {
 func (m *Manager) updateContractBucket(
 	k []byte, f func(walletdb.ReadWriteBucket) error) error {
 	updateFunc := func(tx walletdb.ReadWriteTx) (e error) {
+		// TODO: workaround for panicking inside callback function
 		defer func() {
 			if r := recover(); r != nil {
 				e = r.(error)
@@ -72,13 +74,8 @@ func newContractNotExistsError(
 }
 
 func (m *Manager) viewContractBucket(
-	k []byte, f func(walletdb.ReadBucket) error) (e error) {
+	k []byte, f func(walletdb.ReadBucket) error) error {
 	viewFunc := func(tx walletdb.ReadTx) error {
-		defer func() {
-			if r := recover(); r != nil {
-				e = r.(error)
-			}
-		}()
 		ns := tx.ReadBucket(nsTop)
 		contractsNS := ns.NestedReadBucket(nsContracts)
 		bucket := contractsNS.NestedReadBucket(k)

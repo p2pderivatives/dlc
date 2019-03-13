@@ -19,7 +19,7 @@ import (
 type DLC struct {
 	NetParams   *chaincfg.Params
 	Conds       *Conditions
-	OracleReqs  *OracleRequirements
+	Oracle      *Oracle
 	Pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
 	Addrs       map[Contractor]btcutil.Address  // addresses used to distribute funds after fixing deal
 	ChangeAddrs map[Contractor]btcutil.Address  // addresses used to send change
@@ -38,7 +38,7 @@ func NewDLC(conds *Conditions, net *chaincfg.Params) *DLC {
 	return &DLC{
 		NetParams:   net,
 		Conds:       conds,
-		OracleReqs:  newOracleReqs(nDeal),
+		Oracle:      NewOracle(nDeal),
 		Pubs:        make(map[Contractor]*btcec.PublicKey),
 		Addrs:       make(map[Contractor]btcutil.Address),
 		ChangeAddrs: make(map[Contractor]btcutil.Address),

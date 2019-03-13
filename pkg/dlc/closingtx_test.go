@@ -117,8 +117,8 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
 	dID, _, _ := b1.dlc.DealByMsgs(msgs)
 
 	// set oracle ocmmitment
-	b1.dlc.OracleReqs.commitments[dID] = C
-	b2.dlc.OracleReqs.commitments[dID] = C
+	b1.dlc.Oracle.Commitments[dID] = C
+	b2.dlc.Oracle.Commitments[dID] = C
 
 	// exchange sigs
 	sig1, _ := b1.SignContractExecutionTx(deal, dID)

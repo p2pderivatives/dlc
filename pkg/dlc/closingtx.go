@@ -51,7 +51,7 @@ func (b *Builder) SignedClosingTx(cetx *wire.MsgTx) (*wire.MsgTx, error) {
 	if err != nil {
 		return nil, err
 	}
-	C := b.dlc.OracleReqs.commitments[dID]
+	C := b.dlc.Oracle.Commitments[dID]
 
 	tx, err := b.dlc.ClosingTx(b.party, cetx)
 	if err != nil {
@@ -82,7 +82,7 @@ func (b *Builder) witnessForCEScript(
 	}
 
 	// callback function that adds message sig to private key
-	osig := b.dlc.OracleReqs.sig
+	osig := b.dlc.Oracle.Sig
 	privkeyConverter := genAddSigToPrivkeyFunc(osig)
 
 	sig, err := b.wallet.WitnessSignatureWithCallback(

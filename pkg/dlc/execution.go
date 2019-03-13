@@ -45,7 +45,7 @@ func (d *DLC) ContractExecutionTx(
 		return nil, errors.New("missing pubkey")
 	}
 
-	C := d.OracleReqs.commitments[dID]
+	C := d.Oracle.Commitments[dID]
 	if C == nil {
 		return nil, errors.New("missing oracle's commitment")
 	}

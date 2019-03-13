@@ -37,6 +37,9 @@ func (m *Manager) Close() error {
 func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
 	storeFunc := func(b walletdb.ReadWriteBucket) error {
 		var e error
+		if e = storeOracle(b, d.Oracle); e != nil {
+			return e
+		}
 		if e = storeConditions(b, d.Conds); e != nil {
 			return e
 		}
@@ -64,6 +67,15 @@ func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
 		return nil
 	}
 	return m.updateContractBucket(k, storeFunc)
+}
+
+func storeOracle(
+	b walletdb.ReadWriteBucket, o *dlc.Oracle) error {
+	serializedOracle, e := json.Marshal(o)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsOracle, serializedOracle)
 }
 
 func storeConditions(
@@ -151,6 +163,13 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 		net := &chaincfg.RegressionNetParams
 		d = dlc.NewDLC(conds, net)
 
+		n := len(conds.Deals)
+		o, e := retrieveOracle(b, n)
+		if e != nil {
+			return e
+		}
+		d.Oracle = o
+
 		pubs, e := retrievePublicKeys(b)
 		if e != nil {
 			return e
@@ -203,6 +222,16 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 	}
 	err := m.viewContractBucket(k, retrieveFunc)
 	return d, err
+}
+
+func retrieveOracle(b walletdb.ReadBucket, n int) (*dlc.Oracle, error) {
+	data := b.Get(nsOracle)
+	if len(data) == 0 {
+		return nil, nil
+	}
+	o := dlc.NewOracle(n)
+	e := json.Unmarshal(data, o)
+	return o, e
 }
 
 func retrieveConditions(b walletdb.ReadBucket) (*dlc.Conditions, error) {

@@ -63,6 +63,7 @@ func TestStoreContract(t *testing.T) {
 		assert.Equal(dOrig.FundWits, d.FundWits)
 		assert.Equal(dOrig.RefundSigs, d.RefundSigs)
 		assert.Equal(dOrig.ExecSigs, d.ExecSigs)
+		assert.Equal(dOrig.Oracle, d.Oracle)
 	}
 }
 
@@ -100,8 +101,11 @@ func testDBPath() string {
 }
 
 func newDLC() *dlc.DLC {
+	conds := testConditions()
+	n := len(conds.Deals)
 	return &dlc.DLC{
-		Conds:       testConditions(),
+		Conds:       conds,
+		Oracle:      testOracle(n),
 		Pubs:        testPubkeys(),
 		Addrs:       testAddrs(),
 		ChangeAddrs: testAddrs(),
@@ -149,6 +153,19 @@ func newDeals() []*dlc.Deal {
 	}
 
 	return deals
+}
+
+func testOracle(n int) *dlc.Oracle {
+	o := dlc.NewOracle(n)
+
+	for i := 0; i < n; i++ {
+		_, pub := test.RandKeys()
+		o.Commitments[i] = pub
+	}
+
+	o.Sig = []byte{1}
+	o.SignedMsgs = [][]byte{{1}}
+	return o
 }
 
 func testPubkeys() map[dlc.Contractor]*btcec.PublicKey {
