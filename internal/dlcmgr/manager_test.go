@@ -9,6 +9,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb" // blank import for bolt db driver
@@ -59,6 +60,7 @@ func TestStoreContract(t *testing.T) {
 		assert.Equal(dOrig.Addrs, d.Addrs)
 		assert.Equal(dOrig.ChangeAddrs, d.ChangeAddrs)
 		assert.Equal(dOrig.Utxos, d.Utxos)
+		assert.Equal(dOrig.FundWits, d.FundWits)
 	}
 }
 
@@ -102,6 +104,7 @@ func newDLC() *dlc.DLC {
 		Addrs:       testAddrs(),
 		ChangeAddrs: testAddrs(),
 		Utxos:       testUtxos(),
+		FundWits:    testFundWits(),
 	}
 }
 
@@ -163,6 +166,15 @@ func testUtxos() map[dlc.Contractor][]*dlc.Utxo {
 	utxos[dlc.FirstParty] = randUtxos()
 	utxos[dlc.SecondParty] = randUtxos()
 	return utxos
+}
+
+func testFundWits() map[dlc.Contractor][]wire.TxWitness {
+	wits := make(map[dlc.Contractor][]wire.TxWitness)
+	wit1 := [][]byte{[]byte{1}}
+	wits[dlc.FirstParty] = []wire.TxWitness{wit1}
+	wit2 := [][]byte{[]byte{1}}
+	wits[dlc.SecondParty] = []wire.TxWitness{wit2}
+	return wits
 }
 
 func testFixingTime() time.Time {

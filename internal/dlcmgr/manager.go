@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 )
@@ -49,6 +50,9 @@ func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
 			return e
 		}
 		if e = storeUtxos(b, d.Utxos); e != nil {
+			return e
+		}
+		if e = storeFundWits(b, d.FundWits); e != nil {
 			return e
 		}
 		return nil
@@ -101,6 +105,15 @@ func storeUtxos(
 	return b.Put(nsUtxos, serializedUtxos)
 }
 
+func storeFundWits(
+	b walletdb.ReadWriteBucket, wits map[dlc.Contractor][]wire.TxWitness) error {
+	serializedWits, e := json.Marshal(wits)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsFundWits, serializedWits)
+}
+
 // RetrieveContract retrieves stored DLC
 func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 	var d *dlc.DLC
@@ -143,6 +156,12 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 			return e
 		}
 		d.Utxos = utxos
+
+		fundWits, e := retrieveFundWits(b)
+		if e != nil {
+			return e
+		}
+		d.FundWits = fundWits
 
 		return e
 	}
@@ -201,4 +220,14 @@ func retrieveUtxos(b walletdb.ReadBucket) (map[dlc.Contractor][]*dlc.Utxo, error
 	utxos := make(map[dlc.Contractor][]*dlc.Utxo)
 	e := json.Unmarshal(data, &utxos)
 	return utxos, e
+}
+
+func retrieveFundWits(b walletdb.ReadBucket) (map[dlc.Contractor][]wire.TxWitness, error) {
+	data := b.Get(nsFundWits)
+	if len(data) == 0 {
+		return nil, nil
+	}
+	wits := make(map[dlc.Contractor][]wire.TxWitness)
+	e := json.Unmarshal(data, &wits)
+	return wits, e
 }
