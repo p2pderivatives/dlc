@@ -61,6 +61,8 @@ func TestStoreContract(t *testing.T) {
 		assert.Equal(dOrig.ChangeAddrs, d.ChangeAddrs)
 		assert.Equal(dOrig.Utxos, d.Utxos)
 		assert.Equal(dOrig.FundWits, d.FundWits)
+		assert.Equal(dOrig.RefundSigs, d.RefundSigs)
+		assert.Equal(dOrig.ExecSigs, d.ExecSigs)
 	}
 }
 
@@ -105,6 +107,8 @@ func newDLC() *dlc.DLC {
 		ChangeAddrs: testAddrs(),
 		Utxos:       testUtxos(),
 		FundWits:    testFundWits(),
+		RefundSigs:  testRefundSigs(),
+		ExecSigs:    testExecSigs(),
 	}
 }
 
@@ -120,6 +124,31 @@ func testConditions() *dlc.Conditions {
 		ftime, famt1, famt2, feerate, feerate, refundlc, deals)
 
 	return conds
+}
+
+func testFixingTime() time.Time {
+	t := time.Now().AddDate(0, 0, 1)
+	y, m, d := t.Date()
+	return time.Date(y, m, d, 12, 0, 0, 0, time.UTC)
+}
+
+func newDeals() []*dlc.Deal {
+	deals := []*dlc.Deal{}
+
+	total := 5
+	nMsg := 3
+	for i := 0; i < total+1; i++ {
+		amt1 := btcutil.Amount(i)
+		amt2 := btcutil.Amount(total - i)
+		msgs := [][]byte{}
+		for j := 0; j < nMsg; j++ {
+			msgs = append(msgs, []byte{byte(i)})
+		}
+		deal := dlc.NewDeal(amt1, amt2, msgs)
+		deals = append(deals, deal)
+	}
+
+	return deals
 }
 
 func testPubkeys() map[dlc.Contractor]*btcec.PublicKey {
@@ -170,34 +199,23 @@ func testUtxos() map[dlc.Contractor][]*dlc.Utxo {
 
 func testFundWits() map[dlc.Contractor][]wire.TxWitness {
 	wits := make(map[dlc.Contractor][]wire.TxWitness)
-	wit1 := [][]byte{[]byte{1}}
+	wit1 := [][]byte{{1}}
 	wits[dlc.FirstParty] = []wire.TxWitness{wit1}
-	wit2 := [][]byte{[]byte{1}}
+	wit2 := [][]byte{{1}}
 	wits[dlc.SecondParty] = []wire.TxWitness{wit2}
 	return wits
 }
 
-func testFixingTime() time.Time {
-	t := time.Now().AddDate(0, 0, 1)
-	y, m, d := t.Date()
-	return time.Date(y, m, d, 12, 0, 0, 0, time.UTC)
+func testRefundSigs() map[dlc.Contractor][]byte {
+	sigs := make(map[dlc.Contractor][]byte)
+	sigs[dlc.FirstParty] = []byte{1}
+	sigs[dlc.SecondParty] = []byte{1}
+	return sigs
 }
 
-func newDeals() []*dlc.Deal {
-	deals := []*dlc.Deal{}
-
-	total := 5
-	nMsg := 3
-	for i := 0; i < total+1; i++ {
-		amt1 := btcutil.Amount(i)
-		amt2 := btcutil.Amount(total - i)
-		msgs := [][]byte{}
-		for j := 0; j < nMsg; j++ {
-			msgs = append(msgs, []byte{byte(i)})
-		}
-		deal := dlc.NewDeal(amt1, amt2, msgs)
-		deals = append(deals, deal)
-	}
-
-	return deals
+func testExecSigs() [][]byte {
+	sigs := [][]byte{}
+	sigs = append(sigs, []byte{1})
+	sigs = append(sigs, []byte{2})
+	return sigs
 }

@@ -55,6 +55,12 @@ func (m *Manager) StoreContract(k []byte, d *dlc.DLC) error {
 		if e = storeFundWits(b, d.FundWits); e != nil {
 			return e
 		}
+		if e = storeRefundSigs(b, d.RefundSigs); e != nil {
+			return e
+		}
+		if e = storeExecSigs(b, d.ExecSigs); e != nil {
+			return e
+		}
 		return nil
 	}
 	return m.updateContractBucket(k, storeFunc)
@@ -114,6 +120,24 @@ func storeFundWits(
 	return b.Put(nsFundWits, serializedWits)
 }
 
+func storeRefundSigs(
+	b walletdb.ReadWriteBucket, sigs map[dlc.Contractor][]byte) error {
+	serializedSigs, e := json.Marshal(sigs)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsRefundSigs, serializedSigs)
+}
+
+func storeExecSigs(
+	b walletdb.ReadWriteBucket, sigs [][]byte) error {
+	serializedSigs, e := json.Marshal(sigs)
+	if e != nil {
+		return e
+	}
+	return b.Put(nsExecSigs, serializedSigs)
+}
+
 // RetrieveContract retrieves stored DLC
 func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 	var d *dlc.DLC
@@ -162,6 +186,18 @@ func (m *Manager) RetrieveContract(k []byte) (*dlc.DLC, error) {
 			return e
 		}
 		d.FundWits = fundWits
+
+		refundSigs, e := retrieveRefundSigs(b)
+		if e != nil {
+			return e
+		}
+		d.RefundSigs = refundSigs
+
+		execSigs, e := retrieveExecSigs(b)
+		if e != nil {
+			return e
+		}
+		d.ExecSigs = execSigs
 
 		return e
 	}
@@ -230,4 +266,24 @@ func retrieveFundWits(b walletdb.ReadBucket) (map[dlc.Contractor][]wire.TxWitnes
 	wits := make(map[dlc.Contractor][]wire.TxWitness)
 	e := json.Unmarshal(data, &wits)
 	return wits, e
+}
+
+func retrieveRefundSigs(b walletdb.ReadBucket) (map[dlc.Contractor][]byte, error) {
+	data := b.Get(nsRefundSigs)
+	if len(data) == 0 {
+		return nil, nil
+	}
+	sigs := make(map[dlc.Contractor][]byte)
+	e := json.Unmarshal(data, &sigs)
+	return sigs, e
+}
+
+func retrieveExecSigs(b walletdb.ReadBucket) ([][]byte, error) {
+	data := b.Get(nsExecSigs)
+	if len(data) == 0 {
+		return nil, nil
+	}
+	sigs := [][]byte{}
+	e := json.Unmarshal(data, &sigs)
+	return sigs, e
 }
