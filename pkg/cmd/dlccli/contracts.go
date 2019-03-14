@@ -9,6 +9,11 @@ var contractsCmd = &cobra.Command{
 	Short: "Contract commands",
 }
 
+var dealsCmd = &cobra.Command{
+	Use:   "deals",
+	Short: "Deals commands",
+}
+
 func init() {
 	// subcommand root
 	rootCmd.AddCommand(contractsCmd)
@@ -16,6 +21,9 @@ func init() {
 	// create contract
 	contractsCmd.AddCommand(initCreateContractCmd())
 
-	// view contract
-	// contractsCmd.AddCommand(initViewContractCmd())
+	// subcommand deals
+	contractsCmd.AddCommand(dealsCmd)
+
+	// fix deal
+	dealsCmd.AddCommand(initFixDealCmd())
 }

@@ -24,21 +24,35 @@ var (
 
 func createManager(db walletdb.DB) error {
 	err := walletdb.Update(db, func(tx walletdb.ReadWriteTx) error {
-		ns, e := tx.CreateTopLevelBucket(nsTop)
-		if e != nil {
-			return e
-		}
-
-		_, e = ns.CreateBucket(nsContracts)
+		_, _, e := createBucketsIfNotExist(tx)
 		return e
 	})
 
 	return err
 }
 
+func createBucketsIfNotExist(tx walletdb.ReadWriteTx) (
+	walletdb.ReadWriteBucket, walletdb.ReadWriteBucket, error) {
+	var err error
+	top := tx.ReadWriteBucket(nsTop)
+	if top == nil {
+		top, err = tx.CreateTopLevelBucket(nsTop)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	contracts, err := top.CreateBucketIfNotExists(nsContracts)
+	return top, contracts, err
+}
+
 func openManager(db walletdb.DB) *Manager {
 	mgr := &Manager{db: db}
 	return mgr
+}
+
+type BucketNotExistsError struct {
+	error
 }
 
 func (m *Manager) updateContractBucket(
@@ -50,9 +64,11 @@ func (m *Manager) updateContractBucket(
 				e = r.(error)
 			}
 		}()
-		ns := tx.ReadWriteBucket(nsTop)
-		contractsNS := ns.NestedReadWriteBucket(nsContracts)
-		bucket, e := contractsNS.CreateBucketIfNotExists(k)
+		_, contracts, e := createBucketsIfNotExist(tx)
+		if e != nil {
+			return e
+		}
+		bucket, e := contracts.CreateBucketIfNotExists(k)
 		if e != nil {
 			return e
 		}
@@ -76,9 +92,17 @@ func newContractNotExistsError(
 func (m *Manager) viewContractBucket(
 	k []byte, f func(walletdb.ReadBucket) error) error {
 	viewFunc := func(tx walletdb.ReadTx) error {
-		ns := tx.ReadBucket(nsTop)
-		contractsNS := ns.NestedReadBucket(nsContracts)
-		bucket := contractsNS.NestedReadBucket(k)
+		top := tx.ReadBucket(nsTop)
+		if top == nil {
+			msg := fmt.Sprintf("bucket doesn't exist. bucket name: %s", top)
+			return BucketNotExistsError{error: errors.New(msg)}
+		}
+		contracts := top.NestedReadBucket(nsContracts)
+		if contracts == nil {
+			msg := fmt.Sprintf("bucket doesn't exist. bucket name: %s", nsContracts)
+			return BucketNotExistsError{error: errors.New(msg)}
+		}
+		bucket := contracts.NestedReadBucket(k)
 		if bucket == nil {
 			return newContractNotExistsError(k)
 		}

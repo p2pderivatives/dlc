@@ -87,7 +87,20 @@ func NewConditions(
 	return conds, err
 }
 
+// ContractID returns contract ID
+// Use fund txid at this moment
+func (d *DLC) ContractID() (string, error) {
+	tx, err := d.SignedFundTx()
+	if err != nil {
+		return "", err
+	}
+
+	h := tx.TxHash().String()
+	return h, nil
+}
+
 // ClosingTxOut returns a final txout owned only by a given party
+// TODO: replace with given address
 func (d *DLC) ClosingTxOut(
 	p Contractor, amt btcutil.Amount) (*wire.TxOut, error) {
 	pub := d.Pubs[p]

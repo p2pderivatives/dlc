@@ -167,23 +167,34 @@ func (d *DLC) verifyCETxSignature(
 	return nil
 }
 
-// SignedContractExecutionTx returns a contract execution tx signed by both parties
-func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
-	if !b.dlc.HasDealFixed() {
+// FixedContractExecutionTx returns fixed CETx
+func (d *DLC) FixedContractExecutionTx(p Contractor) (*wire.MsgTx, error) {
+	if !d.HasDealFixed() {
 		return nil, newNoFixedDealError()
 	}
 
-	dID, deal, err := b.dlc.FixedDeal()
+	dID, deal, err := d.FixedDeal()
 	if err != nil {
 		return nil, err
 	}
 
-	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
+	return d.ContractExecutionTx(p, deal, dID)
+}
+
+// SignedContractExecutionTx returns a contract execution tx signed by both parties
+// TODO: separate SignedContractExecutionTx and SignContractExecutionTx
+func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
+	tx, err := b.dlc.FixedContractExecutionTx(b.party)
 	if err != nil {
 		return nil, err
 	}
 
 	sig, err := b.witsigForFundScript(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	dID, _, err := b.dlc.FixedDeal()
 	if err != nil {
 		return nil, err
 	}

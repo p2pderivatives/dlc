@@ -10,7 +10,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcutil"
+	"github.com/p2pderivatives/dlc/internal/dlcmgr"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 	"github.com/p2pderivatives/dlc/pkg/oracle"
 	"github.com/p2pderivatives/dlc/pkg/wallet"
@@ -39,6 +41,7 @@ var privpass2 string
 type Contractor struct {
 	wallet   wallet.Wallet
 	builder  *dlc.Builder
+	manager  *dlcmgr.Manager
 	pubpass  string
 	privpass string
 }
@@ -138,11 +141,36 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 	party2.builder.AcceptFundWitnesses(fundWits1)
 
+	// SecondParty sends FundTx signature
+	fundWits2, err := party2.builder.SignFundTx()
+	errorHandler(err)
+	party1.builder.AcceptFundWitnesses(fundWits2)
+
+	fmt.Println("First party persisting contract")
+
+	d1 := party1.builder.DLC()
+	ID1, err := d1.ContractID()
+	errorHandler(err)
+	key1, err := chainhash.NewHashFromStr(ID1)
+	errorHandler(err)
+	err = party1.manager.StoreContract(key1.CloneBytes(), d1)
+	errorHandler(err)
+
+	fmt.Printf("Contract persisted. ID: %s\n", ID1)
+
+	fmt.Println("Second party persisting contract")
+
+	d2 := party2.builder.DLC()
+	ID2, err := d2.ContractID()
+	key2, err := chainhash.NewHashFromStr(ID2)
+	err = party2.manager.StoreContract(key2.CloneBytes(), d2)
+	errorHandler(err)
+
+	fmt.Printf("Contract persisted. ID: %s\n", ID2)
+
 	fmt.Println("Second party constructing FundTx")
 
 	// SecondParty create FundTx
-	_, err = party2.builder.SignFundTx()
-	errorHandler(err)
 	fundtx, err := party2.builder.FundTxHex()
 	errorHandler(err)
 	refundtx, err := party2.builder.RefundTxHex()
@@ -160,7 +188,7 @@ func initCreateContractCmd() *cobra.Command {
 		Run:   runCreateContract,
 	}
 
-	cmd.Flags().StringVar(&fixingTime, "fixingtime", "", "fixing time")
+	cmd.Flags().StringVar(&fixingTime, "fixingtime", "", "Fixing time")
 	cmd.MarkFlagRequired("fixingtime")
 	cmd.Flags().IntVar(&fund1, "fund1", 0, "Fund amount of First party (satoshi)")
 	cmd.MarkFlagRequired("fund1")
@@ -180,13 +208,13 @@ func initCreateContractCmd() *cobra.Command {
 	cmd.MarkFlagRequired("refund_locktime")
 	cmd.Flags().StringVar(&dealsFile, "deals_file", "", "Path to a csv file that contains deals")
 	cmd.MarkFlagRequired("deals_file")
-	cmd.Flags().StringVar(&opubfile, "oracle_pubkey", "", "Path to oracle's pubkey json file")
+	cmd.Flags().StringVar(&opubfile, "oracle_pubkey", "", "Oracle's pubkey json file")
 	cmd.MarkFlagRequired("oracle_pubkey")
-	cmd.Flags().StringVar(&walletDir, "walletdir", "", "directory path to store wallets")
+	cmd.Flags().StringVar(&walletDir, "walletdir", "", "Wallet directory")
 	cmd.MarkFlagRequired("walletdir")
-	cmd.Flags().StringVar(&wallet1, "wallet1", "", "wallet name of First Party")
+	cmd.Flags().StringVar(&wallet1, "wallet1", "", "Wallet name of First Party")
 	cmd.MarkFlagRequired("wallet1")
-	cmd.Flags().StringVar(&wallet2, "wallet2", "", "wallet name of Second Party")
+	cmd.Flags().StringVar(&wallet2, "wallet2", "", "Wallet name of Second Party")
 	cmd.MarkFlagRequired("wallet_2")
 	cmd.Flags().StringVar(&pubpass1, "pubpass1", "", "Pubpass phrase of First party's wallet")
 	cmd.MarkFlagRequired("pubpass1")
@@ -243,8 +271,10 @@ func convertRowToDeal(rec []string, nDigits int) *dlc.Deal {
 }
 
 func initFirstParty() *Contractor {
-	w := openWallet(pubpass1, walletDir, wallet1)
+	w, wdb := openWallet(pubpass1, walletDir, wallet1)
 	err := w.Unlock([]byte(privpass1))
+	errorHandler(err)
+	mgr, err := dlcmgr.Open(wdb)
 	errorHandler(err)
 	conds := loadDLCConditions()
 	b := dlc.NewBuilder(dlc.FirstParty, w, conds)
@@ -252,14 +282,17 @@ func initFirstParty() *Contractor {
 	return &Contractor{
 		wallet:   w,
 		builder:  b,
+		manager:  mgr,
 		pubpass:  pubpass1,
 		privpass: privpass1,
 	}
 }
 
 func initSecondParty() *Contractor {
-	w := openWallet(pubpass2, walletDir, wallet2)
+	w, wdb := openWallet(pubpass2, walletDir, wallet2)
 	err := w.Unlock([]byte(privpass2))
+	errorHandler(err)
+	mgr, err := dlcmgr.Open(wdb)
 	errorHandler(err)
 	conds := loadDLCConditions()
 	b := dlc.NewBuilder(dlc.SecondParty, w, conds)
@@ -267,6 +300,7 @@ func initSecondParty() *Contractor {
 	return &Contractor{
 		wallet:   w,
 		builder:  b,
+		manager:  mgr,
 		pubpass:  pubpass2,
 		privpass: privpass2,
 	}
