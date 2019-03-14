@@ -19,14 +19,14 @@ dlccli --help
 
 
 ## Steps
-* [Run bitciond](#Run\ bitcoind)
-* [Create Wallet](#Create\ Wallet)
-* [Deposite fund and fee](#Deposite\ fund\ and \fee)
-* [Create DLC](#Create\ DLC)
-* [Confirm Created Transactions](#Confirm\ Created\ Transactions)
-* [Send Fund Tx](#Send Fund Tx)
-* [Fix Message](#Fix Message)
-* Execute Contract
+* [Run bitciond](#run-bitcoind)
+* [Create Wallet](#create-wallet)
+* [Deposite funds and fees](#deposite-funds-and-fees)
+* [Create DLC](#create-dlc)
+* [Confirm Created Transactions](#confirm-created-transactions)
+* [Send Fund Tx](#send-fund-tx)
+* [Fix Message](#fix-message)
+* [Execute Contract](#execute-contract)
 
 ### Run bitcoind
 ```
@@ -366,8 +366,9 @@ or run
 ./test/cmd/fix_message.sh 30001
 ```
 
-### Execute Contract (WIP)
-
+### Execute Contract
+(WIP)
+ 
 ```
 % dlccli contracts deals fix \
 	--conf ./conf/bitcoin.regtest.conf \
