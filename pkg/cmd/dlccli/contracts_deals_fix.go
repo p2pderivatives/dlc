@@ -30,12 +30,18 @@ func runFixDeal(cmd *cobra.Command, args []string) {
 	err := c.builder.FixDeal(osig, idxs)
 	errorHandler(err)
 
-	tx, err := c.builder.SignedContractExecutionTx()
+	cetx, err := c.builder.SignedContractExecutionTx()
 	errorHandler(err)
 
-	h, err := utils.TxToHex(tx)
+	cetxHex, err := utils.TxToHex(cetx)
 	errorHandler(err)
-	fmt.Printf("CETx hex:\n%s\n", h)
+	fmt.Printf("\nCETx hex:\n%s\n", cetxHex)
+
+	cltx, err := c.builder.SignedClosingTx(cetx)
+	errorHandler(err)
+	cltxHex, err := utils.TxToHex(cltx)
+	errorHandler(err)
+	fmt.Printf("\nClosingTx hex:\n%s\n", cltxHex)
 }
 
 func initCotractor() *Contractor {
