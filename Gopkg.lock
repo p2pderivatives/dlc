@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ab6815e0f7c5f12fa55de1a367797cd0ace7cce2678d7b3e6c9dbb94b8e2a3fe"
+  digest = "1:b87da6d2fe400a4a8ffeebdfe79c6d079a5cb72674fe5f42f7e2aa98fa41d945"
   name = "github.com/btcsuite/btcd"
   packages = [
     "btcec",
@@ -15,7 +15,7 @@
     "wire",
   ]
   pruneopts = "UT"
-  revision = "67e573d211ace594f1366b4ce9d39726c4b19bd0"
+  revision = "306aecffea325e97f513b3ff0cf7895a5310651d"
 
 [[projects]]
   branch = "master"
@@ -36,11 +36,11 @@
     "hdkeychain",
   ]
   pruneopts = "UT"
-  revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
+  revision = "4c204d6978034c001714728401fcd63060d568b4"
 
 [[projects]]
   branch = "master"
-  digest = "1:8980602e62605c1c3421314cda12cf4ae8701f00b34e9d8fbb987d58248d4860"
+  digest = "1:9584908fbb932d91b9b69a6efa287d54fccae46de845485acbc35cab3a52df00"
   name = "github.com/btcsuite/btcwallet"
   packages = [
     "internal/zero",
@@ -48,9 +48,10 @@
     "waddrmgr",
     "walletdb",
     "walletdb/bdb",
+    "walletdb/migration",
   ]
   pruneopts = "UT"
-  revision = "c4dd27e481f9801866cf5226bfe532084772ec2a"
+  revision = "68fc7c82e1315fdbb2095719ba280598dd4c1ace"
 
 [[projects]]
   branch = "master"
@@ -83,12 +84,12 @@
   revision = "31079b6807923eb23992c421b114992b95131b55"
 
 [[projects]]
-  digest = "1:c28625428387b63dd7154eb857f51e700465cfbf7c06f619e71f2da33cefe47e"
+  digest = "1:5f7414cf41466d4b4dd7ec52b2cd3e481e08cfd11e7e24fef730c0e483e88bb1"
   name = "github.com/coreos/bbolt"
   packages = ["."]
   pruneopts = "UT"
-  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
-  version = "v1.3.0"
+  revision = "63597a96ec0ad9e6d43c3fc81e809909e0237461"
+  version = "v1.3.2"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -126,6 +127,14 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:6782ffc812e8e700e6952ede1e60487ff1fd9da489eff762985be662a7cfc431"
+  name = "github.com/leodido/go-urn"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "70078a794e8ea4b497ba7c19a78cd60f90ccf0f4"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
@@ -158,39 +167,39 @@
   version = "v0.1.1"
 
 [[projects]]
-  digest = "1:15a4a7e5afac3cea801fa24831fce3bf3b5bd3620cbf8355a07b7dbf06877883"
+  digest = "1:0bcc464dabcfad5393daf87c3f8142911d0f6c52569b837e91a1c15e890265f3"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
     "mock",
   ]
   pruneopts = "UT"
-  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
-  version = "v1.2.2"
+  revision = "ffdc059bfe9ce6a4e144ba849dbedead332c6053"
+  version = "v1.3.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:b69153653dbbbd9b2be2be289dfb94014284c00bb92e73b800f8f8c239c1ca80"
+  digest = "1:1fa95129371749532e2ac8b93a0016c549ebe77f25c6fad296b6ee271fae2fd6"
   name = "golang.org/x/crypto"
   packages = ["ripemd160"]
   pruneopts = "UT"
-  revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
+  revision = "a1f597ede03a7bef967a422b5b3a5bd08805a01e"
 
 [[projects]]
   branch = "master"
-  digest = "1:35560529f5721d65f36dc23aa15fbf7306c5091cdc3f29f65881af5031b80cc8"
+  digest = "1:f36c7b9a36158e62ffe5d8b02d1b5955500c13106cdaeebf5323d88863cae96f"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "9b800f95dbbc54abff0acf7ee32d88ba4e328c89"
+  revision = "fead79001313d15903fb4605b4a1b781532cd93e"
 
 [[projects]]
-  digest = "1:2c6a8f26c364b006a27b8090a9583fcc4b7865583fcf93f99a20fce339e87192"
+  digest = "1:a5000fcb87d763e1d410111d32f3e1d07a6f7913f7efdf68070636c407da54d1"
   name = "gopkg.in/go-playground/validator.v9"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1fa3c8d6336562f0a3f95c73593ee2b57ff4da11"
-  version = "v9.23.0"
+  revision = "b199fa0642d29caca62b6a99d65cc981ba5edc3b"
+  version = "v9.27.0"
 
 [solve-meta]
   analyzer-name = "dep"
