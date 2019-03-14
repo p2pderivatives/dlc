@@ -19,6 +19,16 @@ func P2WPKHpkScript(pub *btcec.PublicKey) ([]byte, error) {
 	return builder.Script()
 }
 
+// P2WPKHpkScriptFromAddress creates a witness script for given address
+func P2WPKHpkScriptFromAddress(addr btcutil.Address) ([]byte, error) {
+	sc := addr.ScriptAddress()
+
+	builder := txscript.NewScriptBuilder()
+	builder.AddOp(txscript.OP_0)
+	builder.AddData(sc)
+	return builder.Script()
+}
+
 // P2WSHpkScript creates a witness script for given script.
 //
 // ScriptCode:

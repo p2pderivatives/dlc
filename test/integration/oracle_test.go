@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/p2pderivatives/dlc/internal/oracle"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +51,8 @@ func contractorBetOnWeatherAndTemperature(t *testing.T, c *Contractor) time.Time
 	deal4 := dlc.NewDeal(0, 2, newWeather("rain", 10, 0)[:2])
 	deals := []*dlc.Deal{deal1, deal2, deal3, deal4}
 	fixingTime := time.Now().AddDate(0, 0, 1)
-	conds, err := dlc.NewConditions(fixingTime, 1, 1, 1, 1, 1, deals)
+	net := &chaincfg.RegressionNetParams
+	conds, err := dlc.NewConditions(net, fixingTime, 1, 1, 1, 1, 1, deals)
 	assert.NoError(t, err)
 	c.createDLCBuilder(conds, dlc.FirstParty)
 	return fixingTime

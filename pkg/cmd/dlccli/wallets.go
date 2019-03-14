@@ -1,7 +1,6 @@
 package dlccli
 
 import (
-	"encoding/hex"
 	"fmt"
 	"path/filepath"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/spf13/cobra"
 
+	"github.com/p2pderivatives/dlc/internal/dlcmgr"
 	_wallet "github.com/p2pderivatives/dlc/internal/wallet"
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
@@ -34,7 +34,6 @@ var walletsCreateCmd = &cobra.Command{
 		// TODO: give seed as command line parameter
 		seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
 		errorHandler(err)
-		fmt.Printf("Seed: %s\n", hex.EncodeToString(seed))
 
 		w, err := _wallet.CreateWallet(chainParams,
 			seed, []byte(pubpass), []byte(privpass),
@@ -42,6 +41,10 @@ var walletsCreateCmd = &cobra.Command{
 		errorHandler(err)
 
 		err = w.Close()
+		errorHandler(err)
+
+		_, wdb := openWallet(pubpass, walletDir, walletName)
+		_, err = dlcmgr.Create(wdb)
 		errorHandler(err)
 
 		fmt.Println("Wallet created")
@@ -57,7 +60,7 @@ var addrsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create address",
 	Run: func(cmd *cobra.Command, args []string) {
-		w := openWallet(pubpass, walletDir, walletName)
+		w, _ := openWallet(pubpass, walletDir, walletName)
 		addr, err := w.NewAddress()
 		errorHandler(err)
 
@@ -69,7 +72,7 @@ var balanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Check total balance",
 	Run: func(cmd *cobra.Command, args []string) {
-		w := openWallet(pubpass, walletDir, walletName)
+		w, _ := openWallet(pubpass, walletDir, walletName)
 		utxos, err := w.ListUnspent()
 		errorHandler(err)
 
@@ -84,7 +87,7 @@ var balanceCmd = &cobra.Command{
 	},
 }
 
-func openWallet(pubpass string, dir string, name string) wallet.Wallet {
+func openWallet(pubpass string, dir string, name string) (wallet.Wallet, walletdb.DB) {
 	chainParams := loadChainParams(bitcoinConf)
 	rpcclient := initRPCClient()
 	wdb := openWalletDB(dir, name)
@@ -92,7 +95,7 @@ func openWallet(pubpass string, dir string, name string) wallet.Wallet {
 	w, err := _wallet.Open(wdb, []byte(pubpass), chainParams, rpcclient)
 	errorHandler(err)
 
-	return w
+	return w, wdb
 }
 
 func openWalletDB(dir string, name string) walletdb.DB {

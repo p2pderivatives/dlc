@@ -23,7 +23,7 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 	conds := newTestConditions()
 	builder := NewBuilder(FirstParty, testWallet, conds)
 
-	err := builder.PrepareFundTxIns()
+	err := builder.PrepareFundTx()
 	assert.NotNil(t, err) // not enough balance for fee
 }
 
@@ -31,21 +31,24 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 func TestPrepareFundTx(t *testing.T) {
 	assert := assert.New(t)
 
-	// prepare mock wallet
+	conds := newTestConditions()
+
+	// mock wallet
 	testWallet := setupTestWallet()
 	var balance, change btcutil.Amount = 1, 1
 	mockSelectUnspent(testWallet, balance, change, nil)
 
-	conds := newTestConditions()
 	b := NewBuilder(FirstParty, testWallet, conds)
 
-	err := b.PrepareFundTxIns()
+	err := b.PrepareFundTx()
 	assert.Nil(err)
 
-	txins := b.dlc.FundTxReqs.TxIns[b.party]
-	assert.NotEmpty(txins, "txins")
-	txout := b.dlc.FundTxReqs.TxOut[b.party]
-	assert.NotNil(txout, "txout")
+	chaddr := b.dlc.ChangeAddrs[b.party]
+	assert.NotEmpty(chaddr, "change address")
+	utxos := b.dlc.Utxos[b.party]
+	assert.NotNil(utxos, "utxos")
+
+	// TODO: check if total amount is enough
 }
 
 // PrepareFundTx shouldn't have txouts if no changes
@@ -60,13 +63,13 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	conds := newTestConditions()
 	b := NewBuilder(FirstParty, testWallet, conds)
 
-	err := b.PrepareFundTxIns()
+	err := b.PrepareFundTx()
 	assert.Nil(err)
 
-	txins := b.dlc.FundTxReqs.TxIns[b.party]
-	assert.NotEmpty(txins, "txins")
-	txout := b.dlc.FundTxReqs.TxOut[b.party]
-	assert.Nil(txout, "txout")
+	chaddr := b.dlc.ChangeAddrs[b.party]
+	assert.Empty(chaddr, "change address")
+	utxos := b.dlc.Utxos[b.party]
+	assert.NotNil(utxos, "utxos")
 }
 
 func TestFundTx(t *testing.T) {
@@ -75,16 +78,16 @@ func TestFundTx(t *testing.T) {
 
 	// first party
 	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	w1 = mockSelectUnspent(w1, 1000, 1, nil)
 	b1 := NewBuilder(FirstParty, w1, conds)
-	b1.PrepareFundTxIns()
+	b1.PrepareFundTx()
 	b1.PreparePubkey()
 
 	// second party
 	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	w2 = mockSelectUnspent(w2, 1000, 1, nil)
 	b2 := NewBuilder(SecondParty, w2, conds)
-	b2.PrepareFundTxIns()
+	b2.PrepareFundTx()
 	b2.PreparePubkey()
 
 	// fail if it hasn't received a pubkey from the counterparty
@@ -92,8 +95,8 @@ func TestFundTx(t *testing.T) {
 	_, err := d.FundTx()
 	assert.NotNil(err)
 
-	// receive pubkey from the counterparty
-	b1.CopyReqsFromCounterparty(b2.DLC())
+	// receive pubkey and utxos and change address from the counterparty
+	stepSendRequirments(b2, b1)
 
 	d = b1.DLC()
 	tx, err := d.FundTx()
@@ -108,21 +111,22 @@ func TestRedeemFundTx(t *testing.T) {
 
 	// init first party
 	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1, 1, nil)
+	w1 = mockSelectUnspent(w1, 1000, 1, nil)
 	b1 := NewBuilder(FirstParty, w1, conds)
 	b1.PreparePubkey()
-	b1.PrepareFundTxIns()
+	b1.PrepareFundTx()
 
 	// init second party
 	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1, 1, nil)
+	w2 = mockSelectUnspent(w2, 1000, 1, nil)
 	b2 := NewBuilder(SecondParty, w2, conds)
 	b2.PreparePubkey()
-	b2.PrepareFundTxIns()
+	b2.PrepareFundTx()
 
-	// exchange pubkeys
-	b1.CopyReqsFromCounterparty(b2.DLC())
-	b2.CopyReqsFromCounterparty(b1.DLC())
+	// exchange pubkey, utxos, change address
+	stepSendRequirments(b2, b1)
+	stepSendRequirments(b1, b2)
+
 	d := b1.DLC()
 
 	// prepare redeem tx for testing. this will be a settlement tx or refund tx

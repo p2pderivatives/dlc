@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/p2pderivatives/dlc/pkg/utils"
 )
 
 // RefundTx creates refund tx
@@ -102,10 +103,10 @@ func (b *Builder) AcceptRefundTxSignature(sig []byte) error {
 
 	err := b.dlc.VerifyRefundTx(sig, b.dlc.Pubs[p])
 	if err != nil {
-		return fmt.Errorf("counterparty's signature didn't pass verification, had error: %v", err)
+		return err
 	}
 
-	// sign passed verification, accept it
+	// accept verified signature
 	b.dlc.RefundSigs[p] = sig
 	return nil
 }
@@ -172,5 +173,5 @@ func (b *Builder) RefundTxHex() (string, error) {
 		return "", err
 	}
 
-	return txToHex(tx)
+	return utils.TxToHex(tx)
 }

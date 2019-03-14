@@ -1,12 +1,12 @@
 package dlc
 
 import (
-	"bytes"
-	"encoding/hex"
 	"errors"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/script"
@@ -17,31 +17,39 @@ import (
 // DLC contains all information required for DLC contract
 // including FundTx, SettlementTx, RefundTx
 type DLC struct {
-	Conds *Conditions
-
-	// requirements
-	Pubs       map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
-	FundTxReqs *FundTxRequirements             // fund txins/outs
-	OracleReqs *OracleRequirements
-	RefundSigs map[Contractor][]byte // signatures for refund tx
-	ExecSigs   [][]byte              // counterparty's signatures for CETxs
+	Conds       *Conditions
+	Oracle      *Oracle
+	Pubs        map[Contractor]*btcec.PublicKey // pubkeys used for script and txout
+	Addrs       map[Contractor]btcutil.Address  // addresses used to distribute funds after fixing deal
+	ChangeAddrs map[Contractor]btcutil.Address  // addresses used to send change
+	Utxos       map[Contractor][]*Utxo
+	FundWits    map[Contractor][]wire.TxWitness // TODO: change to fund signatures
+	RefundSigs  map[Contractor][]byte           // signatures for refund tx
+	ExecSigs    [][]byte                        // counterparty's signatures for CETxs
 }
+
+// Utxo is alias of btcjson.ListUnspentResult
+type Utxo = btcjson.ListUnspentResult
 
 // NewDLC initializes DLC
 func NewDLC(conds *Conditions) *DLC {
 	nDeal := len(conds.Deals)
 	return &DLC{
-		Conds:      conds,
-		Pubs:       make(map[Contractor]*btcec.PublicKey),
-		FundTxReqs: NewFundTxReqs(),
-		OracleReqs: newOracleReqs(nDeal),
-		RefundSigs: make(map[Contractor][]byte),
-		ExecSigs:   make([][]byte, nDeal),
+		Conds:       conds,
+		Oracle:      NewOracle(nDeal),
+		Pubs:        make(map[Contractor]*btcec.PublicKey),
+		Addrs:       make(map[Contractor]btcutil.Address),
+		ChangeAddrs: make(map[Contractor]btcutil.Address),
+		Utxos:       make(map[Contractor][]*Utxo),
+		FundWits:    make(map[Contractor][]wire.TxWitness),
+		RefundSigs:  make(map[Contractor][]byte),
+		ExecSigs:    make([][]byte, nDeal),
 	}
 }
 
 // Conditions contains conditions of a contract
 type Conditions struct {
+	NetParams      *chaincfg.Params              `validate:"required"`
 	FixingTime     time.Time                     `validate:"required,gt=time.Now()"`
 	FundAmts       map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
 	FundFeerate    btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
@@ -52,6 +60,7 @@ type Conditions struct {
 
 // NewConditions creates a new DLC conditions
 func NewConditions(
+	net *chaincfg.Params,
 	ftime time.Time,
 	famt1, famt2 btcutil.Amount,
 	ffeerate, rfeerate btcutil.Amount, // fund feerate and redeem feerate
@@ -63,6 +72,7 @@ func NewConditions(
 	famts[SecondParty] = famt2
 
 	conds := &Conditions{
+		NetParams:      net,
 		FixingTime:     ftime,
 		FundAmts:       famts,
 		FundFeerate:    ffeerate,
@@ -77,7 +87,20 @@ func NewConditions(
 	return conds, err
 }
 
+// ContractID returns contract ID
+// Use fund txid at this moment
+func (d *DLC) ContractID() (string, error) {
+	tx, err := d.SignedFundTx()
+	if err != nil {
+		return "", err
+	}
+
+	h := tx.TxHash().String()
+	return h, nil
+}
+
 // ClosingTxOut returns a final txout owned only by a given party
+// TODO: replace with given address
 func (d *DLC) ClosingTxOut(
 	p Contractor, amt btcutil.Amount) (*wire.TxOut, error) {
 	pub := d.Pubs[p]
@@ -105,6 +128,17 @@ const (
 	// SecondParty is a contractor who accepts offer
 	SecondParty Contractor = 1
 )
+
+// String represents contractor in string format
+func (p Contractor) String() string {
+	switch p {
+	case FirstParty:
+		return "first party"
+	case SecondParty:
+		return "second party"
+	}
+	return ""
+}
 
 // counterparty returns the counterparty
 func counterparty(p Contractor) (cp Contractor) {
@@ -149,35 +183,24 @@ func (b *Builder) PreparePubkey() error {
 	return nil
 }
 
-// CopyReqsFromCounterparty copies requirements from counterparty
-func (b *Builder) CopyReqsFromCounterparty(d *DLC) {
-	p := counterparty(b.party)
+// AcceptPubkey accepts counter party's public key
+func (b *Builder) AcceptPubkey(pub []byte) error {
+	p, err := btcec.ParsePubKey(pub, btcec.S256())
+	c := counterparty(b.party)
 
-	// pubkey
-	b.dlc.Pubs[p] = d.Pubs[p]
+	b.dlc.Pubs[c] = p
 
-	// fund requirements
-	fundReqs := d.FundTxReqs
-	b.dlc.FundTxReqs.TxIns[p] = fundReqs.TxIns[p]
-	b.dlc.FundTxReqs.TxOut[p] = fundReqs.TxOut[p]
+	return err
 }
 
-func txToHex(tx *wire.MsgTx) (string, error) {
-	// Serialize the transaction and convert to hex string.
-	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
-	if err := tx.Serialize(buf); err != nil {
-		return "", err
+// PubkeyNotExistsError is error when either public key doesn't exist
+type PubkeyNotExistsError struct{ error }
+
+// PublicKey returns serialized public key (compressed)
+func (b *Builder) PublicKey() ([]byte, error) {
+	pub, ok := b.dlc.Pubs[b.party]
+	if !ok {
+		return nil, &PubkeyNotExistsError{}
 	}
-	h := hex.EncodeToString(buf.Bytes())
-	return h, nil
+	return pub.SerializeCompressed(), nil
 }
-
-// func hexToTx(txHex string) (tx *wire.MsgTx, err error) {
-// 	txbin, err := hex.DecodeString(txHex)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	bufr := bytes.NewReader(txbin)
-// 	err = tx.Deserialize(bufr)
-// 	return
-// }

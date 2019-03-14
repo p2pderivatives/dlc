@@ -23,17 +23,21 @@ type PubkeySetJSON struct {
 
 // MarshalJSON serialize PubkeySet to JSON
 func (pubset PubkeySet) MarshalJSON() ([]byte, error) {
+	s, err := json.Marshal(pubset.JSON())
+	return s, err
+}
+
+// JSON returns PubkeySetJSON
+func (pubset PubkeySet) JSON() *PubkeySetJSON {
 	pubkey := utils.PubkeyToStr(pubset.Pubkey)
 	var rpoints []string
 	for _, R := range pubset.CommittedRpoints {
 		rpoints = append(rpoints, utils.PubkeyToStr(R))
 	}
-
-	s, err := json.Marshal(&PubkeySetJSON{
+	return &PubkeySetJSON{
 		Pubkey:           pubkey,
 		CommittedRpoints: rpoints,
-	})
-	return s, err
+	}
 }
 
 // UnmarshalJSON deserialize JSON to PubkeySet
@@ -43,7 +47,11 @@ func (pubset *PubkeySet) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+	return pubset.ParseJSON(pjson)
+}
 
+// ParseJSON parses PubkeySetJSON
+func (pubset *PubkeySet) ParseJSON(pjson *PubkeySetJSON) error {
 	pubkey, err := utils.ParsePublicKey(pjson.Pubkey)
 	if err != nil {
 		return err
@@ -70,22 +78,49 @@ type SignedMsg struct {
 	Sigs [][]byte
 }
 
+// SignedMsgJSON is siged message in JSON format
+type SignedMsgJSON struct {
+	Value int      `json:"value"`
+	Sigs  []string `json:"sigs"`
+}
+
 // MarshalJSON serialize SignSet to JSON
-func (fm SignedMsg) MarshalJSON() ([]byte, error) {
-	value := ByteMsgsToNumber(fm.Msgs)
+func (sm SignedMsg) MarshalJSON() ([]byte, error) {
+	value := ByteMsgsToNumber(sm.Msgs)
 
 	var sigs []string
-	for _, s := range fm.Sigs {
+	for _, s := range sm.Sigs {
 		sigs = append(sigs, hex.EncodeToString(s))
 	}
 
-	v := map[string]interface{}{
-		"value": value,
-		"sigs":  sigs,
+	return json.Marshal(&SignedMsgJSON{
+		Value: value,
+		Sigs:  sigs,
+	})
+}
+
+// UnmarshalJSON deserialize JSON to SignedMsg
+func (sm *SignedMsg) UnmarshalJSON(data []byte) error {
+	smJSON := &SignedMsgJSON{}
+	err := json.Unmarshal(data, smJSON)
+	if err != nil {
+		return err
 	}
 
-	s, err := json.Marshal(v)
-	return s, err
+	n := len(smJSON.Sigs)
+	sm.Msgs = NumberToByteMsgs(smJSON.Value, n)
+
+	var sigs [][]byte
+	for _, s := range smJSON.Sigs {
+		sig, err := hex.DecodeString(s)
+		if err != nil {
+			return err
+		}
+		sigs = append(sigs, sig)
+	}
+	sm.Sigs = sigs
+
+	return nil
 }
 
 // NumberToByteMsgs converts number value to byte messages

@@ -34,14 +34,21 @@ func contractorGetCommitmentsFromOracle(t *testing.T, c *Contractor, o *oracle.O
 func contractorOfferCounterparty(t *testing.T, c1, c2 *Contractor) {
 	// first party prepare pubkey and fund txins/txouts
 	c1.DLCBuilder.PreparePubkey()
-	err := c1.DLCBuilder.PrepareFundTxIns()
+	err := c1.DLCBuilder.PrepareFundTx()
 	assert.NoError(t, err)
 
-	// send prepared data to second party
-	dlc1 := *c1.DLCBuilder.DLC()
+	// send pubkey adn utxo to the counterparty
+	p1, err := c1.DLCBuilder.PublicKey()
+	assert.NoError(t, err)
+	u1 := c1.DLCBuilder.Utxos()
+	caddr1 := c1.DLCBuilder.ChangeAddress()
 
-	// second party accepts it
-	c2.DLCBuilder.CopyReqsFromCounterparty(&dlc1)
+	// the counterparty party accepts them
+	err = c2.DLCBuilder.AcceptPubkey(p1)
+	assert.NoError(t, err)
+	err = c2.DLCBuilder.AcceptUtxos(u1)
+	assert.NoError(t, err)
+	c2.DLCBuilder.AcceptsChangeAdderss(caddr1)
 }
 
 // A contractor sends pubkey, fund txins and
@@ -49,16 +56,25 @@ func contractorOfferCounterparty(t *testing.T, c1, c2 *Contractor) {
 func contractorAcceptOffer(t *testing.T, c1, c2 *Contractor) {
 	// Second party prepares pubkey and fund txins/txouts
 	c1.DLCBuilder.PreparePubkey()
-	err := c1.DLCBuilder.PrepareFundTxIns()
+	err := c1.DLCBuilder.PrepareFundTx()
 	assert.NoError(t, err)
 
 	// signatures CE txs and refund tx
 	ceSigs := conractorSignCETxs(t, c1)
 	rfSig := conractorSignRefundTx(t, c1)
 
-	// Sends pubkey and fund txins and sign to the counterparty
-	dlc1 := *c1.DLCBuilder.DLC()
-	c2.DLCBuilder.CopyReqsFromCounterparty(&dlc1)
+	// sends pubkey and fund txins and sign to the counterparty
+	p1, err := c1.DLCBuilder.PublicKey()
+	assert.NoError(t, err)
+	u1 := c1.DLCBuilder.Utxos()
+	caddr1 := c1.DLCBuilder.ChangeAddress()
+
+	// the counterparty accepts them
+	err = c2.DLCBuilder.AcceptPubkey(p1)
+	assert.NoError(t, err)
+	err = c2.DLCBuilder.AcceptUtxos(u1)
+	assert.NoError(t, err)
+	c2.DLCBuilder.AcceptsChangeAdderss(caddr1)
 
 	// send sigatures
 	err = c2.DLCBuilder.AcceptCETxSignatures(ceSigs)

@@ -2,14 +2,27 @@ package dlc
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
+	"github.com/p2pderivatives/dlc/pkg/oracle"
 	"github.com/p2pderivatives/dlc/pkg/utils"
 )
 
+// OracleJSON is oracle information in JSON format
+type OracleJSON struct {
+	PubkeySet   *oracle.PubkeySetJSON `json:"pubkey"`
+	Commitments []string              `json:"commitments"`
+	Sig         []byte                `json:"sig"`
+	SignedMsgs  [][]byte              `json:"signed_msgs"`
+}
+
 // ConditionsJSON is contract conditions in JSON format
 type ConditionsJSON struct {
+	Net            string             `json:"network"`
 	FixingTime     int64              `json:"fixing_time"`
 	FundAmts       map[Contractor]int `json:"fund_amts"`
 	FundFeerate    int                `json:"fund_feerate"`
@@ -27,9 +40,33 @@ type DealJSON struct {
 // PublicKeys is public keys in hex string format
 type PublicKeys map[Contractor]string
 
+// Addresses is addresses in string
+type Addresses map[Contractor]string
+
+// MarshalJSON implements json.Marshaler
+func (o *Oracle) MarshalJSON() ([]byte, error) {
+	var pubkeyJSON *oracle.PubkeySetJSON
+	if o.PubkeySet != nil {
+		pubkeyJSON = o.PubkeySet.JSON()
+	}
+
+	Cs := []string{}
+	for _, c := range o.Commitments {
+		Cs = append(Cs, utils.PubkeyToStr(c))
+	}
+
+	return json.Marshal(&OracleJSON{
+		PubkeySet:   pubkeyJSON,
+		Commitments: Cs,
+		Sig:         o.Sig,
+		SignedMsgs:  o.SignedMsgs,
+	})
+}
+
 // MarshalJSON implements json.Marshaler
 func (conds *Conditions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&ConditionsJSON{
+		Net:            conds.NetParams.Name,
 		FixingTime:     conds.FixingTime.Unix(),
 		FundAmts:       amtsToJSON(conds.FundAmts),
 		FundFeerate:    int(conds.FundFeerate),
@@ -63,12 +100,49 @@ func dealsToJSON(deals []*Deal) []*DealJSON {
 }
 
 // UnmarshalJSON implements json.Unmarshaler
+func (o *Oracle) UnmarshalJSON(data []byte) error {
+	oJSON := &OracleJSON{}
+	err := json.Unmarshal(data, oJSON)
+	if err != nil {
+		return err
+	}
+
+	if oJSON.PubkeySet != nil {
+		pubset := &oracle.PubkeySet{}
+		err = pubset.ParseJSON(oJSON.PubkeySet)
+		if err != nil {
+			return err
+		}
+		o.PubkeySet = pubset
+	}
+
+	for k, cstr := range oJSON.Commitments {
+		c, err := utils.ParsePublicKey(cstr)
+		if err != nil {
+			return err
+		}
+		o.Commitments[k] = c
+	}
+
+	o.Sig = oJSON.Sig
+	o.SignedMsgs = oJSON.SignedMsgs
+
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler
 func (conds *Conditions) UnmarshalJSON(data []byte) error {
 	condsJSON := &ConditionsJSON{}
 	err := json.Unmarshal(data, condsJSON)
 	if err != nil {
 		return err
 	}
+
+	net, err := strToNetParams(condsJSON.Net)
+	if err != nil {
+		return err
+	}
+	conds.NetParams = net
 
 	conds.FixingTime = time.Unix(condsJSON.FixingTime, 0).UTC()
 
@@ -79,6 +153,29 @@ func (conds *Conditions) UnmarshalJSON(data []byte) error {
 	conds.Deals = jsonToDeals(condsJSON.Deals)
 
 	return nil
+}
+
+// InvalidNetworkNameError is used when invalid network name is given
+type InvalidNetworkNameError struct{ error }
+
+func strToNetParams(str string) (*chaincfg.Params, error) {
+	var net *chaincfg.Params
+	var err error
+	switch str {
+	case chaincfg.MainNetParams.Name:
+		net = &chaincfg.MainNetParams
+	case chaincfg.TestNet3Params.Name:
+		net = &chaincfg.TestNet3Params
+	case chaincfg.RegressionNetParams.Name:
+		net = &chaincfg.RegressionNetParams
+	case chaincfg.SimNetParams.Name:
+		net = &chaincfg.SimNetParams
+	default:
+		msg := fmt.Errorf("invalid network name. %s", str)
+		err = InvalidNetworkNameError{error: msg}
+	}
+
+	return net, err
 }
 
 func jsonToAmts(amtsJSON map[Contractor]int) map[Contractor]btcutil.Amount {
@@ -119,6 +216,52 @@ func (d *DLC) ParsePublicKeys(pubs PublicKeys) error {
 			return err
 		}
 		d.Pubs[c] = pub
+	}
+	return nil
+}
+
+// Addresses converts btcutil.Address to string
+func (d *DLC) Addresses() Addresses {
+	addrs := make(Addresses)
+	for c, addr := range d.Addrs {
+		if !reflect.ValueOf(addr).IsNil() {
+			addrs[c] = addr.EncodeAddress()
+		}
+	}
+	return addrs
+}
+
+// ParseAddresses parses address string
+func (d *DLC) ParseAddresses(addrs Addresses) error {
+	for c, addrStr := range addrs {
+		addr, err := btcutil.DecodeAddress(addrStr, d.Conds.NetParams)
+		if err != nil {
+			return err
+		}
+		d.Addrs[c] = addr
+	}
+	return nil
+}
+
+// ChangeAddresses converts btcutil.Address to string
+func (d *DLC) ChangeAddresses() Addresses {
+	addrs := make(Addresses)
+	for c, addr := range d.ChangeAddrs {
+		if !reflect.ValueOf(addr).IsNil() {
+			addrs[c] = addr.EncodeAddress()
+		}
+	}
+	return addrs
+}
+
+// ParseChangeAddresses parses address string
+func (d *DLC) ParseChangeAddresses(addrs Addresses) error {
+	for c, addrStr := range addrs {
+		addr, err := btcutil.DecodeAddress(addrStr, d.Conds.NetParams)
+		if err != nil {
+			return err
+		}
+		d.ChangeAddrs[c] = addr
 	}
 	return nil
 }
