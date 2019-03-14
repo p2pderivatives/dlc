@@ -168,6 +168,16 @@ func NewBuilder(
 	}
 }
 
+// NewBuilderFromDLC createa a builder from DLC
+func NewBuilderFromDLC(
+	d *DLC, p Contractor, w wallet.Wallet) *Builder {
+	return &Builder{
+		dlc:    d,
+		party:  p,
+		wallet: w,
+	}
+}
+
 // DLC returns the DLC constructed by builder
 func (b *Builder) DLC() *DLC {
 	return b.dlc
