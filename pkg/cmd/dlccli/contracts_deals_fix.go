@@ -1,8 +1,6 @@
 package dlccli
 
 import (
-	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +9,7 @@ import (
 	"github.com/p2pderivatives/dlc/internal/dlcmgr"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 	"github.com/p2pderivatives/dlc/pkg/oracle"
+	"github.com/p2pderivatives/dlc/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -30,11 +29,8 @@ func runFixDeal(cmd *cobra.Command, args []string) {
 	tx, err := d.FixedContractExecutionTx(ctype)
 	errorHandler(err)
 
-	// print tx
-	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
-	err = tx.Serialize(buf)
+	h, err := utils.TxToHex(tx)
 	errorHandler(err)
-	h := hex.EncodeToString(buf.Bytes())
 	fmt.Printf("CETx hex\n%s\n", h)
 }
 

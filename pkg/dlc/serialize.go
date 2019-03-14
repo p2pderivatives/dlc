@@ -171,7 +171,7 @@ func strToNetParams(str string) (*chaincfg.Params, error) {
 	case chaincfg.SimNetParams.Name:
 		net = &chaincfg.SimNetParams
 	default:
-		msg := fmt.Errorf("Invalid network name. %s", str)
+		msg := fmt.Errorf("invalid network name. %s", str)
 		err = InvalidNetworkNameError{error: msg}
 	}
 
@@ -224,7 +224,7 @@ func (d *DLC) ParsePublicKeys(pubs PublicKeys) error {
 func (d *DLC) Addresses() Addresses {
 	addrs := make(Addresses)
 	for c, addr := range d.Addrs {
-		if reflect.ValueOf(addr).IsNil() != true {
+		if !reflect.ValueOf(addr).IsNil() {
 			addrs[c] = addr.EncodeAddress()
 		}
 	}
@@ -247,7 +247,7 @@ func (d *DLC) ParseAddresses(addrs Addresses) error {
 func (d *DLC) ChangeAddresses() Addresses {
 	addrs := make(Addresses)
 	for c, addr := range d.ChangeAddrs {
-		if reflect.ValueOf(addr).IsNil() != true {
+		if !reflect.ValueOf(addr).IsNil() {
 			addrs[c] = addr.EncodeAddress()
 		}
 	}

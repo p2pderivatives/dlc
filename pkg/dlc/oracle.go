@@ -16,6 +16,7 @@ type Oracle struct {
 	SignedMsgs  [][]byte           // Messages signed by Oracle
 }
 
+// NewOracle initializes oracle
 func NewOracle(n int) *Oracle {
 	return &Oracle{
 		Commitments: make([]*btcec.PublicKey, n)}

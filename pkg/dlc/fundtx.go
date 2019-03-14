@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/script"
+	"github.com/p2pderivatives/dlc/pkg/utils"
 )
 
 const fundTxOutAt = 0 // fund txout is always at 0 in fund tx
@@ -26,7 +27,7 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 		// txins
 		total := btcutil.Amount(0)
 		for _, utxo := range d.Utxos[p] {
-			txin, err := utxoToTxIn(utxo)
+			txin, err := utils.UtxoToTxIn(utxo)
 			if err != nil {
 				return nil, err
 			}
@@ -314,7 +315,7 @@ func (b *Builder) FundTxHex() (string, error) {
 		return "", err
 	}
 
-	return txToHex(tx)
+	return utils.TxToHex(tx)
 }
 
 // fundTxInAt returns indices of txin in fundtx by the party

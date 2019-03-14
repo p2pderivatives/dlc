@@ -11,7 +11,6 @@ var (
 	nsTop         = []byte("dlcmgr")
 	nsContracts   = []byte("contracts")
 	nsOracle      = []byte("oracle")
-	nsNetParam    = []byte("net")
 	nsConditions  = []byte("conds")
 	nsPubkeys     = []byte("pubkeys")
 	nsAddrs       = []byte("addrs")
@@ -51,6 +50,7 @@ func openManager(db walletdb.DB) *Manager {
 	return mgr
 }
 
+// BucketNotExistsError is error raised when bucket doesn't exist
 type BucketNotExistsError struct {
 	error
 }

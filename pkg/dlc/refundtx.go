@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/p2pderivatives/dlc/pkg/utils"
 )
 
 // RefundTx creates refund tx
@@ -172,5 +173,5 @@ func (b *Builder) RefundTxHex() (string, error) {
 		return "", err
 	}
 
-	return txToHex(tx)
+	return utils.TxToHex(tx)
 }

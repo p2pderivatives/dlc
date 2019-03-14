@@ -3,7 +3,6 @@ package dlcmgr
 import (
 	"encoding/json"
 
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
@@ -11,8 +10,7 @@ import (
 
 // Manager manages contracts
 type Manager struct {
-	db        walletdb.DB
-	netParams *chaincfg.Params
+	db walletdb.DB
 }
 
 // Create creates manager
