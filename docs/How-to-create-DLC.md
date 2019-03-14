@@ -17,6 +17,7 @@ go install ./cmd/dlccli
 dlccli --help
 ```
 
+
 ## Steps
 * [Run bitciond](#Run\ bitcoind)
 * [Create Wallet](#Create\ Wallet)
@@ -30,6 +31,12 @@ dlccli --help
 ### Run bitcoind
 ```
 % make run_bitcoind # run bitciond in regtest mode
+```
+
+To clean up regtest, run the following tasks and run bitciond again
+
+```
+% make stop_bitcoind && make clean_bitciond
 ```
 
 ### Create Wallet
@@ -57,6 +64,13 @@ Bob
     --pubpass "pub_bob"
 
 Wallet created
+```
+
+or run 
+
+```
+./test/cmd/create_wallets.sh
+
 ```
 
 ### Deposite Funds and Fees
@@ -128,31 +142,35 @@ dlccli wallets balance \
 10
 ```
 
+or run
+
+```
+./test/cmd/deposit_funds.sh
+./test/cmd/check_balances.sh
+```
+
+### Prepare Deals
+
+Prepare deals in csv format
+
+```
+# value, distribution1(satoshi), distribution2(satoshi)
+% head deals.csv
+30001,11110,98028100
+30002,22220,98016990
+30003,33330,98005880
+30004,44430,97994770
+30005,55540,97983660
+30006,66650,97972560
+30007,77750,97961450
+30008,88860,97950350
+30009,99970,97939240
+30010,111070,97928140
+```
+
 ### Create DLC
-* Alice creates address
-
-```
-dlccli wallets addresses create \
-    --conf ./conf/bitcoin.regtest.conf \
-    --walletdir ./wallets/regtest \
-    --walletname "alice" \
-    --pubpass "pub_alice"
-    
-bcrt1qjndkjszkzqpahdzz8kkc4hgxljlrlswp25cusr
-```
-
-* Bob creates address
-
-```
-dlccli wallets addresses create \
-    --conf ./conf/bitcoin.regtest.conf \
-    --walletdir ./wallets/regtest \
-    --walletname "bob" \
-    --pubpass "pub_bob"
-    
-bcrt1qkcuc77z0ktnyfv8stz6xrnnc8uawxt7gg055gt
-```
-
+* Alice creates 2 addresses (transfer and change)
+* Bob creates 2 addresses (transfer and change)
 * Alice or Bob gets Oracle's pubkey
 
 ```
@@ -175,8 +193,6 @@ bcrt1qkcuc77z0ktnyfv8stz6xrnnc8uawxt7gg055gt
 }
 ```
 
-* Prepare deals in csv format
-
 * Alice and Bob create DLC
 
 ```
@@ -188,6 +204,8 @@ dlccli contracts create \
 	--fund2 50420168 \
 	--address1 "bcrt1qjndkjszkzqpahdzz8kkc4hgxljlrlswp25cusr" \
 	--address2 "bcrt1qkcuc77z0ktnyfv8stz6xrnnc8uawxt7gg055gt" \
+	--change_address1 "bcrt1qd9aadr8jf4v2y4pe0l239h2r25tmff9lrz35v9" \
+	--change_address2 "bcrt1qwk5j2evm0h3kf7cakd4dlh0e9v38ll0ex64ssj" \
 	--fundtx_feerate 40 \
 	--redeemtx_feerate 40 \
 	--deals_file ./deals.csv \
@@ -202,11 +220,20 @@ dlccli contracts create \
 	
 Contract created
 
+ContractID:
+68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
+
 FundTx hex:
 020000000001028679cb1369e0a690e8c27ea617e2ca00751df97a21c660f7927296cc8a6b58b40000000000ffffffff015e6fdfc8f936e8a019b36138d5bd611bc475399d31b774f3ed6629d5f081410000000000ffffffff03972bd805000000002200208fc69883a973c042c3d636ba6bf16c6d6fcb8e0645b17c49593d4a81b032c0e351d8c338000000001600149f96e83381d6cdd2547c4ba356799f3dd98e8aa5701a993800000000160014b2148ad2f69392741d6aea79c3e9a5b66a95527f02483045022100960ec31876d5250b5c06ec674149ba5229df35553b9dff901195bde65eb572ea02202d2f2f1ef937be7c654d4dfb9942adcf658111adf6b84d9b84d5465ba5d2a2bc012103cb7a859433bbda5ab9d5a956e05e3c0bc32c93ef89333354dd26ab0ff5a4771602473044022043d3f1f92a68ba7cd79903e150502452a5ea7100c1e70f527b649479f070c0e902202588b70052348e5180bcc0491e4b4dc80f8001a7a176a3d7af09e2d98dfad638012103eb9a227fbae493c2d310cccdd9151d0b372be81ccc9665842279c17fd8cf50a800000000
 
 RefundTx hex:
 0200000000010174a82a1e758db53eb4098431430c077cec437866bd9c9135af8d2122c6b1ac500000000000feffffff02e79bd60200000000160014498ef5355b87b188ff074b41ab36c9840171a0c3c859010300000000160014dfea60b1b9eeea759f0c988a89c854ad6959f7930400483045022100d81c1ea006d5f1c132339e0f789756ee354ed906a877d5169a81c44d0d36cb5c02207987d8c5433af70d830009b1213ebd20f382760207e0f702cf1a6281c4d811810147304402205b1fa0062f6c1c2993a6953bed4356e788a2fd69d2a3e05d34212496f2d9257f022034bf8abe5994b5ce8d61f91ea661aca58dcf679272c8a3aaa408638083105f010147522102923081bc3ff2e7c72969013265e99b1c4af1c59b6572f6f9734f632aeb7d319821037b8e3201837b670bafaf3fd3e5cb20e952e45cc406040eda27c32f192dad968c52ae88130000
+```
+
+or run
+
+```
+./test/cmd/create_dlc.sh
 ```
 
 ### Confirm Created Transactions
@@ -333,5 +360,31 @@ Refund Tx
 }
 ```
 
-### Execute Contract
-TBD
+or run
+
+```
+./test/cmd/fix_message.sh 30001
+```
+
+### Execute Contract (WIP)
+
+```
+% dlccli contracts deals fix \
+	--conf ./conf/bitcoin.regtest.conf \
+	--dlcid 68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
+	--oracle_sig ./osig.json \
+	--walletdir ./wallets/regtest \
+	--wallet alice \
+	--pubpass pub_alice \
+	--privpass priv_alice \
+	--contractor_type 0
+
+CETx hex
+020000000192b6986ac26a146f577026dc6750f52b40b3c7fe1456bd330c80766c02c4a0680000000000ffffffff02662b00000000000022002067fd44bf95d5858685e0d500af9a5296f2e6eb15fc564ef730fec33062e6003a44cad70500000000160014c73b321acf4bd2867fdaa59ef82be43cc3c5480c00000000
+```
+
+or run
+
+```
+./test/cmd/fix_deal.sh 68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
+```
