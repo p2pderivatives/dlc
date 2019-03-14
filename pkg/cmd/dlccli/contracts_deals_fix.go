@@ -18,23 +18,33 @@ var osigfile string
 var contractorType int
 
 func runFixDeal(cmd *cobra.Command, args []string) {
-	d := retrieveContract()
+	c := initCotractor()
 
 	osig := parseOracleSignedMsg()
 
-	err := d.FixDeal(osig.Msgs, osig.Sigs)
+	idxs := []int{}
+	n := len(osig.Sigs)
+	for i := 0; i < n; i++ {
+		idxs = append(idxs, i)
+	}
+	err := c.builder.FixDeal(osig, idxs)
 	errorHandler(err)
 
-	ctype := dlc.Contractor(contractorType)
-	tx, err := d.FixedContractExecutionTx(ctype)
+	cetx, err := c.builder.SignedContractExecutionTx()
 	errorHandler(err)
 
-	h, err := utils.TxToHex(tx)
+	cetxHex, err := utils.TxToHex(cetx)
 	errorHandler(err)
-	fmt.Printf("CETx hex\n%s\n", h)
+	fmt.Printf("\nCETx hex:\n%s\n", cetxHex)
+
+	cltx, err := c.builder.SignedClosingTx(cetx)
+	errorHandler(err)
+	cltxHex, err := utils.TxToHex(cltx)
+	errorHandler(err)
+	fmt.Printf("\nClosingTx hex:\n%s\n", cltxHex)
 }
 
-func retrieveContract() *dlc.DLC {
+func initCotractor() *Contractor {
 	w, wdb := openWallet(pubpass, walletDir, walletName)
 	err := w.Unlock([]byte(privpass))
 	errorHandler(err)
@@ -46,7 +56,17 @@ func retrieveContract() *dlc.DLC {
 	key := h.CloneBytes()
 	d, err := mgr.RetrieveContract(key)
 	errorHandler(err)
-	return d
+
+	b := dlc.NewBuilderFromDLC(
+		d, dlc.Contractor(contractorType), w)
+
+	return &Contractor{
+		wallet:   w,
+		builder:  b,
+		manager:  mgr,
+		pubpass:  pubpass,
+		privpass: privpass,
+	}
 }
 
 func parseOracleSignedMsg() *oracle.SignedMsg {
@@ -54,7 +74,8 @@ func parseOracleSignedMsg() *oracle.SignedMsg {
 	errorHandler(err)
 
 	signedMsg := &oracle.SignedMsg{}
-	json.Unmarshal(data, signedMsg)
+	err = json.Unmarshal(data, signedMsg)
+	errorHandler(err)
 
 	return signedMsg
 }

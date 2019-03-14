@@ -156,17 +156,20 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	err = party1.manager.StoreContract(key1.CloneBytes(), d1)
 	errorHandler(err)
 
-	fmt.Printf("Contract persisted. ID: %s\n", ID1)
-
 	fmt.Println("Second party persisting contract")
 
 	d2 := party2.builder.DLC()
 	ID2, err := d2.ContractID()
+	errorHandler(err)
 	key2, err := chainhash.NewHashFromStr(ID2)
+	errorHandler(err)
 	err = party2.manager.StoreContract(key2.CloneBytes(), d2)
 	errorHandler(err)
 
-	fmt.Printf("Contract persisted. ID: %s\n", ID2)
+	if ID1 != ID2 {
+		err = fmt.Errorf("contract IDs must be same, but different")
+		errorHandler(err)
+	}
 
 	fmt.Println("Second party constructing FundTx")
 
@@ -177,6 +180,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 
 	fmt.Println("Contract created")
+	fmt.Printf("\nContractID: \n%s\n", ID1)
 	fmt.Printf("\nFundTx hex:\n%s\n", fundtx)
 	fmt.Printf("\nRefundTx hex:\n%s\n", refundtx)
 }
