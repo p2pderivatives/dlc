@@ -110,8 +110,7 @@ func setupContractorsUntilSignExchange() (b1, b2 *Builder, err error) {
 	}
 
 	setupWallet := func() *walletmock.Wallet {
-		w := setupTestWallet()
-		w = &walletmock.Wallet{}
+		w := &walletmock.Wallet{}
 
 		priv, pub := test.RandKeys()
 		w.On("NewPubkey").Return(pub, nil)
