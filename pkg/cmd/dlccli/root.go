@@ -31,8 +31,10 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/p2pderivatives/dlc/internal/rpc"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
+var debug bool
 var bitcoinConf string
 var walletDir string
 var fixingTime string
@@ -51,9 +53,32 @@ func Execute() {
 }
 
 func init() {
+	initLogger(rootCmd)
+
 	rootCmd.PersistentFlags().StringVar(
 		&bitcoinConf, "conf", "", "bitcoin config file")
 	rootCmd.MarkPersistentFlagRequired("conf")
+}
+
+func initLogger(cmd *cobra.Command) {
+	cmd.PersistentFlags().BoolVar(
+		&debug, "debug", false, "enable debug logs")
+
+	cobra.OnInitialize(func() {
+		cfg := zap.NewDevelopmentConfig()
+		if debug {
+			cfg.Level.SetLevel(zap.DebugLevel)
+		} else {
+			cfg.Level.SetLevel(zap.InfoLevel)
+		}
+		logger, err := cfg.Build()
+		errorHandler(err)
+		zap.ReplaceGlobals(logger)
+	})
+}
+
+func logger() *zap.Logger {
+	return zap.L
 }
 
 func loadChainParams(cfgPath string) *chaincfg.Params {

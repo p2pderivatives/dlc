@@ -54,11 +54,11 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	pubset := parseOraclePubkey()
 
 	// Both set oracle's pubkey
-	fmt.Printf("Setting oracle's pubkey\n")
+	logger().Debug("Setting oracle's pubkey")
 	party1.builder.SetOraclePubkeySet(pubset)
 	party2.builder.SetOraclePubkeySet(pubset)
 
-	fmt.Println("First party preparing public key and utxos")
+	logger().Debug("First party preparing public key and utxos")
 
 	// FirstParty prepares pubkeys
 	err = party1.builder.PreparePubkey()
@@ -68,7 +68,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	err = party1.builder.PrepareFundTx()
 	errorHandler(err)
 
-	fmt.Println("First party sending public key and utxos to second party")
+	logger().Debug("First party sending public key and utxos to second party")
 
 	// First Party sends offer to Second Party
 	p1, err := party1.builder.PublicKey()
@@ -76,7 +76,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	u1 := party1.builder.Utxos()
 	chaddr1 := party1.builder.ChangeAddress()
 
-	fmt.Println("Second party accepting public key, utxos and change address")
+	logger().Debug("Second party accepting public key, utxos and change address")
 
 	// Second party accepts pubkey, utxos, addresses
 	err = party2.builder.AcceptPubkey(p1)
@@ -85,7 +85,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 	party2.builder.AcceptsChangeAdderss(chaddr1)
 
-	fmt.Println("Second party preparing public key and utxos")
+	logger().Debug("Second party preparing public key and utxos")
 
 	// Second Party signs CETxs and RefundTx
 	err = party2.builder.PreparePubkey()
@@ -93,20 +93,20 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	err = party2.builder.PrepareFundTx()
 	errorHandler(err)
 
-	fmt.Println("Second party sigining CETxs and RefundTx")
+	logger().Debug("Second party sigining CETxs and RefundTx")
 
 	ceSigs2, err := party2.builder.SignContractExecutionTxs()
 	errorHandler(err)
 	refundSig2, err := party2.builder.SignRefundTx()
 	errorHandler(err)
 
-	fmt.Println("Second party sending public key, utxos and change address")
+	logger().Debug("Second party sending public key, utxos and change address")
 	p2, err := party2.builder.PublicKey()
 	errorHandler(err)
 	u2 := party2.builder.Utxos()
 	chaddr2 := party2.builder.ChangeAddress()
 
-	fmt.Println("First party accepting public key, utxoa and change address")
+	logger().Debug("First party accepting public key, utxoa and change address")
 
 	err = party1.builder.AcceptPubkey(p2)
 	errorHandler(err)
@@ -115,7 +115,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	party1.builder.AcceptsChangeAdderss(chaddr2)
 	errorHandler(err)
 
-	fmt.Println("First party accepting signatures of CETXs and RefundTx")
+	logger().Debug("First party accepting signatures of CETXs and RefundTx")
 
 	// FirstParty accepts sigs
 	err = party1.builder.AcceptRefundTxSignature(refundSig2)
@@ -123,7 +123,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	err = party1.builder.AcceptCETxSignatures(ceSigs2)
 	errorHandler(err)
 
-	fmt.Println("First party sigining all transactions")
+	logger().Debug("First party sigining all transactions")
 
 	// FirstParty signs CETxs and RefundTx and FundTx
 	ceSigs1, err := party1.builder.SignContractExecutionTxs()
@@ -133,7 +133,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	fundWits1, err := party1.builder.SignFundTx()
 	errorHandler(err)
 
-	fmt.Println("Second party accepting all signatures")
+	logger().Debug("Second party accepting all signatures")
 
 	// SecondParty accepts sigs
 	err = party2.builder.AcceptCETxSignatures(ceSigs1)
@@ -147,7 +147,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 	party1.builder.AcceptFundWitnesses(fundWits2)
 
-	fmt.Println("First party persisting contract")
+	logger().Debug("First party persisting contract")
 
 	d1 := party1.builder.Contract
 	ID1, err := d1.ContractID()
@@ -157,7 +157,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	err = party1.manager.StoreContract(key1.CloneBytes(), d1)
 	errorHandler(err)
 
-	fmt.Println("Second party persisting contract")
+	logger().Debug("Second party persisting contract")
 
 	d2 := party2.builder.Contract
 	ID2, err := d2.ContractID()
@@ -172,7 +172,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 		errorHandler(err)
 	}
 
-	fmt.Println("Second party constructing FundTx")
+	logger().Debug("Second party constructing FundTx")
 
 	// SecondParty create FundTx
 	fundtx, err := party2.builder.Contract.FundTx()
@@ -287,7 +287,10 @@ func initFirstParty() *Contractor {
 	errorHandler(err)
 	conds := loadDLCConditions()
 	d := dlc.NewDLC(conds)
-	b := dlc.NewBuilder(dlc.FirstParty, w, d)
+	p := dlc.FirstParty
+	d.Addrs[p] = parseAddress(address1)
+	d.ChangeAddrs[p] = parseAddress(changeAddress1)
+	b := dlc.NewBuilder(p, w, d)
 
 	return &Contractor{
 		wallet:   w,
@@ -305,8 +308,11 @@ func initSecondParty() *Contractor {
 	mgr, err := dlcmgr.Open(wdb)
 	errorHandler(err)
 	conds := loadDLCConditions()
+	p := dlc.SecondParty
 	d := dlc.NewDLC(conds)
-	b := dlc.NewBuilder(dlc.SecondParty, w, d)
+	d.Addrs[p] = parseAddress(address2)
+	d.ChangeAddrs[p] = parseAddress(changeAddress2)
+	b := dlc.NewBuilder(p, w, d)
 
 	return &Contractor{
 		wallet:   w,
@@ -315,6 +321,13 @@ func initSecondParty() *Contractor {
 		pubpass:  pubpass2,
 		privpass: privpass2,
 	}
+}
+
+func parseAddress(addr string) btcutil.Address {
+	net := loadChainParams(bitcoinConf)
+	address, err := btcutil.DecodeAddress(addr, net)
+	errorHandler(err)
+	return address
 }
 
 func parseOraclePubkey() *oracle.PubkeySet {
