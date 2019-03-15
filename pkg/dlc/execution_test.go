@@ -15,10 +15,13 @@ func TestContractExecutionTx(t *testing.T) {
 
 	// A deal that has both amounts are > 0
 	var damt1, damt2 btcutil.Amount = 1, 1
-	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
+	b, _, dID, deal, err := setupContractorsUntilPubkeyExchange(damt1, damt2)
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
 
 	// fail without oracle's message commitment
-	_, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
+	_, err = b.Contract.ContractExecutionTx(b.party, deal, dID)
 	assert.NotNil(err)
 
 	// set message commitment
@@ -38,7 +41,11 @@ func TestContractExecutionTxTakeAll(t *testing.T) {
 	assert := assert.New(t)
 
 	var damt1, damt2 btcutil.Amount = 1, 0
-	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
+	b, _, dID, deal, err := setupContractorsUntilPubkeyExchange(damt1, damt2)
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
+
 	_, C := test.RandKeys()
 	b.Contract.Oracle.Commitments[dID] = C
 
@@ -51,15 +58,20 @@ func TestContractExecutionTxTakeAll(t *testing.T) {
 
 // An edge case that a executing party tx takes nothing
 func TestContractExecutionTxTakeNothing(t *testing.T) {
+	assert := assert.New(t)
+
 	var damt1, damt2 btcutil.Amount = 0, 1
-	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
+	b, _, dID, deal, err := setupContractorsUntilPubkeyExchange(damt1, damt2)
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
+
 	_, C := test.RandKeys()
 	b.Contract.Oracle.Commitments[dID] = C
 
 	tx, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
 
 	// asserions
-	assert := assert.New(t)
 	assert.Nil(tx)
 	assert.NotNil(err)
 	assert.IsType(&CETTakeNothingError{}, err)
@@ -70,7 +82,11 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	var err error
 
 	// setup
-	b1, b2, dID, deal := setupContractorsUntilPubkeyExchange(1, 1)
+	b1, b2, dID, deal, err := setupContractorsUntilPubkeyExchange(1, 1)
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
+
 	privkey, C := test.RandKeys()
 	b1.Contract.Oracle.Commitments[dID] = C
 	b2.Contract.Oracle.Commitments[dID] = C
@@ -122,35 +138,40 @@ func TestSignedContractExecutionTx(t *testing.T) {
 }
 
 func setupContractorsUntilPubkeyExchange(
-	damt1, damt2 btcutil.Amount) (b1, b2 *Builder, dID int, deal *Deal) {
-	conds := newTestConditions()
-
-	// set deals
+	damt1, damt2 btcutil.Amount,
+) (b1, b2 *Builder, dID int, deal *Deal, err error) {
 	msgs := [][]byte{{1}}
 	deal = NewDeal(damt1, damt2, [][]byte{{1}})
-	conds.Deals = []*Deal{deal}
+
+	setupConds := func() *Conditions {
+		conds := newTestConditions()
+		conds.Deals = []*Deal{deal}
+		return conds
+	}
 
 	// init first party
-	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1000, 1, nil)
-	b1 = NewBuilder(FirstParty, w1, conds)
-	b1.PreparePubkey()
-	b1.PrepareFundTx()
+	b1 = setupBuilder(FirstParty, setupTestWallet, setupConds)
+	if err = stepPrepare(b1); err != nil {
+		return
+	}
 
 	// init second party
-	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1000, 1, nil)
-	b2 = NewBuilder(SecondParty, w2, conds)
-	b2.PreparePubkey()
-	b2.PrepareFundTx()
+	b2 = setupBuilder(SecondParty, setupTestWallet, setupConds)
+	if err = stepPrepare(b2); err != nil {
+		return
+	}
 
 	// exchange pubkeys and utxos
-	stepSendRequirments(b1, b2)
-	stepSendRequirments(b2, b1)
+	if err = stepSendRequirments(b1, b2); err != nil {
+		return
+	}
+	if err = stepSendRequirments(b2, b1); err != nil {
+		return
+	}
 
 	dID, deal, _ = b1.Contract.DealByMsgs(msgs)
 
-	return b1, b2, dID, deal
+	return b1, b2, dID, deal, nil
 }
 
 func runFundScript(b *Builder, tx *wire.MsgTx) error {

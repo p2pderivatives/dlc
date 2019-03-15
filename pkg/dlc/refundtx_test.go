@@ -9,48 +9,67 @@ import (
 
 const testLockTime = uint32(1541951794) // 2018/11/11 3:46pm (UTC)
 
-func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
-	conds := newTestConditions()
-	conds.RefundLockTime = testLockTime
+func setupDLCRefund() (b1, b2 *Builder, d *DLC, err error) {
+	setupConds := func() *Conditions {
+		conds := newTestConditions()
+		conds.RefundLockTime = testLockTime
+		return conds
+	}
 
-	// init first party
-	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1000, 1, nil)
-	b1 := NewBuilder(FirstParty, w1, conds)
-	b1.PreparePubkey()
-	b1.PrepareFundTx()
+	// init builders
+	b1 = setupBuilder(FirstParty, setupTestWallet, setupConds)
+	b2 = setupBuilder(SecondParty, setupTestWallet, setupConds)
 
-	// init second party
-	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1000, 1, nil)
-	b2 := NewBuilder(SecondParty, w2, conds)
-	b2.PreparePubkey()
-	b2.PrepareFundTx()
+	if err = stepPrepare(b1); err != nil {
+		return
+	}
+	if err = stepPrepare(b2); err != nil {
+		return
+	}
 
 	// exchange pubkeys
-	stepSendRequirments(b1, b2)
-	stepSendRequirments(b2, b1)
+	if err = stepSendRequirments(b1, b2); err != nil {
+		return
+	}
+
+	if err = stepSendRequirments(b2, b1); err != nil {
+		return
+	}
 
 	// sign refundtx
-	rs1, _ := b1.SignRefundTx()
-	rs2, _ := b2.SignRefundTx()
+	rs1, err := b1.SignRefundTx()
+	if err != nil {
+		return
+	}
+	rs2, err := b2.SignRefundTx()
+	if err != nil {
+		return
+	}
 
 	// exchange refund signs
-	b1.AcceptRefundTxSignature(rs2)
-	b2.AcceptRefundTxSignature(rs1)
+	if err = b1.AcceptRefundTxSignature(rs2); err != nil {
+		return
+	}
 
-	return b1, b2, b1.Contract
+	if err = b2.AcceptRefundTxSignature(rs1); err != nil {
+		return
+	}
+
+	return b1, b2, b1.Contract, nil
 }
 
 // VerifyRefundTx should return false if given RefundTx isnt valid
 func TestVerifyRefundTxInvalidSig(t *testing.T) {
 	assert := assert.New(t)
 
-	_, _, d := setupDLCRefund()
+	_, _, d, err := setupDLCRefund()
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
 
 	// VerifyRefundTX should return false bc the given signature and pubkey don't match
 	testBadSig := []byte{'b', 'a', 'd'} // make a known bad signature
-	err := d.VerifyRefundTx(testBadSig, d.Pubs[FirstParty])
+	err = d.VerifyRefundTx(testBadSig, d.Pubs[FirstParty])
 	assert.NotNil(err)
 }
 
@@ -58,16 +77,22 @@ func TestVerifyRefundTxInvalidSig(t *testing.T) {
 func TestVerifyRefundTx(t *testing.T) {
 	assert := assert.New(t)
 
-	_, _, d := setupDLCRefund()
+	_, _, d, err := setupDLCRefund()
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
 
-	err := d.VerifyRefundTx(d.RefundSigs[FirstParty], d.Pubs[FirstParty])
+	err = d.VerifyRefundTx(d.RefundSigs[FirstParty], d.Pubs[FirstParty])
 	assert.Nil(err)
 }
 
 func TestRefundTx(t *testing.T) {
 	assert := assert.New(t)
 
-	_, _, d := setupDLCRefund()
+	_, _, d, err := setupDLCRefund()
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
 
 	refundtx, err := d.RefundTx()
 	assert.Nil(err)
@@ -82,7 +107,10 @@ func TestRefundTx(t *testing.T) {
 
 func TestRefundTxOutput(t *testing.T) {
 	assert := assert.New(t)
-	_, _, d := setupDLCRefund()
+	_, _, d, err := setupDLCRefund()
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
 
 	// run script
 	refundtx, err := d.SignedRefundTx()

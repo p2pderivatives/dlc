@@ -286,7 +286,8 @@ func initFirstParty() *Contractor {
 	mgr, err := dlcmgr.Open(wdb)
 	errorHandler(err)
 	conds := loadDLCConditions()
-	b := dlc.NewBuilder(dlc.FirstParty, w, conds)
+	d := dlc.NewDLC(conds)
+	b := dlc.NewBuilder(dlc.FirstParty, w, d)
 
 	return &Contractor{
 		wallet:   w,
@@ -304,7 +305,8 @@ func initSecondParty() *Contractor {
 	mgr, err := dlcmgr.Open(wdb)
 	errorHandler(err)
 	conds := loadDLCConditions()
-	b := dlc.NewBuilder(dlc.SecondParty, w, conds)
+	d := dlc.NewDLC(conds)
+	b := dlc.NewBuilder(dlc.SecondParty, w, d)
 
 	return &Contractor{
 		wallet:   w,

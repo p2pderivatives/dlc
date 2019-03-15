@@ -50,7 +50,8 @@ func TestCondions(t *testing.T) {
 }
 
 func TestNewBuilder(t *testing.T) {
-	builder := NewBuilder(FirstParty, nil, newTestConditions())
+	conds := newTestConditions()
+	builder := NewBuilder(FirstParty, nil, NewDLC(conds))
 
 	assert := assert.New(t)
 	assert.NotNil(builder)

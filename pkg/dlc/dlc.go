@@ -158,19 +158,9 @@ type Builder struct {
 	wallet   wallet.Wallet
 }
 
-// NewBuilder creates a new Builder for a contractor
+// NewBuilder createa a builder from DLC
 func NewBuilder(
-	p Contractor, w wallet.Wallet, conds *Conditions) *Builder {
-	return &Builder{
-		Contract: NewDLC(conds),
-		party:    p,
-		wallet:   w,
-	}
-}
-
-// NewBuilderFromDLC createa a builder from DLC
-func NewBuilderFromDLC(
-	d *DLC, p Contractor, w wallet.Wallet) *Builder {
+	p Contractor, w wallet.Wallet, d *DLC) *Builder {
 	return &Builder{
 		Contract: d,
 		party:    p,
