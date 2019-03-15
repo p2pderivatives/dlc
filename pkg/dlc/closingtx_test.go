@@ -45,6 +45,8 @@ func setupDLC() *DLC {
 	_, pub2 := test.RandKeys()
 	d.Pubs[FirstParty] = pub1
 	d.Pubs[SecondParty] = pub2
+	d.Addrs[FirstParty] = test.RandAddress()
+	d.Addrs[SecondParty] = test.RandAddress()
 	return d
 }
 

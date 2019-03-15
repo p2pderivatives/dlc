@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -99,21 +100,20 @@ func (d *DLC) ContractID() (string, error) {
 	return h, nil
 }
 
-// ClosingTxOut returns a final txout owned only by a given party
-// TODO: replace with given address
-func (d *DLC) ClosingTxOut(
+// distTxOut returns a final txout owned only by a given party
+func (d *DLC) distTxOut(
 	p Contractor, amt btcutil.Amount) (*wire.TxOut, error) {
-	pub := d.Pubs[p]
-	if pub == nil {
-		return nil, errors.New("missing pubkey")
+	addr := d.Addrs[p]
+	if addr == nil {
+		msg := fmt.Sprintf("missing destination address. %s", p)
+		return nil, errors.New(msg)
 	}
-
-	pkScript, err := script.P2WPKHpkScript(pub)
+	sc, err := script.P2WPKHpkScriptFromAddress(addr)
 	if err != nil {
 		return nil, err
 	}
 
-	txout := wire.NewTxOut(int64(amt), pkScript)
+	txout := wire.NewTxOut(int64(amt), sc)
 	return txout, nil
 }
 

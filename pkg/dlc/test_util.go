@@ -136,6 +136,7 @@ func stepSendRequirments(b1, b2 *Builder) error {
 		return err
 	}
 	u1 := b1.Utxos()
+	addr1 := b1.Address()
 	caddr1 := b1.ChangeAddress()
 
 	err = b2.AcceptPubkey(p1)
@@ -146,7 +147,11 @@ func stepSendRequirments(b1, b2 *Builder) error {
 	if err != nil {
 		return err
 	}
-	err = b2.AcceptsChangeAdderss(caddr1)
+	err = b2.AcceptAdderss(addr1)
+	if err != nil {
+		return err
+	}
+	err = b2.AcceptChangeAdderss(caddr1)
 	if err != nil {
 		return err
 	}

@@ -36,7 +36,7 @@ func (d *DLC) ClosingTx(
 		return nil, newNotEnoughFeesError(in, fee)
 	}
 
-	txout, err := d.ClosingTxOut(p, out)
+	txout, err := d.distTxOut(p, out)
 	if err != nil {
 		return nil, err
 	}

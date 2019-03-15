@@ -74,6 +74,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	p1, err := party1.builder.PublicKey()
 	errorHandler(err)
 	u1 := party1.builder.Utxos()
+	addr1 := party1.builder.Address()
 	chaddr1 := party1.builder.ChangeAddress()
 
 	logger().Debug("Second party accepting public key, utxos and change address")
@@ -83,7 +84,8 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 	err = party2.builder.AcceptUtxos(u1)
 	errorHandler(err)
-	party2.builder.AcceptsChangeAdderss(chaddr1)
+	party2.builder.AcceptAdderss(addr1)
+	party2.builder.AcceptChangeAdderss(chaddr1)
 
 	logger().Debug("Second party preparing public key and utxos")
 
@@ -104,6 +106,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	p2, err := party2.builder.PublicKey()
 	errorHandler(err)
 	u2 := party2.builder.Utxos()
+	addr2 := party2.builder.Address()
 	chaddr2 := party2.builder.ChangeAddress()
 
 	logger().Debug("First party accepting public key, utxoa and change address")
@@ -112,8 +115,8 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	errorHandler(err)
 	err = party1.builder.AcceptUtxos(u2)
 	errorHandler(err)
-	party1.builder.AcceptsChangeAdderss(chaddr2)
-	errorHandler(err)
+	party1.builder.AcceptAdderss(addr2)
+	party1.builder.AcceptChangeAdderss(chaddr2)
 
 	logger().Debug("First party accepting signatures of CETXs and RefundTx")
 

@@ -54,7 +54,7 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 		if change > 0 {
 			addr := d.ChangeAddrs[p]
 			if addr == nil {
-				msg := fmt.Sprintf("Change address must be provided by %s", p)
+				msg := fmt.Sprintf("change address must be provided by %s", p)
 				return nil, &ChangeAddressNotExistsError{error: errors.New(msg)}
 			}
 			sc, err := script.P2WPKHpkScriptFromAddress(addr)
@@ -196,6 +196,22 @@ func (b *Builder) AcceptUtxos(utxos []Utxo) error {
 	return nil
 }
 
+// Address returns address to distribute fund
+func (b *Builder) Address() btcutil.Address {
+	addr := b.Contract.Addrs[b.party]
+	if addr != nil {
+		return addr.(btcutil.Address)
+	}
+	return nil
+}
+
+// AcceptAdderss accepts address from the counterparty
+func (b *Builder) AcceptAdderss(addr btcutil.Address) error {
+	cp := counterparty(b.party)
+	b.Contract.Addrs[cp] = addr
+	return nil
+}
+
 // ChangeAddress returns address to send change
 func (b *Builder) ChangeAddress() btcutil.Address {
 	addr := b.Contract.ChangeAddrs[b.party]
@@ -205,12 +221,10 @@ func (b *Builder) ChangeAddress() btcutil.Address {
 	return nil
 }
 
-// AcceptsChangeAdderss accepts change address from the counterparty
-func (b *Builder) AcceptsChangeAdderss(
-	addr btcutil.Address) error {
+// AcceptChangeAdderss accepts change address from the counterparty
+func (b *Builder) AcceptChangeAdderss(addr btcutil.Address) error {
 	cp := counterparty(b.party)
 	b.Contract.ChangeAddrs[cp] = addr
-
 	return nil
 }
 

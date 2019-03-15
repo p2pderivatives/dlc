@@ -31,7 +31,7 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 
 	// txouts
 	for _, p := range []Contractor{FirstParty, SecondParty} {
-		txout, err := d.ClosingTxOut(p, d.Conds.FundAmts[p])
+		txout, err := d.distTxOut(p, d.Conds.FundAmts[p])
 
 		if err != nil {
 			fmt.Printf("err in closing tx out:   %+v\n", err)
