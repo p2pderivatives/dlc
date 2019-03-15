@@ -210,5 +210,5 @@ func (w *Wallet) Unlock(privPass []byte) error {
 // Close closes managers
 func (w *Wallet) Close() error {
 	w.manager.Close()
-	return nil
+	return w.db.Close()
 }

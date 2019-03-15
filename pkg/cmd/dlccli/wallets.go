@@ -44,10 +44,9 @@ var walletsCreateCmd = &cobra.Command{
 		errorHandler(err)
 
 		_, wdb := openWallet(pubpass, walletDir, walletName)
+		defer wdb.Close()
 		_, err = dlcmgr.Create(wdb)
 		errorHandler(err)
-
-		fmt.Println("Wallet created")
 	},
 }
 

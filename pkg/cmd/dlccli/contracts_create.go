@@ -47,10 +47,23 @@ type Contractor struct {
 	privpass string
 }
 
+// Close closed databases
+func (c *Contractor) Close() (err error) {
+	if err = c.manager.Close(); err != nil {
+		return err
+	}
+	if err = c.wallet.Close(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func runCreateContract(cmd *cobra.Command, args []string) {
 	var err error
 	party1 := initFirstParty()
+	defer party1.Close()
 	party2 := initSecondParty()
+	defer party2.Close()
 	pubset := parseOraclePubkey()
 
 	// Both set oracle's pubkey

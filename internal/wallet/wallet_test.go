@@ -32,9 +32,6 @@ func TestOpen(t *testing.T) {
 	_w, tearDownFunc := setupWallet(t)
 	defer tearDownFunc()
 
-	// close wallet
-	_w.Close()
-
 	// open wallet
 	db := _w.db
 	pubPass := _w.publicPassphrase
