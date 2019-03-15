@@ -32,7 +32,10 @@ func (c *Contractor) createWallet() (err error) {
 
 func (c *Contractor) createDLCBuilder(
 	conds *dlc.Conditions, p dlc.Contractor) {
-	c.DLCBuilder = dlc.NewBuilder(p, c.Wallet, conds)
+	d := dlc.NewDLC(conds)
+	d.Addrs[p], _ = c.Wallet.NewAddress()
+	d.ChangeAddrs[p], _ = c.Wallet.NewAddress()
+	c.DLCBuilder = dlc.NewBuilder(p, c.Wallet, d)
 }
 
 func (c *Contractor) unlockWallet() {

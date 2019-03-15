@@ -64,7 +64,7 @@ func (d *DLC) ContractExecutionTx(
 
 	// txout2: counterparty's p2wpkh
 	if amt2 > 0 {
-		txout2, err := d.ClosingTxOut(cparty, amt2)
+		txout2, err := d.distTxOut(cparty, amt2)
 		if err != nil {
 			return nil, err
 		}

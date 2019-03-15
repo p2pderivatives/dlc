@@ -45,6 +45,8 @@ func setupDLC() *DLC {
 	_, pub2 := test.RandKeys()
 	d.Pubs[FirstParty] = pub1
 	d.Pubs[SecondParty] = pub2
+	d.Addrs[FirstParty] = test.RandAddress()
+	d.Addrs[SecondParty] = test.RandAddress()
 	return d
 }
 
@@ -58,7 +60,10 @@ func TestSignedClosingTx(t *testing.T) {
 	assert := assert.New(t)
 
 	// setup
-	b1, b2 := setupContractorsUntilSignExchange()
+	b1, b2, err := setupContractorsUntilSignExchange()
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
 
 	// first party
 	cetx1, err := b1.SignedContractExecutionTx()
@@ -85,67 +90,83 @@ func TestSignedClosingTx(t *testing.T) {
 	assert.Error(err)
 }
 
-func setupContractorsUntilSignExchange() (b1, b2 *Builder) {
-	conds := newTestConditions()
-
-	var damt1, damt2 btcutil.Amount = 1 * btcutil.SatoshiPerBitcoin, 1 * btcutil.SatoshiPerBitcoin
+func setupContractorsUntilSignExchange() (b1, b2 *Builder, err error) {
+	// msg
 	msgs := [][]byte{{1}}
+	damt1 := btcutil.Amount(1 * btcutil.SatoshiPerBitcoin)
+	damt2 := btcutil.Amount(1 * btcutil.SatoshiPerBitcoin)
 	deal := NewDeal(damt1, damt2, msgs)
-	conds.Deals = []*Deal{deal}
 
 	// oracle's signnature and commitment
 	opriv, C := test.RandKeys()
 	osig := opriv.D.Bytes()
-	oFixedMsg := &oracle.SignedMsg{Msgs: msgs, Sigs: [][]byte{osig}}
+	oFixedMsg := &oracle.SignedMsg{
+		Msgs: msgs, Sigs: [][]byte{osig}}
+
+	setupConds := func() *Conditions {
+		conds := newTestConditions()
+		conds.Deals = []*Deal{deal}
+		return conds
+	}
+
+	setupWallet := func() *walletmock.Wallet {
+		w := &walletmock.Wallet{}
+
+		priv, pub := test.RandKeys()
+		w.On("NewPubkey").Return(pub, nil)
+		w = mockWitnessSignature(w, pub, priv)
+		w = mockWitnessSignatureWithCallback(
+			w, pub, priv, genAddSigToPrivkeyFunc(osig))
+
+		return w
+	}
 
 	// init first party
-	w1 := setupTestWalletForTestSignedClosingTx(osig)
-	b1 = NewBuilder(FirstParty, w1, conds)
-	b1.PreparePubkey()
-	b1.PrepareFundTx()
+	b1 = setupBuilder(FirstParty, setupWallet, setupConds)
+	b2 = setupBuilder(SecondParty, setupWallet, setupConds)
 
-	// init second party
-	w2 := setupTestWalletForTestSignedClosingTx(osig)
-	b2 = NewBuilder(SecondParty, w2, conds)
-	b2.PreparePubkey()
-	b2.PrepareFundTx()
+	// preps
+	if err = stepPrepare(b1); err != nil {
+		return
+	}
+	if err = stepPrepare(b2); err != nil {
+		return
+	}
 
 	// exchange pubkeys and utxos
-	stepSendRequirments(b1, b2)
-	stepSendRequirments(b2, b1)
+	if err = stepSendRequirments(b1, b2); err != nil {
+		return
+	}
+	if err = stepSendRequirments(b2, b1); err != nil {
+		return
+	}
 
-	dID, _, _ := b1.Contract.DealByMsgs(msgs)
+	dID, _, err := b1.Contract.DealByMsgs(msgs)
+	if err != nil {
+		return
+	}
 
 	// set oracle ocmmitment
 	b1.Contract.Oracle.Commitments[dID] = C
 	b2.Contract.Oracle.Commitments[dID] = C
 
 	// exchange sigs
-	sig1, _ := b1.SignContractExecutionTx(deal, dID)
-	sig2, _ := b2.SignContractExecutionTx(deal, dID)
-	_ = b1.AcceptCETxSignatures([][]byte{sig2})
-	_ = b2.AcceptCETxSignatures([][]byte{sig1})
+	if err = stepExchangeCETxSig(b1, b2, deal, dID); err != nil {
+		return
+	}
+	if err = stepExchangeCETxSig(b2, b1, deal, dID); err != nil {
+		return
+	}
 
 	// fix deal by oracle's sig
-	b1.FixDeal(oFixedMsg, []int{0})
-	b2.FixDeal(oFixedMsg, []int{0})
+	if err = b1.FixDeal(oFixedMsg, []int{0}); err != nil {
+		return
+	}
+	if err = b2.FixDeal(oFixedMsg, []int{0}); err != nil {
+		return
+	}
 
-	return b1, b2
-}
-
-// setup mocke wallet
-func setupTestWalletForTestSignedClosingTx(msgSig []byte) *walletmock.Wallet {
-	w := &walletmock.Wallet{}
-	w = mockNewAddress(w)
-	w = mockSelectUnspent(w, 1000, 1, nil)
-
-	priv, pub := test.RandKeys()
-	w.On("NewPubkey").Return(pub, nil)
-	w = mockWitnessSignature(w, pub, priv)
-	w = mockWitnessSignatureWithCallback(
-		w, pub, priv, genAddSigToPrivkeyFunc(msgSig))
-
-	return w
+	return b1, b2, nil
 }
 
 func runCEScript(cetx *wire.MsgTx, tx *wire.MsgTx) error {

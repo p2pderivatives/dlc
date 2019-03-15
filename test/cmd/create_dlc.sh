@@ -3,6 +3,8 @@
 conf="--conf ./conf/bitcoin.regtest.conf"
 walletdir="--walletdir ./wallets/regtest"
 create_address="dlccli wallets addresses create"
+alicep_params="--walletname alicep --pubpass pub_alicep"
+bobp_params="--walletname bobp --pubpass pub_bobp"
 
 echo "Getting oracle's pubkey"
 oracle_pubkey_file="opub.json"
@@ -14,12 +16,12 @@ dlccli oracle rpoints $conf \
 echo -e ""
 
 echo "Creating addresses"
-addr1=`$create_address $conf $walletdir --walletname alice --pubpass pub_alice`
-addr2=`$create_address $conf $walletdir --walletname bob --pubpass pub_bob`
+addr1=`$create_address $conf $walletdir $alicep_params`
+addr2=`$create_address $conf $walletdir $bobp_params`
 echo "address1: $addr1"
 echo "address2: $addr2"
-chaddr1=`$create_address $conf $walletdir --walletname alice --pubpass pub_alice`
-chaddr2=`$create_address $conf $walletdir --walletname bob --pubpass pub_bob`
+chaddr1=`$create_address $conf $walletdir $alicep_params`
+chaddr2=`$create_address $conf $walletdir $bobp_params`
 echo "change address1: $chaddr1"
 echo "change address2: $chaddr2"
 echo -e ""

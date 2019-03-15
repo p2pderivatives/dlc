@@ -57,8 +57,8 @@ func initCotractor() *Contractor {
 	d, err := mgr.RetrieveContract(key)
 	errorHandler(err)
 
-	b := dlc.NewBuilderFromDLC(
-		d, dlc.Contractor(contractorType), w)
+	b := dlc.NewBuilder(
+		dlc.Contractor(contractorType), w, d)
 
 	return &Contractor{
 		wallet:   w,

@@ -41,6 +41,7 @@ func contractorOfferCounterparty(t *testing.T, c1, c2 *Contractor) {
 	p1, err := c1.DLCBuilder.PublicKey()
 	assert.NoError(t, err)
 	u1 := c1.DLCBuilder.Utxos()
+	addr1 := c1.DLCBuilder.Address()
 	caddr1 := c1.DLCBuilder.ChangeAddress()
 
 	// the counterparty party accepts them
@@ -48,7 +49,8 @@ func contractorOfferCounterparty(t *testing.T, c1, c2 *Contractor) {
 	assert.NoError(t, err)
 	err = c2.DLCBuilder.AcceptUtxos(u1)
 	assert.NoError(t, err)
-	c2.DLCBuilder.AcceptsChangeAdderss(caddr1)
+	c2.DLCBuilder.AcceptAdderss(addr1)
+	c2.DLCBuilder.AcceptChangeAdderss(caddr1)
 }
 
 // A contractor sends pubkey, fund txins and
@@ -67,6 +69,7 @@ func contractorAcceptOffer(t *testing.T, c1, c2 *Contractor) {
 	p1, err := c1.DLCBuilder.PublicKey()
 	assert.NoError(t, err)
 	u1 := c1.DLCBuilder.Utxos()
+	addr1 := c1.DLCBuilder.Address()
 	caddr1 := c1.DLCBuilder.ChangeAddress()
 
 	// the counterparty accepts them
@@ -74,7 +77,8 @@ func contractorAcceptOffer(t *testing.T, c1, c2 *Contractor) {
 	assert.NoError(t, err)
 	err = c2.DLCBuilder.AcceptUtxos(u1)
 	assert.NoError(t, err)
-	c2.DLCBuilder.AcceptsChangeAdderss(caddr1)
+	c2.DLCBuilder.AcceptAdderss(addr1)
+	c2.DLCBuilder.AcceptChangeAdderss(caddr1)
 
 	// send sigatures
 	err = c2.DLCBuilder.AcceptCETxSignatures(ceSigs)

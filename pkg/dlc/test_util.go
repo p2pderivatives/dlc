@@ -17,22 +17,11 @@ import (
 // setup mocke wallet
 func setupTestWallet() *walletmock.Wallet {
 	w := &walletmock.Wallet{}
-	w = mockNewAddress(w)
-
 	// pubkey for fund script
 	priv, pub := test.RandKeys()
 	w.On("NewPubkey").Return(pub, nil)
 	w = mockWitnessSignature(w, pub, priv)
 
-	return w
-}
-
-func mockNewAddress(w *walletmock.Wallet) *walletmock.Wallet {
-	_, pub := test.RandKeys()
-	pubKeyHash := btcutil.Hash160(pub.SerializeCompressed())
-	addr, _ := btcutil.NewAddressWitnessPubKeyHash(
-		pubKeyHash, &chaincfg.RegressionNetParams)
-	w.On("NewAddress").Return(addr, nil)
 	return w
 }
 
@@ -112,15 +101,76 @@ func newTestConditions() *Conditions {
 	return conds
 }
 
-// stepSendRequirments send pubkey, utoxs, change address
-func stepSendRequirments(b1, b2 *Builder) (*Builder, *Builder) {
-	// b1 -> b2
-	p1, _ := b1.PublicKey()
-	u1 := b1.Utxos()
-	caddr1 := b1.ChangeAddress()
-	b2.AcceptPubkey(p1)
-	b2.AcceptUtxos(u1)
-	b2.AcceptsChangeAdderss(caddr1)
+func setupBuilder(
+	p Contractor,
+	walletFunc func() *walletmock.Wallet,
+	condsFunc func() *Conditions) *Builder {
+	w := walletFunc()
+	w = mockSelectUnspent(w, 1000, 1, nil)
+	conds := condsFunc()
+	d := NewDLC(conds)
+	d.Addrs[p] = test.RandAddress()
+	d.ChangeAddrs[p] = test.RandAddress()
+	b := NewBuilder(p, w, d)
+	return b
+}
 
-	return b1, b2
+func stepPrepare(b *Builder) error {
+	var err error
+	err = b.PreparePubkey()
+	if err != nil {
+		return err
+	}
+	err = b.PrepareFundTx()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// stepSendRequirments send pubkey, utoxs, change address
+func stepSendRequirments(b1, b2 *Builder) error {
+	// b1 -> b2
+	p1, err := b1.PublicKey()
+	if err != nil {
+		return err
+	}
+	u1 := b1.Utxos()
+	addr1 := b1.Address()
+	caddr1 := b1.ChangeAddress()
+
+	err = b2.AcceptPubkey(p1)
+	if err != nil {
+		return err
+	}
+	err = b2.AcceptUtxos(u1)
+	if err != nil {
+		return err
+	}
+	err = b2.AcceptAdderss(addr1)
+	if err != nil {
+		return err
+	}
+	err = b2.AcceptChangeAdderss(caddr1)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func stepExchangeCETxSig(
+	b1, b2 *Builder, deal *Deal, dID int) error {
+
+	sig, err := b1.SignContractExecutionTx(deal, dID)
+	if err != nil {
+		return err
+	}
+
+	err = b2.AcceptCETxSignatures([][]byte{sig})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

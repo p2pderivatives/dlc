@@ -6,6 +6,7 @@ import (
 
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	"github.com/p2pderivatives/dlc/internal/mocks/walletmock"
 	"github.com/p2pderivatives/dlc/internal/test"
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 	"github.com/stretchr/testify/assert"
@@ -14,16 +15,18 @@ import (
 
 // PrepareFundTx should fail if the party doesn't have enough balance
 func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
-	testWallet := setupTestWallet()
-	testWallet.On("SelectUnspent",
-		mock.Anything, mock.Anything, mock.Anything,
-	).Return(
-		[]wallet.Utxo{}, btcutil.Amount(0), errors.New("not enough utxos"))
+	setupWallet := func() *walletmock.Wallet {
+		w := setupTestWallet()
+		w.On("SelectUnspent",
+			mock.Anything, mock.Anything, mock.Anything,
+		).Return(
+			[]wallet.Utxo{}, btcutil.Amount(0), errors.New("not enough utxos"))
+		return w
+	}
 
-	conds := newTestConditions()
-	builder := NewBuilder(FirstParty, testWallet, conds)
+	b := setupBuilder(FirstParty, setupWallet, newTestConditions)
 
-	err := builder.PrepareFundTx()
+	err := b.PrepareFundTx()
 	assert.NotNil(t, err) // not enough balance for fee
 }
 
@@ -31,14 +34,13 @@ func TestPrepareFundTxNotEnoughUtxos(t *testing.T) {
 func TestPrepareFundTx(t *testing.T) {
 	assert := assert.New(t)
 
-	conds := newTestConditions()
+	setupWallet := func() *walletmock.Wallet {
+		return mockSelectUnspent(
+			setupTestWallet(), 1, 1, nil)
+	}
 
-	// mock wallet
-	testWallet := setupTestWallet()
-	var balance, change btcutil.Amount = 1, 1
-	mockSelectUnspent(testWallet, balance, change, nil)
-
-	b := NewBuilder(FirstParty, testWallet, conds)
+	b := setupBuilder(
+		FirstParty, setupWallet, newTestConditions)
 
 	err := b.PrepareFundTx()
 	assert.Nil(err)
@@ -55,40 +57,30 @@ func TestPrepareFundTx(t *testing.T) {
 func TestPrepareFundTxNoChange(t *testing.T) {
 	assert := assert.New(t)
 
-	// prepare mock wallet
-	testWallet := setupTestWallet()
-	var balance, change btcutil.Amount = 1, 0
-	mockSelectUnspent(testWallet, balance, change, nil)
+	setupWallet := func() *walletmock.Wallet {
+		return mockSelectUnspent(
+			setupTestWallet(), 1, 0, nil)
+	}
 
-	conds := newTestConditions()
-	b := NewBuilder(FirstParty, testWallet, conds)
+	b := setupBuilder(FirstParty, setupWallet, newTestConditions)
 
 	err := b.PrepareFundTx()
 	assert.Nil(err)
 
-	chaddr := b.Contract.ChangeAddrs[b.party]
-	assert.Empty(chaddr, "change address")
 	utxos := b.Contract.Utxos[b.party]
 	assert.NotNil(utxos, "utxos")
 }
 
 func TestFundTx(t *testing.T) {
 	assert := assert.New(t)
-	conds := newTestConditions()
 
-	// first party
-	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1000, 1, nil)
-	b1 := NewBuilder(FirstParty, w1, conds)
-	b1.PrepareFundTx()
-	b1.PreparePubkey()
+	// init builders
+	b1 := setupBuilder(FirstParty, setupTestWallet, newTestConditions)
+	b2 := setupBuilder(SecondParty, setupTestWallet, newTestConditions)
 
-	// second party
-	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1000, 1, nil)
-	b2 := NewBuilder(SecondParty, w2, conds)
-	b2.PrepareFundTx()
-	b2.PreparePubkey()
+	// prep
+	stepPrepare(b1)
+	stepPrepare(b2)
 
 	// fail if it hasn't received a pubkey from the counterparty
 	_, err := b1.Contract.FundTx()
@@ -105,23 +97,14 @@ func TestFundTx(t *testing.T) {
 
 func TestRedeemFundTx(t *testing.T) {
 	assert := assert.New(t)
-	conds := newTestConditions()
 
-	// init first party
-	w1 := setupTestWallet()
-	w1 = mockSelectUnspent(w1, 1000, 1, nil)
-	b1 := NewBuilder(FirstParty, w1, conds)
-	b1.PreparePubkey()
-	b1.PrepareFundTx()
+	// init builders
+	b1 := setupBuilder(FirstParty, setupTestWallet, newTestConditions)
+	b2 := setupBuilder(SecondParty, setupTestWallet, newTestConditions)
 
-	// init second party
-	w2 := setupTestWallet()
-	w2 = mockSelectUnspent(w2, 1000, 1, nil)
-	b2 := NewBuilder(SecondParty, w2, conds)
-	b2.PreparePubkey()
-	b2.PrepareFundTx()
-
-	// exchange pubkey, utxos, change address
+	// preparation
+	stepPrepare(b1)
+	stepPrepare(b2)
 	stepSendRequirments(b2, b1)
 	stepSendRequirments(b1, b2)
 

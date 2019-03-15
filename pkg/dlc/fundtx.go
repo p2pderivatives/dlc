@@ -13,6 +13,9 @@ import (
 const fundTxOutAt = 0 // fund txout is always at 0 in fund tx
 const fundTxInAt = 0  // fund txin is always at 0 in redeem tx
 
+// ChangeAddressNotExistsError is raised when change address doesn't exist
+type ChangeAddressNotExistsError struct{ error }
+
 // FundTx constructs fund tx using prepared fund tx requirements
 func (d *DLC) FundTx() (*wire.MsgTx, error) {
 	tx := wire.NewMsgTx(txVersion)
@@ -51,8 +54,8 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 		if change > 0 {
 			addr := d.ChangeAddrs[p]
 			if addr == nil {
-				msg := fmt.Sprintf("Change address must be provided by %s", p)
-				return nil, errors.New(msg)
+				msg := fmt.Sprintf("change address must be provided by %s", p)
+				return nil, &ChangeAddressNotExistsError{error: errors.New(msg)}
 			}
 			sc, err := script.P2WPKHpkScriptFromAddress(addr)
 			if err != nil {
@@ -161,14 +164,9 @@ func (b *Builder) PrepareFundTx() error {
 	}
 	b.Contract.Utxos[b.party] = _utxos
 
-	if change > 0 {
-		addr, err := b.wallet.NewAddress()
-		if err != nil {
-			return err
-		}
-
-		// set change addr to DLC
-		b.Contract.ChangeAddrs[b.party] = addr
+	if change > 0 && b.Contract.ChangeAddrs[b.party] == nil {
+		msg := fmt.Sprintf("Change address must be provided by %s", b.party)
+		return &ChangeAddressNotExistsError{error: errors.New(msg)}
 	}
 
 	return nil
@@ -198,16 +196,36 @@ func (b *Builder) AcceptUtxos(utxos []Utxo) error {
 	return nil
 }
 
+// Address returns address to distribute fund
+func (b *Builder) Address() btcutil.Address {
+	addr := b.Contract.Addrs[b.party]
+	if addr != nil {
+		return addr.(btcutil.Address)
+	}
+	return nil
+}
+
+// AcceptAdderss accepts address from the counterparty
+func (b *Builder) AcceptAdderss(addr btcutil.Address) error {
+	cp := counterparty(b.party)
+	b.Contract.Addrs[cp] = addr
+	return nil
+}
+
 // ChangeAddress returns address to send change
 func (b *Builder) ChangeAddress() btcutil.Address {
 	addr := b.Contract.ChangeAddrs[b.party]
-	return addr.(btcutil.Address)
+	if addr != nil {
+		return addr.(btcutil.Address)
+	}
+	return nil
 }
 
-// AcceptsChangeAdderss accepts change address from the counterparty
-func (b *Builder) AcceptsChangeAdderss(addr btcutil.Address) {
+// AcceptChangeAdderss accepts change address from the counterparty
+func (b *Builder) AcceptChangeAdderss(addr btcutil.Address) error {
 	cp := counterparty(b.party)
 	b.Contract.ChangeAddrs[cp] = addr
+	return nil
 }
 
 // newRedeemTx creates a new tx to redeem fundtx
