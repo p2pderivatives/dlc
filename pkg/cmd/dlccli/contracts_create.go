@@ -175,7 +175,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	logger().Debug("Second party constructing FundTx")
 
 	// SecondParty create FundTx
-	fundtx, err := party2.builder.Contract.FundTx()
+	fundtx, err := party2.builder.Contract.SignedFundTx()
 	errorHandler(err)
 	fundtxHex, err := utils.TxToHex(fundtx)
 	errorHandler(err)
