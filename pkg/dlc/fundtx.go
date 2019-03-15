@@ -138,18 +138,18 @@ func (d *DLC) DepositAmt(p Contractor) btcutil.Amount {
 
 // FundAmt returns fund amount
 func (b *Builder) FundAmt() btcutil.Amount {
-	return b.dlc.Conds.FundAmts[b.party]
+	return b.Contract.Conds.FundAmts[b.party]
 }
 
 // PrepareFundTx prepares fundtx ins and out
 func (b *Builder) PrepareFundTx() error {
-	famt := b.dlc.Conds.FundAmts[b.party]
-	feeBase := b.dlc.fundTxFeeBase()
-	redeemTxFee := b.dlc.redeemTxFee(cetxSize)
+	famt := b.Contract.Conds.FundAmts[b.party]
+	feeBase := b.Contract.fundTxFeeBase()
+	redeemTxFee := b.Contract.redeemTxFee(cetxSize)
 	utxos, change, err := b.wallet.SelectUnspent(
 		famt+feeBase+redeemTxFee,
-		b.dlc.fundTxFeePerTxIn(),
-		b.dlc.fundTxFeePerTxOut())
+		b.Contract.fundTxFeePerTxIn(),
+		b.Contract.fundTxFeePerTxOut())
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func (b *Builder) PrepareFundTx() error {
 	for _, utxo := range utxos {
 		_utxos = append(_utxos, &utxo)
 	}
-	b.dlc.Utxos[b.party] = _utxos
+	b.Contract.Utxos[b.party] = _utxos
 
 	if change > 0 {
 		addr, err := b.wallet.NewAddress()
@@ -168,7 +168,7 @@ func (b *Builder) PrepareFundTx() error {
 		}
 
 		// set change addr to DLC
-		b.dlc.ChangeAddrs[b.party] = addr
+		b.Contract.ChangeAddrs[b.party] = addr
 	}
 
 	return nil
@@ -177,7 +177,7 @@ func (b *Builder) PrepareFundTx() error {
 // Utxos returns utxos
 func (b *Builder) Utxos() []Utxo {
 	utxos := []Utxo{}
-	for _, utxo := range b.dlc.Utxos[b.party] {
+	for _, utxo := range b.Contract.Utxos[b.party] {
 		utxos = append(utxos, *utxo)
 	}
 	return utxos
@@ -193,21 +193,21 @@ func (b *Builder) AcceptUtxos(utxos []Utxo) error {
 	for _, utxo := range utxos {
 		_utxos = append(_utxos, &utxo)
 	}
-	b.dlc.Utxos[cp] = _utxos
+	b.Contract.Utxos[cp] = _utxos
 
 	return nil
 }
 
 // ChangeAddress returns address to send change
 func (b *Builder) ChangeAddress() btcutil.Address {
-	addr := b.dlc.ChangeAddrs[b.party]
+	addr := b.Contract.ChangeAddrs[b.party]
 	return addr.(btcutil.Address)
 }
 
 // AcceptsChangeAdderss accepts change address from the counterparty
 func (b *Builder) AcceptsChangeAdderss(addr btcutil.Address) {
 	cp := counterparty(b.party)
-	b.dlc.ChangeAddrs[cp] = addr
+	b.Contract.ChangeAddrs[cp] = addr
 }
 
 // newRedeemTx creates a new tx to redeem fundtx
@@ -234,39 +234,39 @@ func (d *DLC) newRedeemTx() (*wire.MsgTx, error) {
 
 // witsigForFundScript returns signature for a given tx that redeems fund out
 func (b *Builder) witsigForFundScript(tx *wire.MsgTx) ([]byte, error) {
-	fundtx, err := b.dlc.FundTx()
+	fundtx, err := b.Contract.FundTx()
 	if err != nil {
 		return nil, err
 	}
 	fout := fundtx.TxOut[fundTxOutAt]
 	famt := btcutil.Amount(fout.Value)
 
-	fc, err := b.dlc.fundScript()
+	fc, err := b.Contract.fundScript()
 	if err != nil {
 		return nil, err
 	}
 
-	pub := b.dlc.Pubs[b.party]
+	pub := b.Contract.Pubs[b.party]
 
 	return b.wallet.WitnessSignature(tx, fundTxInAt, famt, fc, pub)
 }
 
 // SignFundTx signs fund tx and return witnesses for the txins owned by the party
 func (b *Builder) SignFundTx() ([]wire.TxWitness, error) {
-	fundtx, err := b.dlc.FundTx()
+	fundtx, err := b.Contract.FundTx()
 	if err != nil {
 		return nil, err
 	}
 
 	// get witnesses
-	idxs := b.dlc.fundTxInsIdxs(b.party)
+	idxs := b.Contract.fundTxInsIdxs(b.party)
 	wits, err := b.wallet.WitnessSignTxByIdxs(fundtx, idxs)
 	if err != nil {
 		return nil, err
 	}
 
 	// set witnesses to dlc
-	b.dlc.FundWits[b.party] = wits
+	b.Contract.FundWits[b.party] = wits
 
 	return wits, nil
 }
@@ -299,23 +299,13 @@ func (d *DLC) SignedFundTx() (*wire.MsgTx, error) {
 
 // SendFundTx sends fund tx to the network
 func (b *Builder) SendFundTx() error {
-	tx, err := b.dlc.SignedFundTx()
+	tx, err := b.Contract.SignedFundTx()
 	if err != nil {
 		return err
 	}
 
 	_, err = b.wallet.SendRawTransaction(tx)
 	return err
-}
-
-// FundTxHex returns hex string of fund tx
-func (b *Builder) FundTxHex() (string, error) {
-	tx, err := b.dlc.SignedFundTx()
-	if err != nil {
-		return "", err
-	}
-
-	return utils.TxToHex(tx)
 }
 
 // fundTxInAt returns indices of txin in fundtx by the party
@@ -339,7 +329,7 @@ func (d *DLC) fundTxInsIdxs(p Contractor) (idxs []int) {
 // AcceptFundWitnesses accepts witnesses for fund txins owned by the counerparty
 func (b *Builder) AcceptFundWitnesses(wits []wire.TxWitness) {
 	cparty := counterparty(b.party)
-	b.dlc.FundWits[cparty] = wits
+	b.Contract.FundWits[cparty] = wits
 
 	// TODO: verify
 }

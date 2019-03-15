@@ -55,6 +55,5 @@ func TestNewBuilder(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(builder)
 
-	dlc := builder.DLC()
-	assert.NotNil(dlc)
+	assert.NotNil(builder.Contract)
 }

@@ -18,9 +18,7 @@ func TestSetOraclePubkeySet(t *testing.T) {
 		Pubkey: pub, CommittedRpoints: []*btcec.PublicKey{R}}
 
 	b.SetOraclePubkeySet(pubset)
-	d := b.DLC()
-
-	assert.NotNil(t, d.Oracle.Commitments[dID])
+	assert.NotNil(t, b.Contract.Oracle.Commitments[dID])
 }
 
 func TestFixDeal(t *testing.T) {
@@ -30,7 +28,7 @@ func TestFixDeal(t *testing.T) {
 	// setup
 	b, deal, dID := setupContractorForOracleTest()
 	privkey, C := test.RandKeys()
-	b.dlc.Oracle.Commitments[dID] = C
+	b.Contract.Oracle.Commitments[dID] = C
 
 	// fail with invalid signature
 	privInvalid, _ := test.RandKeys()
@@ -47,7 +45,7 @@ func TestFixDeal(t *testing.T) {
 	assert.NoError(err)
 
 	// retrieve fixed deal
-	fixedID, fixedDeal, err := b.dlc.FixedDeal()
+	fixedID, fixedDeal, err := b.Contract.FixedDeal()
 	assert.NoError(err)
 	assert.Equal(dID, fixedID)
 	assert.Equal(deal, fixedDeal)
@@ -66,7 +64,7 @@ func setupContractorForOracleTest() (*Builder, *Deal, int) {
 	w = mockSelectUnspent(w, 1, 1, nil)
 	b := NewBuilder(FirstParty, w, conds)
 
-	dID, _, _ := b.dlc.DealByMsgs(msgs)
+	dID, _, _ := b.Contract.DealByMsgs(msgs)
 
 	return b, deal, dID
 }

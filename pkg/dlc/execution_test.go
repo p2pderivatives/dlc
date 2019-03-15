@@ -18,15 +18,15 @@ func TestContractExecutionTx(t *testing.T) {
 	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
 
 	// fail without oracle's message commitment
-	_, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
+	_, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
 	assert.NotNil(err)
 
 	// set message commitment
 	_, C := test.RandKeys()
-	b.dlc.Oracle.Commitments[dID] = C
+	b.Contract.Oracle.Commitments[dID] = C
 
 	// txout should have 2 entries
-	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
+	tx, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
 	assert.Nil(err)
 	assert.Len(tx.TxOut, 2)
 	assert.Equal(int64(damt1), tx.TxOut[0].Value)
@@ -40,9 +40,9 @@ func TestContractExecutionTxTakeAll(t *testing.T) {
 	var damt1, damt2 btcutil.Amount = 1, 0
 	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
 	_, C := test.RandKeys()
-	b.dlc.Oracle.Commitments[dID] = C
+	b.Contract.Oracle.Commitments[dID] = C
 
-	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
+	tx, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
 
 	assert.NoError(err)
 	assert.Len(tx.TxOut, 1)
@@ -54,9 +54,9 @@ func TestContractExecutionTxTakeNothing(t *testing.T) {
 	var damt1, damt2 btcutil.Amount = 0, 1
 	b, _, dID, deal := setupContractorsUntilPubkeyExchange(damt1, damt2)
 	_, C := test.RandKeys()
-	b.dlc.Oracle.Commitments[dID] = C
+	b.Contract.Oracle.Commitments[dID] = C
 
-	tx, err := b.dlc.ContractExecutionTx(b.party, deal, dID)
+	tx, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
 
 	// asserions
 	assert := assert.New(t)
@@ -72,8 +72,8 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	// setup
 	b1, b2, dID, deal := setupContractorsUntilPubkeyExchange(1, 1)
 	privkey, C := test.RandKeys()
-	b1.dlc.Oracle.Commitments[dID] = C
-	b2.dlc.Oracle.Commitments[dID] = C
+	b1.Contract.Oracle.Commitments[dID] = C
+	b2.Contract.Oracle.Commitments[dID] = C
 	osigs := [][]byte{privkey.D.Bytes()}
 	oFixedMsg := &oracle.SignedMsg{Msgs: deal.Msgs, Sigs: osigs}
 
@@ -148,14 +148,13 @@ func setupContractorsUntilPubkeyExchange(
 	stepSendRequirments(b1, b2)
 	stepSendRequirments(b2, b1)
 
-	dID, deal, _ = b1.dlc.DealByMsgs(msgs)
+	dID, deal, _ = b1.Contract.DealByMsgs(msgs)
 
 	return b1, b2, dID, deal
 }
 
 func runFundScript(b *Builder, tx *wire.MsgTx) error {
-	d := b.DLC()
-	fundtx, _ := d.FundTx()
+	fundtx, _ := b.Contract.FundTx()
 	fout := fundtx.TxOut[fundTxOutAt]
 	return test.ExecuteScript(fout.PkScript, tx, fout.Value)
 }

@@ -60,7 +60,7 @@ func contractorBetOnWeatherAndTemperature(t *testing.T, c *Contractor) time.Time
 
 func contractorAsksOracleToCommit(
 	t *testing.T, c *Contractor, o *oracle.Oracle) {
-	ftime := c.DLCBuilder.DLC().Conds.FixingTime
+	ftime := c.DLCBuilder.Contract.Conds.FixingTime
 
 	pubkeySet, err := o.PubkeySet(ftime)
 	assert.NoError(t, err)
@@ -102,7 +102,7 @@ func contractorFixesWeatherDeal(t *testing.T, c *Contractor, o *oracle.Oracle) {
 }
 
 func shouldFixedDealSameWithFixedWeather(t *testing.T, c *Contractor, fixedWeather [][]byte) {
-	_, fixedDeal, err := c.DLCBuilder.DLC().FixedDeal()
+	_, fixedDeal, err := c.DLCBuilder.Contract.FixedDeal()
 	assert.NoError(t, err)
 	assert.Equal(t, fixedWeather[:2], fixedDeal.Msgs)
 }

@@ -76,7 +76,7 @@ func (d *DLC) ContractExecutionTx(
 // SignContractExecutionTxs signs contract execution txs for all deals
 func (b *Builder) SignContractExecutionTxs() ([][]byte, error) {
 	var sigs [][]byte
-	for idx, deal := range b.dlc.Conds.Deals {
+	for idx, deal := range b.Contract.Conds.Deals {
 		sign, err := b.SignContractExecutionTx(deal, idx)
 		if err != nil {
 			return nil, err
@@ -90,7 +90,7 @@ func (b *Builder) SignContractExecutionTxs() ([][]byte, error) {
 func (b *Builder) SignContractExecutionTx(deal *Deal, idx int) ([]byte, error) {
 	cparty := counterparty(b.party)
 
-	tx, err := b.dlc.ContractExecutionTx(cparty, deal, idx)
+	tx, err := b.Contract.ContractExecutionTx(cparty, deal, idx)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (b *Builder) SignContractExecutionTx(deal *Deal, idx int) ([]byte, error) {
 // AcceptCETxSignatures accepts CETx signatures received from the counterparty
 func (b *Builder) AcceptCETxSignatures(sigs [][]byte) error {
 	for idx, sig := range sigs {
-		err := b.dlc.AcceptCETxSignature(b.party, idx, sig)
+		err := b.Contract.AcceptCETxSignature(b.party, idx, sig)
 		if err != nil {
 			return err
 		}
@@ -184,7 +184,7 @@ func (d *DLC) FixedContractExecutionTx(p Contractor) (*wire.MsgTx, error) {
 // SignedContractExecutionTx returns a contract execution tx signed by both parties
 // TODO: separate SignedContractExecutionTx and SignContractExecutionTx
 func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
-	tx, err := b.dlc.FixedContractExecutionTx(b.party)
+	tx, err := b.Contract.FixedContractExecutionTx(b.party)
 	if err != nil {
 		return nil, err
 	}
@@ -194,12 +194,12 @@ func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
 		return nil, err
 	}
 
-	dID, _, err := b.dlc.FixedDeal()
+	dID, _, err := b.Contract.FixedDeal()
 	if err != nil {
 		return nil, err
 	}
 
-	cpSig := b.dlc.ExecSigs[dID]
+	cpSig := b.Contract.ExecSigs[dID]
 
 	var sig1, sig2 []byte
 	switch b.party {
@@ -209,7 +209,7 @@ func (b *Builder) SignedContractExecutionTx() (*wire.MsgTx, error) {
 		sig1, sig2 = cpSig, sig
 	}
 
-	wit, err := b.dlc.witnessForFundScript(sig1, sig2)
+	wit, err := b.Contract.witnessForFundScript(sig1, sig2)
 	if err != nil {
 		return nil, err
 	}

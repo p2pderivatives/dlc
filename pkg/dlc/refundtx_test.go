@@ -39,9 +39,7 @@ func setupDLCRefund() (party1, party2 *Builder, d *DLC) {
 	b1.AcceptRefundTxSignature(rs2)
 	b2.AcceptRefundTxSignature(rs1)
 
-	d = b1.DLC()
-
-	return b1, b2, d
+	return b1, b2, b1.Contract
 }
 
 // VerifyRefundTx should return false if given RefundTx isnt valid

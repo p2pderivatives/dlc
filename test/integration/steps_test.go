@@ -20,7 +20,7 @@ func contratorHasBalance(t *testing.T, c *Contractor, balance btcutil.Amount) {
 
 func contractorGetCommitmentsFromOracle(t *testing.T, c *Contractor, o *oracle.Oracle) {
 	// fixing time of the contract
-	fixingTime := c.DLCBuilder.DLC().Conds.FixingTime
+	fixingTime := c.DLCBuilder.Contract.Conds.FixingTime
 
 	// oracle provides pubkey set for the given time
 	pubkeySet, err := o.PubkeySet(fixingTime)
@@ -158,7 +158,7 @@ func contractorShouldHaveBalanceAfterFunding(
 
 func contractorFixDeal(
 	t *testing.T, c *Contractor, o *oracle.Oracle, idxs []int) {
-	ftime := c.DLCBuilder.DLC().Conds.FixingTime
+	ftime := c.DLCBuilder.Contract.Conds.FixingTime
 
 	// receive signed message
 	sm, err := o.SignMsg(ftime)
@@ -171,7 +171,7 @@ func contractorFixDeal(
 
 func contractorCannotFixDeal(
 	t *testing.T, c *Contractor, o *oracle.Oracle, idxs []int) {
-	ftime := c.DLCBuilder.DLC().Conds.FixingTime
+	ftime := c.DLCBuilder.Contract.Conds.FixingTime
 
 	// receive signset
 	signedMsg, err := o.SignMsg(ftime)

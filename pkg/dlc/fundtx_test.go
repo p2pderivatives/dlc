@@ -43,9 +43,9 @@ func TestPrepareFundTx(t *testing.T) {
 	err := b.PrepareFundTx()
 	assert.Nil(err)
 
-	chaddr := b.dlc.ChangeAddrs[b.party]
+	chaddr := b.Contract.ChangeAddrs[b.party]
 	assert.NotEmpty(chaddr, "change address")
-	utxos := b.dlc.Utxos[b.party]
+	utxos := b.Contract.Utxos[b.party]
 	assert.NotNil(utxos, "utxos")
 
 	// TODO: check if total amount is enough
@@ -66,9 +66,9 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	err := b.PrepareFundTx()
 	assert.Nil(err)
 
-	chaddr := b.dlc.ChangeAddrs[b.party]
+	chaddr := b.Contract.ChangeAddrs[b.party]
 	assert.Empty(chaddr, "change address")
-	utxos := b.dlc.Utxos[b.party]
+	utxos := b.Contract.Utxos[b.party]
 	assert.NotNil(utxos, "utxos")
 }
 
@@ -91,15 +91,13 @@ func TestFundTx(t *testing.T) {
 	b2.PreparePubkey()
 
 	// fail if it hasn't received a pubkey from the counterparty
-	d := b1.DLC()
-	_, err := d.FundTx()
+	_, err := b1.Contract.FundTx()
 	assert.NotNil(err)
 
 	// receive pubkey and utxos and change address from the counterparty
 	stepSendRequirments(b2, b1)
 
-	d = b1.DLC()
-	tx, err := d.FundTx()
+	tx, err := b1.Contract.FundTx()
 	assert.Nil(err)
 	assert.Len(tx.TxIn, 2)  // funds from both parties
 	assert.Len(tx.TxOut, 3) // 1 for reddemtx and 2 for changes
@@ -127,7 +125,7 @@ func TestRedeemFundTx(t *testing.T) {
 	stepSendRequirments(b2, b1)
 	stepSendRequirments(b1, b2)
 
-	d := b1.DLC()
+	d := b1.Contract
 
 	// prepare redeem tx for testing. this will be a settlement tx or refund tx
 	redeemtx, err := d.newRedeemTx()

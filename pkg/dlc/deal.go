@@ -49,7 +49,7 @@ func (d *DLC) DealByMsgs(msgs [][]byte) (idx int, deal *Deal, err error) {
 
 // FixedDealAmt returns fixed amt that the party will receive
 func (b *Builder) FixedDealAmt() (btcutil.Amount, error) {
-	_, deal, err := b.dlc.FixedDeal()
+	_, deal, err := b.Contract.FixedDeal()
 	if err != nil {
 		return 0, err
 	}

@@ -153,18 +153,18 @@ func counterparty(p Contractor) (cp Contractor) {
 
 // Builder builds DLC by interacting with wallet
 type Builder struct {
-	party  Contractor
-	wallet wallet.Wallet
-	dlc    *DLC
+	Contract *DLC
+	party    Contractor
+	wallet   wallet.Wallet
 }
 
 // NewBuilder creates a new Builder for a contractor
 func NewBuilder(
 	p Contractor, w wallet.Wallet, conds *Conditions) *Builder {
 	return &Builder{
-		dlc:    NewDLC(conds),
-		party:  p,
-		wallet: w,
+		Contract: NewDLC(conds),
+		party:    p,
+		wallet:   w,
 	}
 }
 
@@ -172,15 +172,10 @@ func NewBuilder(
 func NewBuilderFromDLC(
 	d *DLC, p Contractor, w wallet.Wallet) *Builder {
 	return &Builder{
-		dlc:    d,
-		party:  p,
-		wallet: w,
+		Contract: d,
+		party:    p,
+		wallet:   w,
 	}
-}
-
-// DLC returns the DLC constructed by builder
-func (b *Builder) DLC() *DLC {
-	return b.dlc
 }
 
 // PreparePubkey sets fund pubkey
@@ -189,7 +184,7 @@ func (b *Builder) PreparePubkey() error {
 	if err != nil {
 		return err
 	}
-	b.dlc.Pubs[b.party] = pub
+	b.Contract.Pubs[b.party] = pub
 	return nil
 }
 
@@ -198,7 +193,7 @@ func (b *Builder) AcceptPubkey(pub []byte) error {
 	p, err := btcec.ParsePubKey(pub, btcec.S256())
 	c := counterparty(b.party)
 
-	b.dlc.Pubs[c] = p
+	b.Contract.Pubs[c] = p
 
 	return err
 }
@@ -208,7 +203,7 @@ type PubkeyNotExistsError struct{ error }
 
 // PublicKey returns serialized public key (compressed)
 func (b *Builder) PublicKey() ([]byte, error) {
-	pub, ok := b.dlc.Pubs[b.party]
+	pub, ok := b.Contract.Pubs[b.party]
 	if !ok {
 		return nil, &PubkeyNotExistsError{}
 	}

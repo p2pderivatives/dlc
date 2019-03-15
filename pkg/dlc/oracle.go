@@ -33,9 +33,9 @@ func (d *DLC) PrepareOracleCommitments(
 
 // SetOraclePubkeySet sets oracle's pubkey set
 func (b *Builder) SetOraclePubkeySet(pubset *oracle.PubkeySet) {
-	b.dlc.PrepareOracleCommitments(
+	b.Contract.PrepareOracleCommitments(
 		pubset.Pubkey, pubset.CommittedRpoints)
-	b.dlc.Oracle.PubkeySet = pubset
+	b.Contract.Oracle.PubkeySet = pubset
 }
 
 // FixDeal fixes a deal by setting the signature provided by oracle
@@ -68,7 +68,7 @@ func (b *Builder) FixDeal(fm *oracle.SignedMsg, idxs []int) error {
 		msgs = append(msgs, fm.Msgs[idx])
 		sigs = append(sigs, fm.Sigs[idx])
 	}
-	return b.dlc.FixDeal(msgs, sigs)
+	return b.Contract.FixDeal(msgs, sigs)
 }
 
 // FixedDeal returns a fixed deal

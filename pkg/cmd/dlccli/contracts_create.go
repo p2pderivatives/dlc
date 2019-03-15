@@ -15,6 +15,7 @@ import (
 	"github.com/p2pderivatives/dlc/internal/dlcmgr"
 	"github.com/p2pderivatives/dlc/pkg/dlc"
 	"github.com/p2pderivatives/dlc/pkg/oracle"
+	"github.com/p2pderivatives/dlc/pkg/utils"
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 	"github.com/spf13/cobra"
 )
@@ -148,7 +149,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 
 	fmt.Println("First party persisting contract")
 
-	d1 := party1.builder.DLC()
+	d1 := party1.builder.Contract
 	ID1, err := d1.ContractID()
 	errorHandler(err)
 	key1, err := chainhash.NewHashFromStr(ID1)
@@ -158,7 +159,7 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 
 	fmt.Println("Second party persisting contract")
 
-	d2 := party2.builder.DLC()
+	d2 := party2.builder.Contract
 	ID2, err := d2.ContractID()
 	errorHandler(err)
 	key2, err := chainhash.NewHashFromStr(ID2)
@@ -174,15 +175,19 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	fmt.Println("Second party constructing FundTx")
 
 	// SecondParty create FundTx
-	fundtx, err := party2.builder.FundTxHex()
+	fundtx, err := party2.builder.Contract.FundTx()
 	errorHandler(err)
-	refundtx, err := party2.builder.RefundTxHex()
+	fundtxHex, err := utils.TxToHex(fundtx)
+	errorHandler(err)
+	refundtx, err := party2.builder.Contract.SignedRefundTx()
+	errorHandler(err)
+	refundtxHex, err := utils.TxToHex(refundtx)
 	errorHandler(err)
 
 	fmt.Println("Contract created")
 	fmt.Printf("\nContractID: \n%s\n", ID1)
-	fmt.Printf("\nFundTx hex:\n%s\n", fundtx)
-	fmt.Printf("\nRefundTx hex:\n%s\n", refundtx)
+	fmt.Printf("\nFundTx hex:\n%s\n", fundtxHex)
+	fmt.Printf("\nRefundTx hex:\n%s\n", refundtxHex)
 }
 
 func initCreateContractCmd() *cobra.Command {

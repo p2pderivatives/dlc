@@ -7,7 +7,6 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/p2pderivatives/dlc/pkg/utils"
 )
 
 // RefundTx creates refund tx
@@ -46,7 +45,7 @@ func (d *DLC) RefundTx() (*wire.MsgTx, error) {
 
 // SignRefundTx creates signature for a refund tx, sets it, and returns it
 func (b *Builder) SignRefundTx() ([]byte, error) {
-	tx, err := b.dlc.RefundTx()
+	tx, err := b.Contract.RefundTx()
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +55,7 @@ func (b *Builder) SignRefundTx() ([]byte, error) {
 		return nil, err
 	}
 
-	b.dlc.RefundSigs[b.party] = sig
+	b.Contract.RefundSigs[b.party] = sig
 
 	return sig, nil
 }
@@ -101,13 +100,13 @@ func (d *DLC) witnessForRefundTx() (wire.TxWitness, error) {
 func (b *Builder) AcceptRefundTxSignature(sig []byte) error {
 	p := counterparty(b.party)
 
-	err := b.dlc.VerifyRefundTx(sig, b.dlc.Pubs[p])
+	err := b.Contract.VerifyRefundTx(sig, b.Contract.Pubs[p])
 	if err != nil {
 		return err
 	}
 
 	// accept verified signature
-	b.dlc.RefundSigs[p] = sig
+	b.Contract.RefundSigs[p] = sig
 	return nil
 }
 
@@ -157,21 +156,11 @@ func (d *DLC) VerifyRefundTx(sig []byte, pub *btcec.PublicKey) error {
 
 // SendRefundTx sends refund tx
 func (b *Builder) SendRefundTx() error {
-	tx, err := b.dlc.SignedRefundTx()
+	tx, err := b.Contract.SignedRefundTx()
 	if err != nil {
 		return err
 	}
 
 	_, err = b.wallet.SendRawTransaction(tx)
 	return err
-}
-
-// RefundTxHex return hex string of refund tx
-func (b *Builder) RefundTxHex() (string, error) {
-	tx, err := b.dlc.SignedRefundTx()
-	if err != nil {
-		return "", err
-	}
-
-	return utils.TxToHex(tx)
 }
