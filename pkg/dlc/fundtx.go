@@ -135,7 +135,7 @@ func (d *DLC) fundAmount() (btcutil.Amount, error) {
 // DepositAmt calculates fund amount + fees
 func (d *DLC) DepositAmt(p Contractor) btcutil.Amount {
 	famt := d.Conds.FundAmts[p]
-	fee := d.totalFee(p)
+	fee := d.feeByParty(p)
 	return famt + fee
 }
 

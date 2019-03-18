@@ -1,6 +1,8 @@
 package dlc
 
-import "github.com/btcsuite/btcutil"
+import (
+	"github.com/btcsuite/btcutil"
+)
 
 // Tx sizes for fee estimation
 const fundTxBaseSize = int64(55)
@@ -25,12 +27,12 @@ func (d *DLC) fundTxFeePerTxOut() btcutil.Amount {
 	return d.Conds.FundFeerate.MulF64(float64(fundTxOutSize))
 }
 
-func (d *DLC) fundTxFee(p Contractor) btcutil.Amount {
-	feeBase := d.fundTxFeeBase()
+func (d *DLC) fundTxFeeByParty(p Contractor) btcutil.Amount {
+	feeBase := d.fundTxFeeBase() / 2
 	feeIns := d.fundTxFeeTxIns(len(d.Utxos[p]))
 	feeOut := btcutil.Amount(0)
 	if d.ChangeAddrs[p] != nil {
-		feeOut = d.fundTxFeePerTxIn()
+		feeOut = d.fundTxFeePerTxOut()
 	}
 	return feeBase + feeIns + feeOut
 }
@@ -39,8 +41,9 @@ func (d *DLC) redeemTxFee(size int64) btcutil.Amount {
 	return d.Conds.RedeemFeerate.MulF64(float64(size))
 }
 
-func (d *DLC) totalFee(p Contractor) btcutil.Amount {
-	ffee := d.fundTxFee(p)
-	rfee := d.redeemTxFee(cetxSize)
-	return ffee + rfee
+func (d *DLC) feeByParty(p Contractor) btcutil.Amount {
+	fundtxFee := d.fundTxFeeByParty(p)
+	cetxFee := d.redeemTxFee(cetxSize) / 2
+	closingtxFee := d.redeemTxFee(closingTxSize) / 2
+	return fundtxFee + cetxFee + closingtxFee
 }

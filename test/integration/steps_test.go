@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var feeByParty = btcutil.Amount(float64(415+345+238) / 2)
+
 func contratorHasBalance(t *testing.T, c *Contractor, balance btcutil.Amount) {
 	addr, err := c.Wallet.NewAddress()
 	assert.NoError(t, err)
@@ -154,10 +156,9 @@ func contractorShouldHaveBalanceAfterFunding(
 	assert.NoError(t, err)
 
 	// expected_balance = balance_before - fund_amount - fee
-	expected := int64(balanceBefore - fundAmt)
+	expected := int64(balanceBefore - fundAmt - feeByParty)
 	actual := int64(balance)
-	feeAtMost := float64(1000)
-	assert.InDelta(t, expected, actual, feeAtMost)
+	assert.InDelta(t, expected, actual, 1)
 }
 
 func contractorFixDeal(
@@ -205,10 +206,9 @@ func contractorShouldReceiveFundsByFixedDeal(
 
 	// expected_balance =
 	//   balance_before - fund_amount + deal_amount - fee
-	expected := int64(balanceBefore - fundAmt + dealAmt)
+	expected := int64(balanceBefore - fundAmt + dealAmt - feeByParty)
 	actual := int64(balance)
-	feeAtMost := float64(1000)
-	assert.InDelta(t, expected, actual, feeAtMost)
+	assert.InDelta(t, expected, actual, 1)
 }
 
 func contractorRefund(t *testing.T, c *Contractor) {
@@ -231,10 +231,10 @@ func contractorShouldReceiveRefund(
 	assert.NoError(t, err)
 
 	// expected_balance = balance_before - fee
-	expected := int64(balanceBefore)
+	expected := int64(balanceBefore - feeByParty)
 	actual := int64(balance)
-	feeAtMost := float64(1000)
-	assert.InDelta(t, expected, actual, feeAtMost)
+
+	assert.InDelta(t, expected, actual, 1)
 }
 
 func waitUntil(t *testing.T, height uint32) {
