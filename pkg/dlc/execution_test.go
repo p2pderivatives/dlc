@@ -32,7 +32,8 @@ func TestContractExecutionTx(t *testing.T) {
 	tx, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
 	assert.Nil(err)
 	assert.Len(tx.TxOut, 2)
-	assert.Equal(int64(damt1), tx.TxOut[0].Value)
+	fee := btcutil.Amount(closingTxSize) // fee rate is 1 satoshi / byte in test
+	assert.Equal(int64(damt1+fee), tx.TxOut[0].Value)
 	assert.Equal(int64(damt2), tx.TxOut[1].Value)
 }
 
@@ -53,7 +54,8 @@ func TestContractExecutionTxTakeAll(t *testing.T) {
 
 	assert.NoError(err)
 	assert.Len(tx.TxOut, 1)
-	assert.Equal(int64(damt1), tx.TxOut[0].Value)
+	fee := btcutil.Amount(closingTxSize) // fee rate is 1 satoshi / byte in test
+	assert.Equal(int64(damt1+fee), tx.TxOut[0].Value)
 }
 
 // An edge case that a executing party tx takes nothing
@@ -127,8 +129,10 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	assert.Equal(
 		tx1.TxIn[fundTxInAt].PreviousOutPoint,
 		tx2.TxIn[fundTxInAt].PreviousOutPoint)
-	assert.Equal(tx1.TxOut[0].Value, tx2.TxOut[1].Value)
-	assert.Equal(tx1.TxOut[1].Value, tx2.TxOut[0].Value)
+
+	fee := int64(closingTxSize) // fee rate is 1 satoshi / byte in test
+	assert.Equal(tx1.TxOut[0].Value-fee, tx2.TxOut[1].Value)
+	assert.Equal(tx1.TxOut[1].Value, tx2.TxOut[0].Value-fee)
 
 	// Both parties are able to send the CET
 	err = runFundScript(b1, tx1)

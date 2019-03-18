@@ -99,7 +99,8 @@ func (d *DLC) fundTxOutForRedeemTx() (*wire.TxOut, error) {
 		return nil, err
 	}
 
-	amt += d.redeemTxFee(cetxSize)
+	fee := d.execTxFee() + d.closignTxFee()
+	amt += fee
 
 	txout := wire.NewTxOut(int64(amt), pkScript)
 
@@ -146,11 +147,10 @@ func (b *Builder) FundAmt() btcutil.Amount {
 
 // PrepareFundTx prepares fundtx ins and out
 func (b *Builder) PrepareFundTx() error {
-	famt := b.Contract.Conds.FundAmts[b.party]
-	feeBase := b.Contract.fundTxFeeBase()
-	redeemTxFee := b.Contract.redeemTxFee(cetxSize)
+	famt := b.FundAmt()
+	feeCommon := b.Contract.feeCommon()
 	utxos, change, err := b.wallet.SelectUnspent(
-		famt+feeBase+redeemTxFee,
+		famt+feeCommon,
 		b.Contract.fundTxFeePerTxIn(),
 		b.Contract.fundTxFeePerTxOut())
 	if err != nil {

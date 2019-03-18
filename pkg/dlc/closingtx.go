@@ -26,10 +26,8 @@ func (d *DLC) ClosingTx(
 
 	tx.AddTxIn(txin)
 
-	// TODO: the party who sends closing tx have to pay for this fee.
-	// Consider spliting it with the counterparty
 	in := btcutil.Amount(cetx.TxOut[closingTxOutAt].Value)
-	fee := d.redeemTxFee(closingTxSize)
+	fee := d.closignTxFee()
 	out := in - fee
 
 	if out <= 0 {
