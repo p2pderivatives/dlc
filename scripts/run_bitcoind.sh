@@ -2,7 +2,9 @@
 
 bitcoind=$(command -v bitcoind)
 bitcoincli=$(command -v bitcoin-cli)
-opts=( -datadir=./bitcoind -conf=./bitcoin.regtest.conf )
+net=${BITCOIN_NET:=regtest}
+conf="bitcoin.${net}.conf"
+opts=( -datadir=./bitcoind -conf=$conf )
 
 # start deamon if not running
 function getnetworkinfo() {
@@ -30,10 +32,12 @@ function getblockcount() {
 height=$(getblockcount)
 echo "Block Height: ${height}"
 
-blocks=$((101 - $height))
-if [[ "$blocks" -gt "0" ]];then
-  echo "Generating initial regtest blocks"
-  $bitcoincli "${opts[@]}" generate $blocks &> /dev/null
-  height=$(getblockcount)
-  echo "Block Height: ${height}"
+if [[ "$net" == "regetst" ]];then
+  blocks=$((101 - $height))
+  if [[ "$blocks" -gt "0" ]];then
+    echo "Generating initial regtest blocks"
+    $bitcoincli "${opts[@]}" generate $blocks &> /dev/null
+    height=$(getblockcount)
+    echo "Block Height: ${height}"
+  fi
 fi

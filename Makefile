@@ -1,3 +1,6 @@
+BITCOIN_NET?=regtest
+export BITCOIN_NET
+
 run_bitcoind:
 	./scripts/run_bitcoind.sh
 
