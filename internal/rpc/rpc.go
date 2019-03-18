@@ -4,6 +4,7 @@ package rpc
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -85,19 +86,13 @@ func loadConfig(cfgPath string) (*rpcclient.ConnConfig, error) {
 	pass := strings.Split(string(passSubmatches[0]), "=")[1]
 
 	// Extract the regtest
-	regtestRegexp, err := regexp.Compile(`(?m)^\s*regtest=([^\s]+)`)
+	port, err := detectRPCPort(content)
 	if err != nil {
 		return nil, err
 	}
-	regtestSubmatches := regtestRegexp.FindSubmatch(content)
-	regtest := strings.Split(string(regtestSubmatches[0]), "=")[1]
-	var useRegTest bool
-	if regtestSubmatches != nil && regtest == "1" {
-		useRegTest = true
-	}
 
 	cfg := &rpcclient.ConnConfig{
-		Host:         appendPort(defaultHost, useRegTest),
+		Host:         net.JoinHostPort(defaultHost, port),
 		User:         user,
 		Pass:         pass,
 		HTTPPostMode: defaultHTTPPostMode, // Bitcoin core only supports HTTP POST mode
@@ -106,11 +101,42 @@ func loadConfig(cfgPath string) (*rpcclient.ConnConfig, error) {
 	return cfg, nil
 }
 
-func appendPort(addr string, useRegTest bool) string {
-	port := ""
-	if useRegTest {
-		port = "18443"
+func detectRPCPort(content []byte) (string, error) {
+	use, err := useTestnet(content)
+	if err != nil {
+		return "", err
+	}
+	if use {
+		return "18332", nil
 	}
 
-	return net.JoinHostPort(addr, port)
+	use, err = useRegtest(content)
+	if err != nil {
+		return "", err
+	}
+	if use {
+		return "18443", nil
+	}
+
+	return "8332", nil
+}
+func useTestnet(content []byte) (bool, error) {
+	return checkNetFlag("testnet", content)
+}
+
+func useRegtest(content []byte) (bool, error) {
+	return checkNetFlag("regtest", content)
+}
+
+func checkNetFlag(net string, content []byte) (bool, error) {
+	re, err := regexp.Compile(fmt.Sprintf(`(?m)^\s*%s=([^\s]+)`, net))
+	if err != nil {
+		return false, err
+	}
+	matches := re.FindSubmatch(content)
+	if matches == nil {
+		return false, nil
+	}
+	v := strings.Split(string(matches[0]), "=")[1]
+	return v == "1", nil
 }
