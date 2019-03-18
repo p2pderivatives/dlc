@@ -65,7 +65,8 @@ func contractorAsksOracleToCommit(
 	pubkeySet, err := o.PubkeySet(ftime)
 	assert.NoError(t, err)
 
-	c.DLCBuilder.SetOraclePubkeySet(&pubkeySet)
+	err = c.DLCBuilder.SetOraclePubkeySet(&pubkeySet)
+	assert.NoError(t, err)
 }
 
 func oracleFixesWeather(

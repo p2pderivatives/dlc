@@ -11,6 +11,7 @@ import (
 func CommitMulti(
 	V *btcec.PublicKey, Rs []*btcec.PublicKey, msgs [][]byte,
 ) *btcec.PublicKey {
+
 	Psum := new(btcec.PublicKey)
 	for i, m := range msgs {
 		R := Rs[i]

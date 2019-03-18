@@ -60,16 +60,19 @@ func (c *Contractor) Close() (err error) {
 
 func runCreateContract(cmd *cobra.Command, args []string) {
 	var err error
-	party1 := initFirstParty()
-	defer party1.Close()
-	party2 := initSecondParty()
-	defer party2.Close()
 	pubset := parseOraclePubkey()
+	nRpoints := len(pubset.CommittedRpoints)
+	party1 := initFirstParty(nRpoints)
+	defer party1.Close()
+	party2 := initSecondParty(nRpoints)
+	defer party2.Close()
 
 	// Both set oracle's pubkey
 	logger().Debug("Setting oracle's pubkey")
-	party1.builder.SetOraclePubkeySet(pubset)
-	party2.builder.SetOraclePubkeySet(pubset)
+	err = party1.builder.SetOraclePubkeySet(pubset)
+	errorHandler(err)
+	err = party2.builder.SetOraclePubkeySet(pubset)
+	errorHandler(err)
 
 	logger().Debug("First party preparing public key and utxos")
 
@@ -253,12 +256,9 @@ func initCreateContractCmd() *cobra.Command {
 	return cmd
 }
 
-func loadDeals() []*dlc.Deal {
+func loadDeals(nRpoints int) []*dlc.Deal {
 	f, err := os.Open(dealsFile)
 	errorHandler(err)
-
-	// TOOD: give nDigits from outside
-	nDigits := 5
 
 	deals := []*dlc.Deal{}
 	r := csv.NewReader(bufio.NewReader(f))
@@ -269,7 +269,7 @@ func loadDeals() []*dlc.Deal {
 		}
 		errorHandler(err)
 
-		deal := convertRowToDeal(row, nDigits)
+		deal := convertRowToDeal(row, nRpoints)
 		deals = append(deals, deal)
 	}
 
@@ -295,13 +295,13 @@ func convertRowToDeal(rec []string, nDigits int) *dlc.Deal {
 	return deal
 }
 
-func initFirstParty() *Contractor {
+func initFirstParty(nRpoints int) *Contractor {
 	w, wdb := openWallet(pubpass1, walletDir, wallet1)
 	err := w.Unlock([]byte(privpass1))
 	errorHandler(err)
 	mgr, err := dlcmgr.Open(wdb)
 	errorHandler(err)
-	conds := loadDLCConditions()
+	conds := loadDLCConditions(nRpoints)
 	d := dlc.NewDLC(conds)
 	p := dlc.FirstParty
 	d.Addrs[p] = parseAddress(address1)
@@ -317,13 +317,13 @@ func initFirstParty() *Contractor {
 	}
 }
 
-func initSecondParty() *Contractor {
+func initSecondParty(nRpoints int) *Contractor {
 	w, wdb := openWallet(pubpass2, walletDir, wallet2)
 	err := w.Unlock([]byte(privpass2))
 	errorHandler(err)
 	mgr, err := dlcmgr.Open(wdb)
 	errorHandler(err)
-	conds := loadDLCConditions()
+	conds := loadDLCConditions(nRpoints)
 	p := dlc.SecondParty
 	d := dlc.NewDLC(conds)
 	d.Addrs[p] = parseAddress(address2)
@@ -356,7 +356,7 @@ func parseOraclePubkey() *oracle.PubkeySet {
 	return pubset
 }
 
-func loadDLCConditions() *dlc.Conditions {
+func loadDLCConditions(nRpoints int) *dlc.Conditions {
 	ftime := parseFixingTimeFlag()
 
 	// cast int to btcutil.Amount
@@ -368,7 +368,7 @@ func loadDLCConditions() *dlc.Conditions {
 	// TODO: confirm how to convert timestamp to locktime
 	lc := uint32(refundlc)
 
-	deals := loadDeals()
+	deals := loadDeals(nRpoints)
 
 	net := loadChainParams(bitcoinConf)
 	conds, err := dlc.NewConditions(
