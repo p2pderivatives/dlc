@@ -7,7 +7,7 @@ const fundTxBaseSize = int64(55)
 const fundTxInSize = int64(149)
 const fundTxOutSize = int64(31)
 const cetxSize = int64(345) // context execution tx size
-const closingTxSize = int64(216)
+const closingTxSize = int64(238)
 
 func (d *DLC) fundTxFeeBase() btcutil.Amount {
 	return d.Conds.FundFeerate.MulF64(float64(fundTxBaseSize))
