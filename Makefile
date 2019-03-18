@@ -11,7 +11,7 @@ clean_bitcoind:
 	./scripts/stop_bitcoind.sh &> /dev/null || true
 	rm -rf ./bitcoind/regtest
 
-generate_mocks:
+mocks:
 	./scripts/generate_mocks.sh
 
 cli:

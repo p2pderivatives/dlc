@@ -23,7 +23,7 @@ type Client interface {
 	ListUnspentMinMaxAddresses(
 		minConf, maxConf int, addrs []btcutil.Address,
 	) ([]btcjson.ListUnspentResult, error)
-	ImportAddress(address string) error
+	ImportAddressRescan(address string, account string, rescan bool) error
 	SendRawTransaction(tx *wire.MsgTx, allowHighFees bool) (*chainhash.Hash, error)
 	SendToAddress(address btcutil.Address, amount btcutil.Amount) (*chainhash.Hash, error)
 	Generate(numBlocks uint32) ([]*chainhash.Hash, error)

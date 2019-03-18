@@ -1,7 +1,9 @@
 #!/bin/bash
 
-conf="--conf ./conf/bitcoin.regtest.conf"
-walletdir="--walletdir ./wallets/regtest"
+net=${BITCOIN_NET:=regtest}
+conf="bitcoin.${net}.conf"
+conf="--conf ./conf/${conf}"
+walletdir="--walletdir ./wallets/${net}"
 create_address="dlccli wallets addresses create"
 alicep_params="--walletname alicep --pubpass pub_alicep"
 bobp_params="--walletname bobp --pubpass pub_bobp"
@@ -10,7 +12,7 @@ echo "Getting oracle's pubkey"
 oracle_pubkey_file="opub.json"
 dlccli oracle rpoints $conf \
     --oraclename "olivia" \
-    --rpoints 5 \
+    --rpoints 4 \
     --fixingtime "2019-03-30T12:00:00Z" \
 > $oracle_pubkey_file && cat $oracle_pubkey_file
 echo -e ""

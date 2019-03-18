@@ -59,13 +59,13 @@ func (_m *Client) GetBlockCount() (int64, error) {
 	return r0, r1
 }
 
-// ImportAddress provides a mock function with given fields: address
-func (_m *Client) ImportAddress(address string) error {
-	ret := _m.Called(address)
+// ImportAddressRescan provides a mock function with given fields: address, account, rescan
+func (_m *Client) ImportAddressRescan(address string, account string, rescan bool) error {
+	ret := _m.Called(address, account, rescan)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(address)
+	if rf, ok := ret.Get(0).(func(string, string, bool) error); ok {
+		r0 = rf(address, account, rescan)
 	} else {
 		r0 = ret.Error(0)
 	}
