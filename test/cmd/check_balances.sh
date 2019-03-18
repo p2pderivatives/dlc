@@ -1,6 +1,8 @@
 #!/bin/bash
 
-dlc_params="--conf ./conf/bitcoin.regtest.conf --walletdir ./wallets/regtest"
+net=${BITCOIN_NET:=regtest}
+conf="bitcoin.${net}.conf"
+dlc_params="--conf ./conf/${conf} --walletdir ./wallets/${net}"
 balance="dlccli wallets balance $dlc_params"
 alice_params="--walletname alice --pubpass pub_alice"
 alicep_params="--walletname alicep --pubpass pub_alicep"
