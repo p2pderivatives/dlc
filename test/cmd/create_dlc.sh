@@ -29,22 +29,25 @@ echo "change address2: $chaddr2"
 echo -e ""
 
 echo "Creating DLC"
-dlccli contracts create $conf $walletdir \
+cmd="dlccli contracts create $conf $walletdir \
         --oracle_pubkey $oracle_pubkey_file \
-        --fixingtime "2019-03-30T12:00:00Z" \
-        --fund1 20000000 \
-        --fund2 33333333 \
+        --fixingtime 2019-03-30T12:00:00Z \
+        --fund1 20000 \
+        --fund2 33333 \
         --address1 $addr1 \
         --address2 $addr2 \
         --change_address1 $chaddr1 \
         --change_address2 $chaddr2 \
         --fundtx_feerate 50 \
         --redeemtx_feerate 40 \
-        --deals_file ./deals.csv \
-        --refund_locktime 5000 \
-        --wallet1 "alice" \
-        --wallet2 "bob" \
-        --pubpass1 "pub_alice" \
-        --pubpass2 "pub_bob" \
-        --privpass1 "priv_alice" \
-        --privpass2 "priv_bob"
+        --deals_file ./test/cmd/deals_qa.csv \
+        --refund_locktime 1485200 \
+        --wallet1 alice \
+        --wallet2 bob \
+        --pubpass1 pub_alice \
+        --pubpass2 pub_bob \
+        --privpass1 priv_alice \
+        --privpass2 priv_bob"
+
+echo $cmd
+$cmd
