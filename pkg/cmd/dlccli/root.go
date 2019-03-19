@@ -78,7 +78,7 @@ func initLogger(cmd *cobra.Command) {
 }
 
 func logger() *zap.Logger {
-	return zap.L
+	return zap.L()
 }
 
 func loadChainParams(cfgPath string) *chaincfg.Params {

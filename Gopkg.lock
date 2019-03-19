@@ -15,7 +15,7 @@
     "wire",
   ]
   pruneopts = "UT"
-  revision = "306aecffea325e97f513b3ff0cf7895a5310651d"
+  revision = "aa6e0f35703c1438cc45860ddc0c3f6e6c633c93"
 
 [[projects]]
   branch = "master"
@@ -27,7 +27,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5be1c66caeb03381e4e7322eddfc0b06b26991ddba3ad39e009ccf67c20dfb18"
+  digest = "1:456e40540d5256454d0585141c0338946d552d5dec04ede6bded006509ec4c35"
   name = "github.com/btcsuite/btcutil"
   packages = [
     ".",
@@ -36,11 +36,11 @@
     "hdkeychain",
   ]
   pruneopts = "UT"
-  revision = "4c204d6978034c001714728401fcd63060d568b4"
+  revision = "3ac1210f4b38284536002486ef8a21ac54c14497"
 
 [[projects]]
   branch = "master"
-  digest = "1:9584908fbb932d91b9b69a6efa287d54fccae46de845485acbc35cab3a52df00"
+  digest = "1:bc7a6fd12a04e63052893e07e9b5921bf729b8de21d44019dc19994bfaf5fc25"
   name = "github.com/btcsuite/btcwallet"
   packages = [
     "internal/zero",
@@ -51,7 +51,7 @@
     "walletdb/migration",
   ]
   pruneopts = "UT"
-  revision = "68fc7c82e1315fdbb2095719ba280598dd4c1ace"
+  revision = "89ab2044f9625f827c347c5e6aec8f1739819e4b"
 
 [[projects]]
   branch = "master"
@@ -186,19 +186,27 @@
   version = "v1.3.2"
 
 [[projects]]
-  digest = "1:a8393910a5fd67130a7d73c9a696fa6d65ff272142621c6b7a388e523545f242"
+  digest = "1:60bf2a5e347af463c42ed31a493d817f8a72f102543060ed992754e689805d1a"
+  name = "go.uber.org/multierr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:c52caf7bd44f92e54627a31b85baf06a68333a196b3d8d241480a774733dcf8b"
   name = "go.uber.org/zap"
   packages = [
     ".",
     "buffer",
     "internal/bufferpool",
+    "internal/color",
     "internal/exit",
-    "internal/multierror",
     "zapcore",
   ]
   pruneopts = "UT"
-  revision = "72313cde80537dd4dc9b7b80eda6d7ed796c4232"
-  version = "v1.0.0-rc.1"
+  revision = "ff33455a0e382e8a81d14dd7c922020b6b5e7982"
+  version = "v1.9.1"
 
 [[projects]]
   branch = "master"
@@ -210,11 +218,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f36c7b9a36158e62ffe5d8b02d1b5955500c13106cdaeebf5323d88863cae96f"
+  digest = "1:5637b3b43405643229e55140bb3049dfa7d73957ba9ecfccc31cdadbfbe0b1f9"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "fead79001313d15903fb4605b4a1b781532cd93e"
+  revision = "6c81ef8f67ca3f42fc9cd71dfbd5f35b0c4b5771"
 
 [[projects]]
   digest = "1:a5000fcb87d763e1d410111d32f3e1d07a6f7913f7efdf68070636c407da54d1"
