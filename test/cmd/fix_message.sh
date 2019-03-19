@@ -1,7 +1,8 @@
 #!/bin/bash
 
-conf="--conf=`pwd`/conf/bitcoin.regtest.conf"
-oracle_params="--oraclename olivia --rpoints 5"
+net=${BITCOIN_NET:=regtest}
+conf="--conf ./conf/bitcoin.${net}.conf"
+oracle_params="--oraclename olivia --rpoints 4"
 fix_message="dlccli oracle messages fix"
 value=$1
 
