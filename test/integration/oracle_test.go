@@ -65,7 +65,8 @@ func contractorAsksOracleToCommit(
 	pubkeySet, err := o.PubkeySet(ftime)
 	assert.NoError(t, err)
 
-	err = c.DLCBuilder.SetOraclePubkeySet(&pubkeySet)
+	idxs := []int{0, 1} // use only weather and temperature
+	err = c.DLCBuilder.SetOraclePubkeySet(&pubkeySet, idxs)
 	assert.NoError(t, err)
 }
 

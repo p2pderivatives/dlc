@@ -40,9 +40,15 @@ func (d *DLC) PrepareOracleCommitments(
 }
 
 // SetOraclePubkeySet sets oracle's pubkey set
-func (b *Builder) SetOraclePubkeySet(pubset *oracle.PubkeySet) error {
-	err := b.Contract.PrepareOracleCommitments(
-		pubset.Pubkey, pubset.CommittedRpoints)
+func (b *Builder) SetOraclePubkeySet(
+	pubset *oracle.PubkeySet, idxs []int) error {
+
+	Rs := []*btcec.PublicKey{}
+	for _, idx := range idxs {
+		Rs = append(Rs, pubset.CommittedRpoints[idx])
+	}
+
+	err := b.Contract.PrepareOracleCommitments(pubset.Pubkey, Rs)
 	if err != nil {
 		return err
 	}
@@ -81,6 +87,7 @@ func (b *Builder) FixDeal(fm *oracle.SignedMsg, idxs []int) error {
 		msgs = append(msgs, fm.Msgs[idx])
 		sigs = append(sigs, fm.Sigs[idx])
 	}
+	fmt.Println(len(sigs))
 	return b.Contract.FixDeal(msgs, sigs)
 }
 

@@ -17,7 +17,7 @@ func TestSetOraclePubkeySet(t *testing.T) {
 	pubset := &oracle.PubkeySet{
 		Pubkey: pub, CommittedRpoints: []*btcec.PublicKey{R}}
 
-	err := b.SetOraclePubkeySet(pubset)
+	err := b.SetOraclePubkeySet(pubset, []int{0})
 	assert.NoError(t, err)
 	assert.NotNil(t, b.Contract.Oracle.Commitments[dID])
 }

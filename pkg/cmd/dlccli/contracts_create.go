@@ -67,11 +67,16 @@ func runCreateContract(cmd *cobra.Command, args []string) {
 	party2 := initSecondParty(nRpoints)
 	defer party2.Close()
 
+	idxs := []int{}
+	for idx := 0; idx < nRpoints; idx++ {
+		idxs = append(idxs, idx)
+	}
+
 	// Both set oracle's pubkey
 	logger().Debug("Setting oracle's pubkey")
-	err = party1.builder.SetOraclePubkeySet(pubset)
+	err = party1.builder.SetOraclePubkeySet(pubset, idxs)
 	errorHandler(err)
-	err = party2.builder.SetOraclePubkeySet(pubset)
+	err = party2.builder.SetOraclePubkeySet(pubset, idxs)
 	errorHandler(err)
 
 	logger().Debug("First party preparing public key and utxos")
