@@ -21,18 +21,12 @@ func (d *DLC) ContractExecutionTx(
 	party Contractor, deal *Deal, dID int) (*wire.MsgTx, error) {
 	cparty := counterparty(party)
 
-	tx, err := d.newRedeemTx()
-	if err != nil {
-		return nil, err
-	}
-
 	// out values
 	damt1 := deal.Amts[party]
 	damt2 := deal.Amts[cparty]
 
 	if damt1 == 0 {
-		errmsg := "Amount for a multisig script address shouldn't be zero"
-		return nil, newCETTakeNothingError(errmsg)
+		return d.ContractAbandonmentTx(party)
 	}
 
 	// txout1: contract execution script
@@ -59,6 +53,11 @@ func (d *DLC) ContractExecutionTx(
 		return nil, err
 	}
 
+	tx, err := d.newRedeemTx()
+	if err != nil {
+		return nil, err
+	}
+
 	outAmt1 := damt1 + d.closignTxFee()
 	txout1 := wire.NewTxOut(int64(outAmt1), pkScript)
 	tx.AddTxOut(txout1)
@@ -71,6 +70,31 @@ func (d *DLC) ContractExecutionTx(
 		}
 		tx.AddTxOut(txout2)
 	}
+	return tx, nil
+}
+
+// ContractAbandonmentTx creates tx that sends all fund to the counterparty
+// Note: This transaction isn't useful in the realworld, but is necessary for PoC
+func (d *DLC) ContractAbandonmentTx(p Contractor) (*wire.MsgTx, error) {
+	famt, err := d.fundAmount()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := d.newRedeemTx()
+	if err != nil {
+		return nil, err
+	}
+
+	// return closing tx fee to the counterparty
+	cp := counterparty(p)
+	exterFee := d.closignTxFee()
+	txout, err := d.distTxOut(cp, famt+exterFee)
+	if err != nil {
+		return nil, err
+	}
+	tx.AddTxOut(txout)
+
 	return tx, nil
 }
 
