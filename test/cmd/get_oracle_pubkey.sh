@@ -1,7 +1,7 @@
 #!/bin/bash
 
 conf="--conf=`pwd`/conf/bitcoin.regtest.conf"
-oracle_params="--oraclename olivia --rpoints 5"
+oracle_params="--oraclename olivia --rpoints 4"
 fix_message="dlccli oracle rpoints"
 
 $fix_message $conf $oracle_params \

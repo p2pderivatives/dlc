@@ -29,7 +29,13 @@ func contractorGetCommitmentsFromOracle(t *testing.T, c *Contractor, o *oracle.O
 	assert.NoError(t, err)
 
 	// contractor sets and prepare commitents on each deal
-	c.DLCBuilder.SetOraclePubkeySet(&pubkeySet)
+	nRpoints := len(pubkeySet.CommittedRpoints)
+	idxs := []int{}
+	for idx := 0; idx < nRpoints; idx++ {
+		idxs = append(idxs, idx)
+	}
+	err = c.DLCBuilder.SetOraclePubkeySet(&pubkeySet, idxs)
+	assert.NoError(t, err)
 }
 
 // A contractor sends pubkey and fund txins to the counterparty

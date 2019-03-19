@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/p2pderivatives/dlc/pkg/oracle"
@@ -24,18 +25,36 @@ func NewOracle(n int) *Oracle {
 
 // PrepareOracleCommitments prepares oracle's commitments for all deals
 func (d *DLC) PrepareOracleCommitments(
-	V *btcec.PublicKey, Rs []*btcec.PublicKey) {
+	V *btcec.PublicKey, Rs []*btcec.PublicKey) error {
 	for i, deal := range d.Conds.Deals {
+		if nR, nMsg := len(Rs), len(deal.Msgs); nR != nMsg {
+			msg := "Invalid message length. expected %d, given %d"
+			return fmt.Errorf(msg, nR, nMsg)
+		}
+
 		C := schnorr.CommitMulti(V, Rs, deal.Msgs)
 		d.Oracle.Commitments[i] = C
 	}
+
+	return nil
 }
 
 // SetOraclePubkeySet sets oracle's pubkey set
-func (b *Builder) SetOraclePubkeySet(pubset *oracle.PubkeySet) {
-	b.Contract.PrepareOracleCommitments(
-		pubset.Pubkey, pubset.CommittedRpoints)
+func (b *Builder) SetOraclePubkeySet(
+	pubset *oracle.PubkeySet, idxs []int) error {
+
+	Rs := []*btcec.PublicKey{}
+	for _, idx := range idxs {
+		Rs = append(Rs, pubset.CommittedRpoints[idx])
+	}
+
+	err := b.Contract.PrepareOracleCommitments(pubset.Pubkey, Rs)
+	if err != nil {
+		return err
+	}
+
 	b.Contract.Oracle.PubkeySet = pubset
+	return nil
 }
 
 // FixDeal fixes a deal by setting the signature provided by oracle
@@ -68,6 +87,7 @@ func (b *Builder) FixDeal(fm *oracle.SignedMsg, idxs []int) error {
 		msgs = append(msgs, fm.Msgs[idx])
 		sigs = append(sigs, fm.Sigs[idx])
 	}
+	fmt.Println(len(sigs))
 	return b.Contract.FixDeal(msgs, sigs)
 }
 

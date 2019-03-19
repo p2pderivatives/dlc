@@ -1,6 +1,7 @@
 #!/bin/bash
 
-dlc_params="--conf ./conf/bitcoin.regtest.conf --walletdir ./wallets/regtest"
+net=${BITCOIN_NET:=regtest}
+dlc_params="--conf ./conf/bitcoin.${net}.conf --walletdir ./wallets/${net}"
 alice_params="--walletname alice --pubpass pub_alice --privpass priv_alice"
 alice_personal_params="--walletname alicep --pubpass pub_alicep --privpass priv_alicep"
 alice_params="--walletname alice --pubpass pub_alice --privpass priv_alice"

@@ -38,8 +38,8 @@ func TestNewAddress(t *testing.T) {
 }
 
 func mockImportAddress(c *rpcmock.Client, err error) *rpcmock.Client {
-	c.On("ImportAddress",
-		mock.AnythingOfType("string"),
+	c.On("ImportAddressRescan",
+		mock.AnythingOfType("string"), "", false,
 	).Return(err)
 
 	return c

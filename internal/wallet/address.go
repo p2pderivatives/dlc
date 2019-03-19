@@ -52,7 +52,7 @@ func (w *Wallet) newAddress() (waddrmgr.ManagedAddress, error) {
 	addr := addrs[0]
 
 	// register address to bitcoind
-	err = w.rpc.ImportAddress(addr.Address().EncodeAddress())
+	err = w.rpc.ImportAddressRescan(addr.Address().EncodeAddress(), "", false)
 	if err != nil {
 		return nil, err
 	}
