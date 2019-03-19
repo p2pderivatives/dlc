@@ -10,6 +10,6 @@ bob_params="--walletname bob --pubpass pub_bob"
 
 addr_a=`$create_address $alice_params`
 addr_b=`$create_address $bob_params`
-$bitcoincli sendtoaddress $addr_a 10.0
-$bitcoincli sendtoaddress $addr_b 10.0
+$bitcoincli sendtoaddress $addr_a 0.20022035
+$bitcoincli sendtoaddress $addr_b 0.33355368
 $bitcoincli generate 1

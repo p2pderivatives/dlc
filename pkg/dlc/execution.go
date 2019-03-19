@@ -27,10 +27,10 @@ func (d *DLC) ContractExecutionTx(
 	}
 
 	// out values
-	amt1 := deal.Amts[party]
-	amt2 := deal.Amts[cparty]
+	damt1 := deal.Amts[party]
+	damt2 := deal.Amts[cparty]
 
-	if amt1 == 0 {
+	if damt1 == 0 {
 		errmsg := "Amount for a multisig script address shouldn't be zero"
 		return nil, newCETTakeNothingError(errmsg)
 	}
@@ -59,12 +59,13 @@ func (d *DLC) ContractExecutionTx(
 		return nil, err
 	}
 
-	txout1 := wire.NewTxOut(int64(amt1), pkScript)
+	outAmt1 := damt1 + d.closignTxFee()
+	txout1 := wire.NewTxOut(int64(outAmt1), pkScript)
 	tx.AddTxOut(txout1)
 
 	// txout2: counterparty's p2wpkh
-	if amt2 > 0 {
-		txout2, err := d.distTxOut(cparty, amt2)
+	if damt2 > 0 {
+		txout2, err := d.distTxOut(cparty, damt2)
 		if err != nil {
 			return nil, err
 		}

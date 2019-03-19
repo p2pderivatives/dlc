@@ -10,3 +10,7 @@ clean_bitcoind:
 
 generate_mocks:
 	./scripts/generate_mocks.sh
+
+cli:
+	dep ensure
+	go install ./cmd/dlccli
