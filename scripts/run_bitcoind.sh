@@ -32,7 +32,7 @@ function getblockcount() {
 height=$(getblockcount)
 echo "Block Height: ${height}"
 
-if [[ "$net" == "regetst" ]];then
+if [[ "$net" == "regtest" ]];then
   blocks=$((101 - $height))
   if [[ "$blocks" -gt "0" ]];then
     echo "Generating initial regtest blocks"
