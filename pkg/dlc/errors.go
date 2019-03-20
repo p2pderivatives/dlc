@@ -17,16 +17,6 @@ func newNotEnoughFeesError(in, fee btcutil.Amount) *NotEnoughFeesError {
 	return &NotEnoughFeesError{error: errors.New(msg)}
 }
 
-// CETTakeNothingError is an error for invalid CET
-// Doesn't make sense to create a CTE that takes nothing
-type CETTakeNothingError struct {
-	error
-}
-
-func newCETTakeNothingError(msg string) *CETTakeNothingError {
-	return &CETTakeNothingError{error: errors.New(msg)}
-}
-
 // NoFixedDealError is an error for a case when no deals has been fixed yet
 type NoFixedDealError struct {
 	error

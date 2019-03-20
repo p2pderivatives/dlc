@@ -87,7 +87,6 @@ func (b *Builder) FixDeal(fm *oracle.SignedMsg, idxs []int) error {
 		msgs = append(msgs, fm.Msgs[idx])
 		sigs = append(sigs, fm.Sigs[idx])
 	}
-	fmt.Println(len(sigs))
 	return b.Contract.FixDeal(msgs, sigs)
 }
 

@@ -74,9 +74,11 @@ func TestContractExecutionTxTakeNothing(t *testing.T) {
 	tx, err := b.Contract.ContractExecutionTx(b.party, deal, dID)
 
 	// asserions
-	assert.Nil(tx)
-	assert.NotNil(err)
-	assert.IsType(&CETTakeNothingError{}, err)
+	assert.NoError(err)
+	assert.NotNil(tx)
+	assert.Len(tx.TxIn, 1)
+	assert.Len(tx.TxOut, 1)
+	assert.True(tx.TxOut[0].Value > int64(damt2))
 }
 
 func TestSignedContractExecutionTx(t *testing.T) {
@@ -138,6 +140,51 @@ func TestSignedContractExecutionTx(t *testing.T) {
 	err = runFundScript(b1, tx1)
 	assert.Nil(err)
 	err = runFundScript(b2, tx2)
+	assert.Nil(err)
+}
+
+func TestSignedContractAbandonmentTx(t *testing.T) {
+	assert := assert.New(t)
+	var err error
+
+	// setup
+	b1, b2, dID, deal, err := setupContractorsUntilPubkeyExchange(0, 2)
+	if !assert.NoError(err) {
+		assert.FailNow(err.Error())
+	}
+
+	// oracle's commitment
+	privkey, C := test.RandKeys()
+	b1.Contract.Oracle.Commitments[dID] = C
+	b2.Contract.Oracle.Commitments[dID] = C
+
+	// exchange signs
+	sig1, err := b1.SignContractExecutionTx(deal, dID)
+	assert.NoError(err)
+	sig2, err := b2.SignContractExecutionTx(deal, dID)
+	assert.Nil(err)
+
+	err = b1.AcceptCETxSignatures([][]byte{sig2})
+	assert.Nil(err)
+	err = b2.AcceptCETxSignatures([][]byte{sig1})
+	assert.Nil(err)
+
+	// oracle fix message
+	osigs := [][]byte{privkey.D.Bytes()}
+	oFixedMsg := &oracle.SignedMsg{Msgs: deal.Msgs, Sigs: osigs}
+	err = b1.FixDeal(oFixedMsg, []int{0})
+	assert.NoError(err)
+
+	// create Abandonment tx
+	tx1, err := b1.SignedContractExecutionTx()
+	assert.NoError(err)
+
+	assert.Len(tx1.TxOut, 1)
+
+	fee := int64(closingTxSize) // fee rate is 1 satoshi / byte in test
+	assert.Equal(tx1.TxOut[0].Value, 2+fee)
+
+	err = runFundScript(b1, tx1)
 	assert.Nil(err)
 }
 
