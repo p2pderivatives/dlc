@@ -15,7 +15,7 @@ import (
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
-// var seed []byte
+var seed string
 var pubpass string
 var privpass string
 var walletName string
@@ -37,12 +37,11 @@ var walletsCreateCmd = func() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			chainParams := loadChainParams(bitcoinConf)
 
-			// TODO: give seed as command line parameter
-			seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
+			seedB, err := hex.DecodeString(seed)
 			errorHandler(err)
 
 			w, err := _wallet.CreateWallet(chainParams,
-				seed, []byte(pubpass), []byte(privpass),
+				seedB, []byte(pubpass), []byte(privpass),
 				walletDir, walletName)
 			errorHandler(err)
 
@@ -56,6 +55,8 @@ var walletsCreateCmd = func() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&seed, "seed", "", "seed of HD wallet")
+	cmd.MarkFlagRequired("seed")
 	cmd.Flags().StringVar(&walletDir, "walletdir", "", "directory path to store wallets")
 	cmd.MarkFlagRequired("walletdir")
 	cmd.Flags().StringVar(&walletName, "walletname", "", "wallet name")
