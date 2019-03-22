@@ -11,8 +11,16 @@ function getnetworkinfo() {
   $bitcoincli "${opts[@]}" getnetworkinfo &> /dev/null
   echo $?
 }
-if [[ "$(getnetworkinfo)" -ne "0" ]];then
+
+function run_bitcoind() {
   $bitcoind "${opts[@]}"
+  echo $?
+}
+
+if [[ "$(getnetworkinfo)" -ne "0" ]];then
+  if [[ "$(run_bitcoind)" -ne "0" ]];then
+    exit 1
+  fi
 
   # wait until accepting rpc requests
   while true;do
