@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcutil"
@@ -15,7 +16,8 @@ func (w *Wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 	if err != nil {
 		return nil, err
 	}
-	pub = (mAddr.(waddrmgr.ManagedPubKeyAddress)).PubKey()
+	mpka := mAddr.(waddrmgr.ManagedPubKeyAddress)
+	pub = mpka.PubKey()
 	return pub, err
 }
 
@@ -26,8 +28,45 @@ func (w *Wallet) NewAddress() (btcutil.Address, error) {
 		return nil, err
 	}
 
+	mpka := maddr.(waddrmgr.ManagedPubKeyAddress)
+	keyScope, path, _ := mpka.DerivationInfo()
+	fmt.Println(keyScope)
+	fmt.Println(path)
+
 	return maddr.Address(), nil
 }
+
+func (w *Wallet) ImportAddressByKeyPath(kp waddrmgr.DerivationPath) error {
+	scopedMgr, err := w.manager.FetchScopedKeyManager(waddrmgrKeyScope)
+	if err != nil {
+		return err
+	}
+
+	var addr waddrmgr.ManagedAddress
+	err = walletdb.View(w.db, func(tx walletdb.ReadTx) (e error) {
+		ns := tx.ReadBucket(waddrmgrNamespaceKey)
+		addr, e = scopedMgr.DeriveFromKeyPath(ns, kp)
+		return e
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// TODO: compare with given address
+	fmt.Println(addr)
+
+	return nil
+}
+
+// func (w *Wallet) ImportAddress(addr btcutil.Address) error {
+// 	scopedMgr, err := w.manager.FetchScopedKeyManager(waddrmgrKeyScope)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	return w.rpc.ImportAddressRescan(addr.EncodeAddress(), "", true)
+// }
 
 // newAddress returns a new ManagedAddress
 // NOTE: this function calls NextExternalAddresses to generate a ManagadAdddress.
