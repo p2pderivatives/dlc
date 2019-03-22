@@ -17,6 +17,9 @@ type Wallet interface {
 	// NewAddress creates a new address
 	NewAddress() (btcutil.Address, error)
 
+	// ImportAddress imports address
+	ImportAddress(btcutil.Address) error
+
 	// WitnessSignature returns witness signature for a given txin and pubkey
 	WitnessSignature(
 		tx *wire.MsgTx, idx int, amt btcutil.Amount, sc []byte, pub *btcec.PublicKey,

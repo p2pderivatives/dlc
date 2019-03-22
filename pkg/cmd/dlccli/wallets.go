@@ -15,11 +15,6 @@ import (
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 )
 
-var seed string
-var pubpass string
-var privpass string
-var walletName string
-
 // walletCmd represents the wallet command
 var walletsCmd = func() *cobra.Command {
 	cmd := &cobra.Command{
@@ -31,6 +26,11 @@ var walletsCmd = func() *cobra.Command {
 }
 
 var walletsCreateCmd = func() *cobra.Command {
+	var seed string
+	var pubpass string
+	var privpass string
+	var walletName string
+
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new wallet",
@@ -92,6 +92,9 @@ var addrsCmd = func() *cobra.Command {
 }
 
 var addrsCreateCmd = func() *cobra.Command {
+	var pubpass string
+	var walletName string
+
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create address",
@@ -114,7 +117,40 @@ var addrsCreateCmd = func() *cobra.Command {
 	return cmd
 }
 
+var addrsImportCmd = func() *cobra.Command {
+	var pubpass string
+	var walletName string
+	var address string
+
+	cmd := &cobra.Command{
+		Use:   "import",
+		Short: "Import address with derivation path",
+		Run: func(cmd *cobra.Command, args []string) {
+			w, _ := openWallet(pubpass, walletDir, walletName)
+			net := loadChainParams(bitcoinConf)
+			addr, err := btcutil.DecodeAddress(address, net)
+			errorHandler(err)
+			err = w.ImportAddress(addr)
+			errorHandler(err)
+		},
+	}
+
+	cmd.Flags().StringVar(&walletDir, "walletdir", "", "directory path to store wallets")
+	cmd.MarkFlagRequired("walletdir")
+	cmd.Flags().StringVar(&walletName, "walletname", "", "wallet name")
+	cmd.MarkFlagRequired("walletname")
+	cmd.Flags().StringVar(&pubpass, "pubpass", "", "public passphrase")
+	cmd.MarkFlagRequired("pubpass")
+	cmd.Flags().StringVar(&address, "address", "", "importing address")
+	cmd.MarkFlagRequired("address")
+
+	return cmd
+}
+
 var balanceCmd = func() *cobra.Command {
+	var pubpass string
+	var walletName string
+
 	cmd := &cobra.Command{
 		Use:   "balance",
 		Short: "Check total balance",
@@ -180,6 +216,9 @@ func init() {
 	addrsRootCmd := addrsCmd()
 	subRootCmd.AddCommand(addrsRootCmd)
 
-	// addresse create
+	// address create
 	addrsRootCmd.AddCommand(addrsCreateCmd())
+
+	// address import
+	addrsRootCmd.AddCommand(addrsImportCmd())
 }

@@ -13,38 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dlcid string
-var osigfile string
-var contractorType int
-
-func runFixDeal(cmd *cobra.Command, args []string) {
-	c := initCotractor()
-
-	osig := parseOracleSignedMsg()
-
-	idxs := []int{}
-	n := len(osig.Sigs)
-	for i := 0; i < n; i++ {
-		idxs = append(idxs, i)
-	}
-	err := c.builder.FixDeal(osig, idxs)
-	errorHandler(err)
-
-	cetx, err := c.builder.SignedContractExecutionTx()
-	errorHandler(err)
-
-	cetxHex, err := utils.TxToHex(cetx)
-	errorHandler(err)
-	fmt.Printf("\nCETx hex:\n%s\n", cetxHex)
-
-	cltx, err := c.builder.SignedClosingTx(cetx)
-	errorHandler(err)
-	cltxHex, err := utils.TxToHex(cltx)
-	errorHandler(err)
-	fmt.Printf("\nClosingTx hex:\n%s\n", cltxHex)
-}
-
-func initCotractor() *Contractor {
+func initCotractor(
+	dlcid, walletDir, walletName, pubpass, privpass string, contractorType int) *Contractor {
 	w, wdb := openWallet(pubpass, walletDir, walletName)
 	err := w.Unlock([]byte(privpass))
 	errorHandler(err)
@@ -69,7 +39,7 @@ func initCotractor() *Contractor {
 	}
 }
 
-func parseOracleSignedMsg() *oracle.SignedMsg {
+func parseOracleSignedMsg(osigfile string) *oracle.SignedMsg {
 	data, err := ioutil.ReadFile(osigfile)
 	errorHandler(err)
 
@@ -81,10 +51,44 @@ func parseOracleSignedMsg() *oracle.SignedMsg {
 }
 
 func initFixDealCmd() *cobra.Command {
+	var dlcid string
+	var osigfile string
+	var contractorType int
+	var walletName string
+	var pubpass string
+	var privpass string
+
 	var cmd = &cobra.Command{
 		Use:   "fix",
 		Short: "Fix deal",
-		Run:   runFixDeal,
+		Run: func(cmd *cobra.Command, args []string) {
+			c := initCotractor(
+				dlcid, walletDir, walletName, pubpass, privpass, contractorType)
+
+			osig := parseOracleSignedMsg(osigfile)
+
+			idxs := []int{}
+			n := len(osig.Sigs)
+			for i := 0; i < n; i++ {
+				idxs = append(idxs, i)
+			}
+			err := c.builder.FixDeal(osig, idxs)
+			errorHandler(err)
+
+			cetx, err := c.builder.SignedContractExecutionTx()
+			errorHandler(err)
+
+			cetxHex, err := utils.TxToHex(cetx)
+			errorHandler(err)
+			fmt.Printf("\nCETx hex:\n%s\n", cetxHex)
+
+			cltx, err := c.builder.SignedClosingTx(cetx)
+			errorHandler(err)
+			cltxHex, err := utils.TxToHex(cltx)
+			errorHandler(err)
+			fmt.Printf("\nClosingTx hex:\n%s\n", cltxHex)
+
+		},
 	}
 
 	cmd.Flags().StringVar(&dlcid, "dlcid", "", "Contract ID")
