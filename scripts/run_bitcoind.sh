@@ -12,22 +12,21 @@ function getnetworkinfo() {
   echo $?
 }
 
-function run_bitcoind() {
-  $bitcoind "${opts[@]}"
-  echo $?
-}
-
 if [[ "$(getnetworkinfo)" -ne "0" ]];then
-  if [[ "$(run_bitcoind)" -ne "0" ]];then
-    exit 1
-  fi
+  $bitcoind "${opts[@]}"
 
   # wait until accepting rpc requests
+  cnt=0
   while true;do
     if [[ "$(getnetworkinfo)" -eq "0" ]];then
       break
     fi
+    if [[ "$cnt" -gt "100" ]];then
+      echo "Failed to start bitcoind. see debug.log for more details."
+      exit 1
+    fi
     sleep 0.1
+    cnt=$(($cnt+1))
   done
 else
   echo "Bitcoind is already running"
