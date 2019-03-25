@@ -30,14 +30,16 @@ func (w *Wallet) NewAddress() (btcutil.Address, error) {
 	return maddr.Address(), nil
 }
 
+// ImportAddress imports an address by creating addresses until reaching to it
+// It stops after creating 100 addresses to avoid infinite loop
 func (w *Wallet) ImportAddress(addr btcutil.Address) error {
 	var maddr waddrmgr.ManagedAddress
-	walletdb.View(w.db, func(tx walletdb.ReadTx) (e error) {
+	err := walletdb.View(w.db, func(tx walletdb.ReadTx) (e error) {
 		ns := tx.ReadBucket(waddrmgrNamespaceKey)
 		maddr, e = w.manager.Address(ns, addr)
 		return e
 	})
-	if maddr != nil {
+	if err == nil && maddr != nil {
 		return nil
 	}
 
@@ -53,7 +55,7 @@ func (w *Wallet) ImportAddress(addr btcutil.Address) error {
 		}
 	}
 
-	return errors.New("Failed to import address")
+	return errors.New("failed to import address")
 }
 
 // newAddress returns a new ManagedAddress
