@@ -4,6 +4,9 @@ export BITCOIN_NET
 run_bitcoind:
 	./scripts/run_bitcoind.sh
 
+reindex_bitciond:
+	./scripts/run_bitcoind.sh --reindex
+
 stop_bitcoind:
 	./scripts/stop_bitcoind.sh
 

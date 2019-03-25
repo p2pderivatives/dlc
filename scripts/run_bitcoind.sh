@@ -12,6 +12,11 @@ function getnetworkinfo() {
   echo $?
 }
 
+while [[ "$#" -ne "0" ]];do
+  opts+=( ${1} )
+  shift
+done
+
 if [[ "$(getnetworkinfo)" -ne "0" ]];then
   $bitcoind "${opts[@]}"
 
