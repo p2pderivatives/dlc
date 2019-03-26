@@ -8,7 +8,7 @@
 
 ### Install CLI
 ```
-go get -u github.com/p2pderivatives/dlc/cmd/dlcli
+go get -u github.com/p2pderivatives/dlc/cmd/dlccli
 dlccli --help
 ```
 
