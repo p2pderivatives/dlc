@@ -30,6 +30,20 @@ func (_m *Wallet) Close() error {
 	return r0
 }
 
+// ImportAddress provides a mock function with given fields: _a0
+func (_m *Wallet) ImportAddress(_a0 btcutil.Address) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(btcutil.Address) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ListUnspent provides a mock function with given fields:
 func (_m *Wallet) ListUnspent() ([]btcjson.ListUnspentResult, error) {
 	ret := _m.Called()

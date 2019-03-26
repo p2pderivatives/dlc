@@ -15,7 +15,8 @@ func (w *Wallet) NewPubkey() (pub *btcec.PublicKey, err error) {
 	if err != nil {
 		return nil, err
 	}
-	pub = (mAddr.(waddrmgr.ManagedPubKeyAddress)).PubKey()
+	mpka := mAddr.(waddrmgr.ManagedPubKeyAddress)
+	pub = mpka.PubKey()
 	return pub, err
 }
 
@@ -27,6 +28,34 @@ func (w *Wallet) NewAddress() (btcutil.Address, error) {
 	}
 
 	return maddr.Address(), nil
+}
+
+// ImportAddress imports an address by creating addresses until reaching to it
+// It stops after creating 100 addresses to avoid infinite loop
+func (w *Wallet) ImportAddress(addr btcutil.Address) error {
+	var maddr waddrmgr.ManagedAddress
+	err := walletdb.View(w.db, func(tx walletdb.ReadTx) (e error) {
+		ns := tx.ReadBucket(waddrmgrNamespaceKey)
+		maddr, e = w.manager.Address(ns, addr)
+		return e
+	})
+	if err == nil && maddr != nil {
+		return nil
+	}
+
+	// generate new addresses until reaching to the target address
+	for i := 0; i < 100; i++ {
+		newAddr, err := w.NewAddress()
+		if err != nil {
+			return err
+		}
+
+		if newAddr.EncodeAddress() == addr.EncodeAddress() {
+			return nil
+		}
+	}
+
+	return errors.New("failed to import address")
 }
 
 // newAddress returns a new ManagedAddress
