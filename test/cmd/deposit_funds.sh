@@ -15,10 +15,8 @@ bob_params="--walletname bob --pubpass pub_bob"
 
 addr_a=`$create_address $alice_params`
 addr_b=`$create_address $bob_params`
-# $bitcoincli sendtoaddress $addr_a 0.20022035
-# $bitcoincli sendtoaddress $addr_b 0.33355368
-$bitcoincli sendtoaddress $addr_a 0.00042035
-$bitcoincli sendtoaddress $addr_b 0.00055368
+$bitcoincli sendtoaddress $addr_a 0.00011980
+$bitcoincli sendtoaddress $addr_b 0.00013313
 
 if [[ "${net}" == "regtest" ]];then
   $bitcoincli generate 1

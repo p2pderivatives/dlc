@@ -32,16 +32,16 @@ echo "Creating DLC"
 cmd="dlccli contracts create $conf $walletdir \
         --oracle_pubkey $oracle_pubkey_file \
         --fixingtime 2019-03-30T12:00:00Z \
-        --fund1 20000 \
-        --fund2 33333 \
+        --fund1 2000 \
+        --fund2 3333 \
         --address1 $addr1 \
         --address2 $addr2 \
         --change_address1 $chaddr1 \
         --change_address2 $chaddr2 \
-        --fundtx_feerate 50 \
-        --redeemtx_feerate 40 \
+        --fundtx_feerate 20 \
+        --redeemtx_feerate 20 \
         --deals_file ./test/cmd/deals_qa.csv \
-        --refund_locktime 1485200 \
+        --refund_locktime 569132 \
         --wallet1 alice \
         --wallet2 bob \
         --pubpass1 pub_alice \
