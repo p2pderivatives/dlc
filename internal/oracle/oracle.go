@@ -1,8 +1,6 @@
 package oracle
 
 import (
-	"fmt"
-
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcutil/hdkeychain"
@@ -18,10 +16,6 @@ type Oracle struct {
 
 // New creates a oracle
 func New(name string, params *chaincfg.Params, nRpoints int) (*Oracle, error) {
-	if isMainNet(params) {
-		return nil, fmt.Errorf("mainnet isn't supported yet")
-	}
-
 	// TODO: pass master key from outside
 	mKey, err := randMasterKey(name, params)
 	if err != nil {
