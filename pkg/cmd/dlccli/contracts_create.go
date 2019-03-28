@@ -310,7 +310,9 @@ func initFirstParty(nRpoints int) *Contractor {
 	d := dlc.NewDLC(conds)
 	p := dlc.FirstParty
 	d.Addrs[p] = parseAddress(address1)
-	d.ChangeAddrs[p] = parseAddress(changeAddress1)
+	if changeAddress1 != "" {
+		d.ChangeAddrs[p] = parseAddress(changeAddress1)
+	}
 	b := dlc.NewBuilder(p, w, d)
 
 	return &Contractor{
@@ -332,7 +334,9 @@ func initSecondParty(nRpoints int) *Contractor {
 	p := dlc.SecondParty
 	d := dlc.NewDLC(conds)
 	d.Addrs[p] = parseAddress(address2)
-	d.ChangeAddrs[p] = parseAddress(changeAddress2)
+	if changeAddress2 != "" {
+		d.ChangeAddrs[p] = parseAddress(changeAddress2)
+	}
 	b := dlc.NewBuilder(p, w, d)
 
 	return &Contractor{
