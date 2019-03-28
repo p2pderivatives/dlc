@@ -3,7 +3,6 @@ package dlc
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg"
@@ -224,7 +223,7 @@ func (d *DLC) ParsePublicKeys(pubs PublicKeys) error {
 func (d *DLC) Addresses() Addresses {
 	addrs := make(Addresses)
 	for c, addr := range d.Addrs {
-		if !reflect.ValueOf(addr).IsNil() {
+		if addr != nil {
 			addrs[c] = addr.EncodeAddress()
 		}
 	}
@@ -247,7 +246,7 @@ func (d *DLC) ParseAddresses(addrs Addresses) error {
 func (d *DLC) ChangeAddresses() Addresses {
 	addrs := make(Addresses)
 	for c, addr := range d.ChangeAddrs {
-		if !reflect.ValueOf(addr).IsNil() {
+		if addr != nil {
 			addrs[c] = addr.EncodeAddress()
 		}
 	}
