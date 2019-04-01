@@ -13,7 +13,7 @@ oracle_pubkey_file="opub.json"
 dlccli oracle rpoints $conf \
     --oraclename "olivia" \
     --rpoints 4 \
-    --fixingtime "2019-03-30T12:00:00Z" \
+    --fixingtime "2019-04-30T12:00:00Z" \
 > $oracle_pubkey_file && cat $oracle_pubkey_file
 echo -e ""
 
@@ -33,7 +33,7 @@ echo -e ""
 echo "Creating DLC"
 cmd="dlccli contracts create $conf $walletdir \
         --oracle_pubkey $oracle_pubkey_file \
-        --fixingtime 2019-03-30T12:00:00Z \
+        --fixingtime 2019-04-30T12:00:00Z \
         --fund1 2000 \
         --fund2 3333 \
         --address1 $addr1 \
@@ -41,7 +41,7 @@ cmd="dlccli contracts create $conf $walletdir \
         --fundtx_feerate 20 \
         --redeemtx_feerate 20 \
         --deals_file ./test/cmd/deals_qa.csv \
-        --refund_locktime 569132 \
+        --refund_locktime 574196 \
         --wallet1 alice \
         --wallet2 bob \
         --pubpass1 pub_alice \
