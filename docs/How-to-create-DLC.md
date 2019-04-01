@@ -61,7 +61,8 @@ dlccli wallets create \
     --walletdir ./wallets/regtest \
     --walletname "alice" \
     --privpass "priv_alice" \
-    --pubpass "pub_alice"
+    --pubpass "pub_alice" \
+    --seed "seed_alice" 
 
 Wallet created
 ```
@@ -74,7 +75,8 @@ dlccli wallets create \
     --walletdir ./wallets/regtest \
     --walletname "bob" \
     --privpass "priv_bob" \
-    --pubpass "pub_bob"
+    --pubpass "pub_bob" \
+    --seed "seed_bob" 
 
 Wallet created
 ```
