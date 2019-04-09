@@ -8,9 +8,9 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/p2pderivatives/dlc/pkg/script"
 	"github.com/p2pderivatives/dlc/pkg/wallet"
 	validator "gopkg.in/go-playground/validator.v9"
 )
@@ -108,7 +108,8 @@ func (d *DLC) distTxOut(
 		msg := fmt.Sprintf("missing destination address. %s", p)
 		return nil, errors.New(msg)
 	}
-	sc, err := script.P2WPKHpkScriptFromAddress(addr)
+
+	sc, err := txscript.PayToAddrScript(addr)
 	if err != nil {
 		return nil, err
 	}
