@@ -2,7 +2,7 @@
 
 net=${BITCOIN_NET:=regtest}
 conf="bitcoin.${net}.conf"
-conf="--conf ./conf/${conf}"
+conf_param="--conf ./conf/${conf}"
 walletdir="--walletdir ./wallets/${net}"
 create_address="dlccli wallets addresses create"
 alicep_params="--walletname alicep --pubpass pub_alicep"
@@ -10,7 +10,7 @@ bobp_params="--walletname bobp --pubpass pub_bobp"
 
 echo "Getting oracle's pubkey"
 oracle_pubkey_file="opub.json"
-dlccli oracle rpoints $conf \
+dlccli oracle rpoints $conf_param \
     --oraclename "olivia" \
     --rpoints 4 \
     --fixingtime "2019-04-30T12:00:00Z" \
@@ -18,18 +18,20 @@ dlccli oracle rpoints $conf \
 echo -e ""
 
 echo "Creating addresses"
-addr1=`$create_address $conf $walletdir $alicep_params`
-addr2=`$create_address $conf $walletdir $bobp_params`
+addr1=`bitcoin-cli -datadir=./bitcoind -conf=${conf} getnewaddress` # p2sh
+addr2=`bitcoin-cli -datadir=./bitcoind -conf=${conf} getnewaddress` # p2sh
+# addr1=$create_address $conf $walletdir $alicep_params`
+# addr2=`$create_address $conf $walletdir $bobp_params`
 echo "address1: $addr1"
 echo "address2: $addr2"
-chaddr1=`$create_address $conf $walletdir $alicep_params`
-chaddr2=`$create_address $conf $walletdir $bobp_params`
+chaddr1=`$create_address $conf_param $walletdir $alicep_params`
+chaddr2=`$create_address $conf_param $walletdir $bobp_params`
 echo "change address1: $chaddr1"
 echo "change address2: $chaddr2"
 echo -e ""
 
 echo "Creating DLC"
-cmd="dlccli contracts create $conf $walletdir \
+cmd="dlccli contracts create $conf_param $walletdir \
         --oracle_pubkey $oracle_pubkey_file \
         --fixingtime 2019-04-30T12:00:00Z \
         --fund1 2000 \
