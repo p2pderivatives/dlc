@@ -93,6 +93,7 @@ func SumSigs(signs [][]byte) []byte {
 		sb := new(big.Int).SetBytes(sign)
 		sum = new(big.Int).Add(sum, sb)
 	}
+	sum = new(big.Int).Mod(sum, btcec.S256().N)
 	return sum.Bytes()
 }
 
