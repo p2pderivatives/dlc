@@ -56,6 +56,12 @@ make stop_bitcoind BITCOIN_NET=testnet # or mainnet
 Alice
 
 ```
+dlccli wallets seed --conf ./conf/bitcoin.regtest.conf
+
+3100c6bd2a1fe93baaa49e7666bd5c3875a86fb7e417947281d757e7f8e6593f
+```
+
+```
 dlccli wallets create \
     --conf ./conf/bitcoin.regtest.conf \
     --walletdir ./wallets/regtest \
