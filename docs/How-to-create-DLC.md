@@ -2,7 +2,7 @@
 
 ## Setup
 ### Prerequisites
-* bitciond / bitcoin-cli have been installed
+* bitcoind / bitcoin-cli have been installed
 	* e.g. `brew install bitcoin` 
 * Contract conditions and deals have been decided
 
@@ -30,10 +30,10 @@ make run_bitcoind BITCOIN_NET=testnet
 make run_bitcoind BITCOIN_NET=mainnet
 ```
 
-To clean up regtest, run the following tasks and run bitciond again
+To clean up regtest, run the following tasks and run bitcoind again
 
 ```
-make stop_bitcoind && make clean_bitciond
+make stop_bitcoind && make clean_bitcoind
 ```
 
 if you want to stop bitconind of mainnet/testnet
