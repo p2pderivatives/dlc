@@ -3,7 +3,7 @@ package dlc
 import (
 	"errors"
 	"fmt"
-
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/p2pderivatives/dlc/pkg/script"
@@ -63,6 +63,18 @@ func (d *DLC) FundTx() (*wire.MsgTx, error) {
 			}
 			tx.AddTxOut(wire.NewTxOut(int64(change), sc))
 		}
+	}
+
+	if d.Conds.PremiumInfo != nil {
+		sc, err := txscript.PayToAddrScript(d.Conds.PremiumInfo.PremiumDestAddress)
+
+		if err != nil {
+			return nil, err
+		}
+
+		txout := wire.NewTxOut(int64(d.Conds.PremiumInfo.PremiumAmount), sc)
+
+		tx.AddTxOut(txout)
 	}
 
 	return tx, nil
@@ -149,8 +161,13 @@ func (b *Builder) FundAmt() btcutil.Amount {
 func (b *Builder) PrepareFundTx() error {
 	famt := b.FundAmt()
 	feeCommon := b.Contract.feeCommon()
+	premiumAmount := btcutil.Amount(0)
+	if premiumInfo := b.Contract.Conds.PremiumInfo; premiumInfo != nil && premiumInfo.PayingParty == b.party {
+		premiumAmount = premiumInfo.PremiumAmount
+	}
+
 	utxos, change, err := b.wallet.SelectUnspent(
-		famt+feeCommon,
+		famt+feeCommon+premiumAmount,
 		b.Contract.fundTxFeePerTxIn(),
 		b.Contract.fundTxFeePerTxOut())
 	if err != nil {

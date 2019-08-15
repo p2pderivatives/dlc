@@ -52,7 +52,7 @@ func contractorBetOnWeatherAndTemperature(t *testing.T, c *Contractor) time.Time
 	deals := []*dlc.Deal{deal1, deal2, deal3, deal4}
 	fixingTime := time.Now().AddDate(0, 0, 1)
 	net := &chaincfg.RegressionNetParams
-	conds, err := dlc.NewConditions(net, fixingTime, 1, 1, 1, 1, 1, deals)
+	conds, err := dlc.NewConditions(net, fixingTime, 1, 1, 1, 1, 1, deals, nil)
 	assert.NoError(t, err)
 	c.createDLCBuilder(conds, dlc.FirstParty)
 	return fixingTime
