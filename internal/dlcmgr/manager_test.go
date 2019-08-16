@@ -117,7 +117,7 @@ func testConditions() *dlc.Conditions {
 	deals := newDeals()
 
 	conds, _ := dlc.NewConditions(
-		net, ftime, famt1, famt2, feerate, feerate, refundlc, deals)
+		net, ftime, famt1, famt2, feerate, feerate, refundlc, deals, nil)
 
 	return conds
 }

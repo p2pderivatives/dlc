@@ -97,8 +97,25 @@ func mockSelectUnspent(
 
 func newTestConditions() *Conditions {
 	net := &chaincfg.RegressionNetParams
-	conds, _ := NewConditions(net, time.Now(), 1, 1, 1, 1, 1, []*Deal{})
+	conds, _ := NewConditions(net, time.Now(), 1, 1, 1, 1, 1, []*Deal{}, nil)
 	return conds
+}
+
+func newTestConditionsWithPremium() *Conditions {
+	info := newTestPremiumInfo()
+	net := &chaincfg.RegressionNetParams
+	conds, _ := NewConditions(net, time.Now(), 1, 1, 1, 1, 1, []*Deal{}, info)
+	return conds
+}
+
+func newTestPremiumInfo() *PremiumInfo {
+	address, _ := btcutil.DecodeAddress("bcrt1q8cjx85nnuqd92mq3xnfrqc4xxljhm5sjax55rk", &chaincfg.RegressionNetParams)
+	amount := btcutil.Amount(5000)
+	party := Contractor(0)
+
+	info, _ := NewPremiumInfo(address, amount, party)
+
+	return info
 }
 
 func setupBuilder(

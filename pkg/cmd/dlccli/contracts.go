@@ -21,6 +21,9 @@ func init() {
 	// create contract
 	contractsCmd.AddCommand(initCreateContractCmd())
 
+	// create contract with premium command
+	contractsCmd.AddCommand(initCreateContractWithPremiumCmd())
+
 	// subcommand deals
 	contractsCmd.AddCommand(dealsCmd)
 

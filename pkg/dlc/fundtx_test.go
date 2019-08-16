@@ -71,12 +71,12 @@ func TestPrepareFundTxNoChange(t *testing.T) {
 	assert.NotNil(utxos, "utxos")
 }
 
-func TestFundTx(t *testing.T) {
+func testFundTx(t *testing.T, conditions func() *Conditions, expectedOutLen int) {
 	assert := assert.New(t)
 
 	// init builders
-	b1 := setupBuilder(FirstParty, setupTestWallet, newTestConditions)
-	b2 := setupBuilder(SecondParty, setupTestWallet, newTestConditions)
+	b1 := setupBuilder(FirstParty, setupTestWallet, conditions)
+	b2 := setupBuilder(SecondParty, setupTestWallet, conditions)
 
 	// prep
 	stepPrepare(b1)
@@ -92,7 +92,17 @@ func TestFundTx(t *testing.T) {
 	tx, err := b1.Contract.FundTx()
 	assert.Nil(err)
 	assert.Len(tx.TxIn, 2)  // funds from both parties
-	assert.Len(tx.TxOut, 3) // 1 for reddemtx and 2 for changes
+	assert.Len(tx.TxOut, expectedOutLen)
+}
+
+func TestFundTxNoPremium(t *testing.T) {
+	expectedOutLen := 3  // 1 for redeemtx and 2 for changes
+	testFundTx(t, newTestConditions, expectedOutLen)
+}
+
+func TestFundTxWithPremium(t *testing.T) {
+	expectedOutLen := 4  // 1 for redeemtx, 2 for changes and one for premium
+	testFundTx(t, newTestConditionsWithPremium, expectedOutLen)
 }
 
 func TestRedeemFundTx(t *testing.T) {

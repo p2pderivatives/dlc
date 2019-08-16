@@ -37,6 +37,9 @@ var pubpass1 string
 var pubpass2 string
 var privpass1 string
 var privpass2 string
+var premiumDestAddress string
+var premiumAmount int
+var premiumPayingParty int
 
 // Contractor is contractor
 type Contractor struct {
@@ -221,6 +224,31 @@ func initCreateContractCmd() *cobra.Command {
 		Run:   runCreateContract,
 	}
 
+	registerCommonFlags(cmd)
+
+	return cmd
+}
+
+func initCreateContractWithPremiumCmd() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "createwithpremium",
+		Short: "Create contract with a premium",
+		Run:   runCreateContract,
+	}
+
+	registerCommonFlags(cmd)
+
+	cmd.Flags().StringVar(&premiumDestAddress, "premiumdestaddress", "", "Address to send the premium)")
+	cmd.MarkFlagRequired("premiumdestaddress")
+	cmd.Flags().IntVar(&premiumAmount, "premiumamount", 0, "Premium amount")
+	cmd.MarkFlagRequired("premiumamount")
+	cmd.Flags().IntVar(&premiumPayingParty, "premiumpayingparty", 0, "Party paying the premium (0 or 1)")
+	cmd.MarkFlagRequired("premiumpayingparty")
+
+	return cmd
+}
+
+func registerCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&fixingTime, "fixingtime", "", "Fixing time")
 	cmd.MarkFlagRequired("fixingtime")
 	cmd.Flags().IntVar(&fund1, "fund1", 0, "Fund amount of First party (satoshi)")
@@ -258,7 +286,6 @@ func initCreateContractCmd() *cobra.Command {
 	cmd.Flags().StringVar(&privpass2, "privpass2", "", "Privpass phrase of Second party's wallet")
 	cmd.MarkFlagRequired("privpass2")
 
-	return cmd
 }
 
 func loadDeals(nRpoints int) []*dlc.Deal {
@@ -373,6 +400,13 @@ func loadDLCConditions(nRpoints int) *dlc.Conditions {
 	famt2 := btcutil.Amount(fund2)
 	ffrate := btcutil.Amount(fundtxFeerate)
 	rfrate := btcutil.Amount(redeemtxFeerate)
+	var premiumInfo *dlc.PremiumInfo
+	var err error
+
+	if premiumAmount != 0 {
+		premiumInfo, err = loadPremiumInfo()
+		errorHandler(err)
+	}
 
 	// TODO: confirm how to convert timestamp to locktime
 	lc := uint32(refundlc)
@@ -381,8 +415,16 @@ func loadDLCConditions(nRpoints int) *dlc.Conditions {
 
 	net := loadChainParams(bitcoinConf)
 	conds, err := dlc.NewConditions(
-		net, ftime, famt1, famt2, ffrate, rfrate, lc, deals)
+		net, ftime, famt1, famt2, ffrate, rfrate, lc, deals, premiumInfo)
 	errorHandler(err)
 
 	return conds
+}
+
+func loadPremiumInfo() (*dlc.PremiumInfo, error) {
+	premiumDestAddressBtc := parseAddress(premiumDestAddress)
+	premiumAmountBtc := btcutil.Amount(premiumAmount)
+	payingParty := dlc.Contractor(premiumPayingParty)
+
+	return dlc.NewPremiumInfo(premiumDestAddressBtc, premiumAmountBtc, payingParty)
 }

@@ -57,6 +57,13 @@ type Conditions struct {
 	RedeemFeerate  btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
 	RefundLockTime uint32                        `validate:"required,gt=0"` // refund locktime (block height)
 	Deals          []*Deal                       `validate:"required,gt=0,dive,required"`
+	PremiumInfo    *PremiumInfo
+}
+
+type PremiumInfo struct {
+	PremiumDestAddress btcutil.Address			`validate:"required"`
+	PremiumAmount 	   btcutil.Amount			`validate:"required,gt=0"`
+	PayingParty        Contractor				`validate:"oneof= 0 1"`
 }
 
 // NewConditions creates a new DLC conditions
@@ -67,6 +74,7 @@ func NewConditions(
 	ffeerate, rfeerate btcutil.Amount, // fund feerate and redeem feerate
 	refundLockTime uint32, // refund locktime
 	deals []*Deal,
+	info *PremiumInfo,
 ) (*Conditions, error) {
 	famts := make(map[Contractor]btcutil.Amount)
 	famts[FirstParty] = famt1
@@ -80,12 +88,25 @@ func NewConditions(
 		RedeemFeerate:  rfeerate,
 		RefundLockTime: refundLockTime,
 		Deals:          deals,
+		PremiumInfo:   info,
 	}
 
 	// validate structure
 	err := validator.New().Struct(conds)
 
 	return conds, err
+}
+
+func NewPremiumInfo(premiumAddress btcutil.Address, premiumAmount btcutil.Amount, payingParty Contractor) (*PremiumInfo, error) {
+	premiumInfo := &PremiumInfo{
+		PremiumDestAddress: premiumAddress,
+		PremiumAmount:      premiumAmount,
+		PayingParty:        payingParty,
+	}
+
+	err := validator.New().Struct(premiumInfo)
+
+	return premiumInfo, err
 }
 
 // ContractID returns contract ID
