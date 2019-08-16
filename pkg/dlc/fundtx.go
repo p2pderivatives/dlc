@@ -159,8 +159,8 @@ func (b *Builder) PrepareFundTx() error {
 
 	// set utxos to DLC
 	_utxos := []*Utxo{}
-	for _, utxo := range utxos {
-		_utxos = append(_utxos, &utxo)
+	for i, _ := range utxos {
+		_utxos = append(_utxos, &utxos[i])
 	}
 	b.Contract.Utxos[b.party] = _utxos
 
@@ -188,8 +188,8 @@ func (b *Builder) AcceptUtxos(utxos []Utxo) error {
 	// TODO: validate if total amount is enough
 
 	_utxos := []*Utxo{}
-	for _, utxo := range utxos {
-		_utxos = append(_utxos, &utxo)
+	for i, _ := range utxos {
+		_utxos = append(_utxos, &utxos[i])
 	}
 	b.Contract.Utxos[cp] = _utxos
 
