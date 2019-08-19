@@ -3,59 +3,58 @@
 net=${BITCOIN_NET:=regtest}
 conf="bitcoin.${net}.conf"
 conf_param="--conf ./conf/${conf}"
-walletdir="--walletdir ./wallets/${net}"
-create_address="dlccli wallets addresses create"
-alicep_params="--walletname alicep --pubpass pub_alicep"
-bobp_params="--walletname bobp --pubpass pub_bobp"
 
 echo "Getting oracle's pubkey"
 oracle_pubkey_file="opub.json"
 dlccli oracle rpoints $conf_param \
     --oraclename "olivia" \
-    --rpoints 4 \
-    --fixingtime "2019-04-30T12:00:00Z" \
+    --rpoints $RPOINTS \
+    --fixingtime $FIX_TIME \
 > $oracle_pubkey_file && cat $oracle_pubkey_file
 echo -e ""
 
-echo "Creating addresses"
-addr1=`bitcoin-cli -datadir=./bitcoind -conf=${conf} getnewaddress` # p2sh
-addr2=`bitcoin-cli -datadir=./bitcoind -conf=${conf} getnewaddress` # p2sh
-# addr1=$create_address $conf $walletdir $alicep_params`
-# addr2=`$create_address $conf $walletdir $bobp_params`
-echo "address1: $addr1"
-echo "address2: $addr2"
-chaddr1=`$create_address $conf_param $walletdir $alicep_params`
-chaddr2=`$create_address $conf_param $walletdir $bobp_params`
-echo "change address1: $chaddr1"
-echo "change address2: $chaddr2"
-echo -e ""
+if [[ -z $PARTY1_TRANSFER_ADDRESS ]] || [[ -z $PARTY2_TRANSFER_ADDRESS ]];then
+	echo "Transfer addresses not set, source create_addresses.sh script before."
+	exit 1
+fi
+
+cmd="dlccli contracts"
+
+if [[ "$PREMIUM_AMOUNT" -ne 0 ]];then
+	cmd="$cmd createwithpremium \
+        --premiumamount $PREMIUM_AMOUNT \
+        --premiumdestaddress $PREMIUM_DEST_ADDRESS \
+        --premiumpayingparty $PREMIUM_PAYING_PARTY"
+else
+  cmd="$cmd create"
+fi
 
 echo "Creating DLC"
-cmd="dlccli contracts create $conf_param $walletdir \
+cmd="$cmd $conf_param \
+        --walletdir	$WALLET_DIR \
         --oracle_pubkey $oracle_pubkey_file \
-        --fixingtime 2019-04-30T12:00:00Z \
-        --fund1 2000 \
-        --fund2 3333 \
-        --address1 $addr1 \
-        --address2 $addr2 \
-        --change_address1 $chaddr1 \
-        --change_address2 $chaddr2 \
-        --fundtx_feerate 20 \
-        --redeemtx_feerate 20 \
-        --deals_file ./test/cmd/deals_qa.csv \
-        --refund_locktime 574196 \
-        --wallet1 alice \
-        --wallet2 bob \
-        --pubpass1 pub_alice \
-        --pubpass2 pub_bob \
-        --privpass1 priv_alice \
-        --privpass2 priv_bob"
+        --fixingtime $FIX_TIME \
+        --fund1 $PARTY1_FUND \
+        --fund2 $PARTY2_FUND \
+        --address1 $PARTY1_TRANSFER_ADDRESS \
+        --address2 $PARTY2_TRANSFER_ADDRESS \
+        --fundtx_feerate $FUND_TX_FEERATE \
+        --redeemtx_feerate $REDEEM_TX_FEERATE \
+        --deals_file $DEALS_FILE \
+        --refund_locktime $REFUND_LOCKTIME \
+        --wallet1 $PARTY1_WALLET_NAME \
+        --wallet2 $PARTY2_WALLET_NAME \
+        --pubpass1 $PARTY1_PUB_PASS \
+        --pubpass2 $PARTY2_PUB_PASS \
+        --privpass1 $PARTY1_PRIV_PASS \
+        --privpass2 $PARTY2_PRIV_PASS"
 
-if [[ "$chaddr1" -ne "" ]];then
-  cmd="$cmd --change_address1 $chaddr1"
+if [[ -n "$PARTY1_CHANGE_ADDRESS" ]];then
+  cmd="$cmd --change_address1 $PARTY1_CHANGE_ADDRESS"
 fi
-if [[ "$chaddr2" -ne "" ]];then
-  cmd="$cmd --change_address2 $chaddr2"
+
+if [[ -n "$PARTY2_CHANGE_ADDRESS" ]];then
+  cmd="$cmd --change_address2 $PARTY2_CHANGE_ADDRESS"
 fi
 
 echo $cmd
