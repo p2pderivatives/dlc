@@ -149,7 +149,13 @@ func (d *DLC) fundAmount() (btcutil.Amount, error) {
 func (d *DLC) DepositAmt(p Contractor) btcutil.Amount {
 	famt := d.Conds.FundAmts[p]
 	fee := d.feeByParty(p)
-	return famt + fee
+	premium := btcutil.Amount(0)
+
+	if d.Conds.PremiumInfo != nil && d.Conds.PremiumInfo.PayingParty == p {
+		premium = d.Conds.PremiumInfo.PremiumAmount
+	}
+
+	return famt + fee + premium
 }
 
 // FundAmt returns fund amount
