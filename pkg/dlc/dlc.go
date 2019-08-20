@@ -52,7 +52,7 @@ func NewDLC(conds *Conditions) *DLC {
 type Conditions struct {
 	NetParams      *chaincfg.Params              `validate:"required"`
 	FixingTime     time.Time                     `validate:"required,gt=time.Now()"`
-	FundAmts       map[Contractor]btcutil.Amount `validate:"required,dive,gt=0"`
+	FundAmts       map[Contractor]btcutil.Amount `validate:"required,funds,dive,gte=0"`
 	FundFeerate    btcutil.Amount                `validate:"required,gt=0"` // fund fee rate (satoshi per byte)
 	RedeemFeerate  btcutil.Amount                `validate:"required,gt=0"` // redeem fee rate (satoshi per byte)
 	RefundLockTime uint32                        `validate:"required,gt=0"` // refund locktime (block height)
@@ -92,7 +92,17 @@ func NewConditions(
 	}
 
 	// validate structure
-	err := validator.New().Struct(conds)
+	validate := validator.New()
+	_ = validate.RegisterValidation("funds", func(fl validator.FieldLevel) bool {
+		m, ok := fl.Field().Interface().(map[Contractor]btcutil.Amount)
+		if !ok {
+			return false
+		}
+
+		return m[0] != 0 || m[1] != 0
+	})
+
+	err := validate.Struct(conds)
 
 	return conds, err
 }

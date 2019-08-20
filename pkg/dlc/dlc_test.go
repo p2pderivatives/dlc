@@ -32,10 +32,14 @@ func TestCondions(t *testing.T) {
 
 	_, err = NewConditions(
 		net, ftime, 0, famt2, frate, rrate, lc, deals, nil)
-	assert.Error(err)
+	assert.NoError(err)
 
 	_, err = NewConditions(
 		net, ftime, famt1, 0, frate, rrate, lc, deals, nil)
+	assert.NoError(err)
+
+	_, err = NewConditions(
+		net, ftime, 0, 0, frate, rrate, lc, deals, nil)
 	assert.Error(err)
 
 	_, err = NewConditions(
