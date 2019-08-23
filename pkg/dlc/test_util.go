@@ -110,7 +110,7 @@ func newTestConditionsWithPremium() *Conditions {
 
 func newTestPremiumInfo() *PremiumInfo {
 	address, _ := btcutil.DecodeAddress("bcrt1q8cjx85nnuqd92mq3xnfrqc4xxljhm5sjax55rk", &chaincfg.RegressionNetParams)
-	amount := btcutil.Amount(5000)
+	amount := btcutil.Amount(300)
 	party := Contractor(0)
 
 	info, _ := NewPremiumInfo(address, amount, party)

@@ -2,14 +2,11 @@
 
 net=${BITCOIN_NET:=regtest}
 conf="bitcoin.${net}.conf"
-dlc_params="--conf ./conf/${conf} --walletdir ./wallets/${net}"
+wallet_dir=${WALLET_DIR:="./wallets/${net}"}
+dlc_params="--conf ./conf/${conf} --walletdir $wallet_dir"
 balance="dlccli wallets balance $dlc_params"
-alice_params="--walletname alice --pubpass pub_alice"
-alicep_params="--walletname alicep --pubpass pub_alicep"
-bob_params="--walletname bob --pubpass pub_bob"
-bobp_params="--walletname bobp --pubpass pub_bobp"
+party1_params="--walletname ${PARTY1_WALLET_NAME} --pubpass ${PARTY1_PUB_PASS}"
+party2_params="--walletname ${PARTY2_WALLET_NAME} --pubpass ${PARTY2_PUB_PASS}"
 
-echo "Alice (DLC Wallet): $($balance $alice_params)"
-echo "Alice (Personal Wallet): $($balance $alicep_params)"
-echo "Bob (DLC Wallet): $($balance $bob_params)"
-echo "Bob (Personal Wallet): $($balance $bobp_params)"
+echo "Party1 (DLC Wallet): $($balance $party1_params)"
+echo "Party2 (DLC Wallet): $($balance $party2_params)"

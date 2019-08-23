@@ -7,19 +7,19 @@
 * Contract conditions and deals have been decided
 
 ### Install CLI
-```
+```bash
 go get -u github.com/p2pderivatives/dlc/cmd/dlccli
 dlccli --help
 ```
 
 and go to source directory
 
-```
+```bash
 cd $GOPATH/src/github.com/p2pderivatives/dlc
 ```
 
 ### Run bitcoind
-```
+```bash
 # regtest mode
 make run_bitcoind 
 
@@ -32,19 +32,21 @@ make run_bitcoind BITCOIN_NET=mainnet
 
 To clean up regtest, run the following tasks and run bitcoind again
 
-```
+```bash
 make stop_bitcoind && make clean_bitcoind
 ```
 
 if you want to stop bitconind of mainnet/testnet
 
-```
+```bash
 make stop_bitcoind BITCOIN_NET=testnet # or mainnet
 ```
 
 
 ## Steps
+* [Set Up Parameters (optional)](#set-up-parameters-optional)
 * [Create Wallet](#create-wallet)
+* [Create Addresses](#create-addresses)
 * [Deposite funds and fees](#deposite-funds-and-fees)
 * [Create DLC](#create-dlc)
 * [Confirm Created Transactions](#confirm-created-transactions)
@@ -52,16 +54,39 @@ make stop_bitcoind BITCOIN_NET=testnet # or mainnet
 * [Fix Message](#fix-message)
 * [Execute Contract](#execute-contract)
 
-### Create Wallet
-Alice
+### Set Up Parameters (optional)
 
+If you wish to use the scripts to execute the different steps, you first need to set up the parameters.
+Edit the file `test/cmd/set_parameters.sh` and then source it using:
+
+```bash
+source ./test/cmd/set_parameters.sh
 ```
+The parameters are described in the file.
+
+(Note: it is important to use `source` and not execute it directly otherwise the environment variables won't be set.)
+
+### Create Wallet
+
+#### Using a script
+
+Run:
+```bash
+./test/cmd/create_wallets.sh
+```
+
+#### Using commands
+
+##### Create Alice's wallet
+
+```bash
 dlccli wallets seed --conf ./conf/bitcoin.regtest.conf
 
 3100c6bd2a1fe93baaa49e7666bd5c3875a86fb7e417947281d757e7f8e6593f
 ```
+Hereafter, replace "seed\_alice" with the hexadecimal number generated above.
 
-```
+```bash
 dlccli wallets create \
     --conf ./conf/bitcoin.regtest.conf \
     --walletdir ./wallets/regtest \
@@ -69,13 +94,19 @@ dlccli wallets create \
     --privpass "priv_alice" \
     --pubpass "pub_alice" \
     --seed "seed_alice" 
-
-Wallet created
 ```
 
-Bob
+#### Create Bob's wallet
+
+```bash
+dlccli wallets seed --conf ./conf/bitcoin.regtest.conf
+
+3100c6bd2a1fe93baaa49e7666bd5c3875a86fb7e417947281d757e7f8e6593f
 
 ```
+Hereafter, replace "seed\_bob" with the hexadecimal number generated above.
+
+```bash
 dlccli wallets create \
     --conf ./conf/bitcoin.regtest.conf \
     --walletdir ./wallets/regtest \
@@ -83,27 +114,28 @@ dlccli wallets create \
     --privpass "priv_bob" \
     --pubpass "pub_bob" \
     --seed "seed_bob" 
-
-Wallet created
 ```
 
-or run 
+### Create addresses
 
+#### Using a script
+
+Run:
+```bash
+source test/cmd/create_addresses.sh
 ```
-# regtest
-./test/cmd/create_wallets.sh
+(Note: again be careful to use `source` so that environment variables are properly set.)
 
-# testnet
-BITCOIN_NET=testnet ./test/cmd/create_wallets.sh
+#### Using commands
 
-# mainet
-BITCOIN_NET=mainnet ./test/cmd/create_wallets.sh
-```
+The DLC requires three addresses:
+* One base address to be used in the fund transaction,
+* One change address to be use to send the change from the fund transaction,
+* One transfer address to receive the output of the DLC.
 
-### Deposite Funds and Fees
-Alice
+For Alice use the following command to generate an address:
 
-```
+```bash
 dlccli wallets addresses create \
     --conf ./conf/bitcoin.regtest.conf \
     --walletdir ./wallets/regtest \
@@ -112,20 +144,51 @@ dlccli wallets addresses create \
 
 bcrt1q9679haanl0tax3wmylsdr62ft3xfc2yu9g74a4
 ```
+
+For Bob:
+
+```bash
+dlccli wallets addresses create \
+    --conf ./conf/bitcoin.regtest.conf \
+    --walletdir ./wallets/regtest \
+    --walletname "bob" \
+    --pubpass "pub_bob"
+
+bcrt1q08q2ks538wqzu2z766rpfh0cttvckz6jsluszm
 ```
+
+### Deposite Funds and Fees
+
+Note that the below steps are only valid for `regtest`. For `testnet` and `mainnet`, you will have to send the fund using your wallet to the base addresses generated in the previous step.
+
+#### Using a script
+
+Run:
+```bash
+./test/cmd/deposit_funds.sh
+./test/cmd/check_balances.sh
+```
+
+#### Using commands
+
+Alice
+
+```bash
 % bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf \
 	sendtoaddress bcrt1q9679haanl0tax3wmylsdr62ft3xfc2yu9g74a4 0.20022035
 	
 b4586b8acc967292f760c6217af91d7500cae217a67ec2e890a6e06913cb7986
 ```
-```
+
+If using `regtest`:
+```bash
 % bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf generate 1
 
 [
   "5d9aef6cae467233c6d263d85875e1db10b5dfc561e03b8c2d4924b2a5d7bd32"
 ]
 ```
-```
+```bash
 dlccli wallets balance \
 	--conf ./conf/bitcoin.regtest.conf \
 	--walletdir ./wallets/regtest \
@@ -137,29 +200,22 @@ dlccli wallets balance \
 
 Bob
 
-```
-dlccli wallets addresses create \
-    --conf ./conf/bitcoin.regtest.conf \
-    --walletdir ./wallets/regtest \
-    --walletname "bob" \
-    --pubpass "pub_bob"
-
-bcrt1q08q2ks538wqzu2z766rpfh0cttvckz6jsluszm
-```
-```
+```bash
 bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf \
 	sendtoaddress bcrt1q08q2ks538wqzu2z766rpfh0cttvckz6jsluszm 0.33355368
 	
 4181f0d52966edf374b7319d3975c41b61bdd53861b319a0e836f9c8df6f5e01
 ```
-```
+
+If using `regtest`:
+```bash
 bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf generate 1
 
 [
   "6f176d42b59de844d0f334ac06aafb348c20fec68ddbc0d6034de94f09fe9d71"
 ]
 ```
-```
+```bash
 dlccli wallets balance \
 	--conf ./conf/bitcoin.regtest.conf \
 	--walletdir ./wallets/regtest \
@@ -169,74 +225,68 @@ dlccli wallets balance \
 0.33355368
 ```
 
-or run
-
-```
-# regtest
-./test/cmd/deposit_funds.sh
-./test/cmd/check_balances.sh
-
-
-# testnet
-BITCOIN_NET=testnet ./test/cmd/deposit_funds.sh
-BITCOIN_NET=testnet ./test/cmd/check_balances.sh
-
-# mainet
-BITCOIN_NET=mainnet ./test/cmd/deposit_funds.sh
-BITCOIN_NET=mainnet ./test/cmd/check_balances.sh
-```
-
 ### Prepare Deals
 
-Prepare deals in csv format
+Prepare deals in csv format (or use the file included in the repository).
 
-```
+Example:
+```bash
 # value, distribution1(satoshi), distribution2(satoshi)
-% head ./test/cmd/deals.csv
-30001,11110,98028100
-30002,22220,98016990
-30003,33330,98005880
-30004,44430,97994770
-30005,55540,97983660
-30006,66650,97972560
-30007,77750,97961450
-30008,88860,97950350
-30009,99970,97939240
-30010,111070,97928140
+$ head ./test/cmd/deals.csv
+3000,53333333,0
+3001,53288903,44429
+3002,53244503,88829
+3003,53200133,133200
+3004,53155792,177541
+3005,53111480,221852
+3006,53067198,266134
+3007,53022946,310386
+3008,52978723,354609
+3009,52934529,398803
 ```
 
 ### Create DLC
-* Alice creates 2 addresses (transfer and change)
-* Bob creates 2 addresses (transfer and change)
-* Alice or Bob gets Oracle's pubkey
 
+#### Using a script
+
+Run
+
+```bash
+./test/cmd/create_dlc.sh
 ```
-% dlccli oracle rpoints \
+
+#### Using commands
+
+##### Generate R points for oracle
+
+(Note: fix time needs to be greater than current time.)
+
+```bash
+$ dlccli oracle rpoints \
     --conf ./conf/bitcoin.regtest.conf \
     --oraclename "olivia" \
     --rpoints 4 \
-    --fixingtime "2019-03-30T12:00:00Z" \
+    --fixingtime "2019-08-30T12:00:00Z" \
 > opub.json && cat opub.json
-
 {
-  "pubkey": "0268cc166f01171b411e0929243a26e40eb43cc0471b454624bdf76c6b5b2e678d",
+  "pubkey": "03a7844731daf02e1fa81249bafe7efe456375ebbcce927dd38e4e4232853dff15",
   "rpoints": [
-    "0246920d67ca40fbdad84f48a7a23ac763c45d3d990fef26a1b55df6a4b1b06098",
-    "020de6c68a99ce542bbd256070e0b00b8529ac7037b2ee72929b89cc0efc51f1ab",
-    "024afa3590955cb0d84b3f3a8a0ef2f419565d83a3d117a1421ed775ccaea6e716",
-    "024744439b417fb75f03b623dd02f5ffc6f4d1e9fe29e10ab1b8b25181e92baaae",
-    "02281c1b8e86f4845125584325f5cb3064b0bbf0aa6019a49d14833bc20219eeef"
-  ]
+    "021fc465868ef187ec26ce45407bfadd99839d4dc101f4c4526e2e9a17ad3e811b",
+    "02dc200c6cadcf320abbaeabb710a11d1da2e92cb42a1d7d7b19729a270ed51190",
+    "03602cf96e40bc6fd08df540cbcc841cce95625bd9d4588d7e8bc113d864c6a5a0",
+    "03e2ee1312646d0b22d526299ca293445ff4c242b0cae0aadd76fa1ccb0bd06880"]
 }
 ```
 
-* Alice and Bob create DLC
+##### Alice and Bob create DLC
 
-```
+(Note: hereafter `address1` and `address2` correspond to the transfer addresses generated in [create addresses](#create-addresses))
+
+```bash
 dlccli contracts create \
 	--conf ./bitcoind/bitcoin.regtest.conf \
 	--oracle_pubkey ./opub.json \
-	--fixingtime "2019-03-30T12:00:00Z" \
+	--fixingtime "2019-08-30T12:00:00Z" \
 	--fund1 2000000 \
 	--fund2 3333333 \
 	--address1 "bcrt1qjndkjszkzqpahdzz8kkc4hgxljlrlswp25cusr" \
@@ -267,26 +317,19 @@ RefundTx hex:
 0200000000010174a82a1e758db53eb4098431430c077cec437866bd9c9135af8d2122c6b1ac500000000000feffffff02e79bd60200000000160014498ef5355b87b188ff074b41ab36c9840171a0c3c859010300000000160014dfea60b1b9eeea759f0c988a89c854ad6959f7930400483045022100d81c1ea006d5f1c132339e0f789756ee354ed906a877d5169a81c44d0d36cb5c02207987d8c5433af70d830009b1213ebd20f382760207e0f702cf1a6281c4d811810147304402205b1fa0062f6c1c2993a6953bed4356e788a2fd69d2a3e05d34212496f2d9257f022034bf8abe5994b5ce8d61f91ea661aca58dcf679272c8a3aaa408638083105f010147522102923081bc3ff2e7c72969013265e99b1c4af1c59b6572f6f9734f632aeb7d319821037b8e3201837b670bafaf3fd3e5cb20e952e45cc406040eda27c32f192dad968c52ae88130000
 ```
 
-or run
+If one of the party pays a premium to the other use:
 
+```bash
+dlccli contracts createwithpremium ... --premiumamount 200000 --premiumdestaddress "bcrt1qvqpyv5nd49y9y7ndjdum5xy0qduttc7ehhw70e" --premiumpayingparty 0
 ```
-# regtest
-./test/cmd/create_dlc.sh
-
-# testnet
-BITCOIN_NET=testnet ./test/cmd/create_dlc.sh
-
-# mainet
-BITCOIN_NET=mainnet ./test/cmd/create_dlc.sh
-```
-
+(Note: the other parameters should be set similarly.)
 
 ### Confirm Created Transactions
 
 Fund Tx
 
-```
-% bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf decoderawtransaction \
+```bash
+$ bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf decoderawtransaction \
 020000000001028679cb1369e0a690e8c27ea617e2ca00751df97a21c660f7927296cc8a6b58b40000000000ffffffff015e6fdfc8f936e8a019b36138d5bd611bc475399d31b774f3ed6629d5f081410000000000ffffffff03972bd805000000002200208fc69883a973c042c3d636ba6bf16c6d6fcb8e0645b17c49593d4a81b032c0e351d8c338000000001600149f96e83381d6cdd2547c4ba356799f3dd98e8aa5701a993800000000160014b2148ad2f69392741d6aea79c3e9a5b66a95527f02483045022100960ec31876d5250b5c06ec674149ba5229df35553b9dff901195bde65eb572ea02202d2f2f1ef937be7c654d4dfb9942adcf658111adf6b84d9b84d5465ba5d2a2bc012103cb7a859433bbda5ab9d5a956e05e3c0bc32c93ef89333354dd26ab0ff5a4771602473044022043d3f1f92a68ba7cd79903e150502452a5ea7100c1e70f527b649479f070c0e902202588b70052348e5180bcc0491e4b4dc80f8001a7a176a3d7af09e2d98dfad638012103eb9a227fbae493c2d310cccdd9151d0b372be81ccc9665842279c17fd8cf50a800000000
 
 {
@@ -317,8 +360,8 @@ Fund Tx
 
 Refund Tx
 
-```
-% bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf decoderawtransaction \
+```bash
+$ bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf decoderawtransaction \
 0200000000010174a82a1e758db53eb4098431430c077cec437866bd9c9135af8d2122c6b1ac500000000000feffffff02e79bd60200000000160014498ef5355b87b188ff074b41ab36c9840171a0c3c859010300000000160014dfea60b1b9eeea759f0c988a89c854ad6959f7930400483045022100d81c1ea006d5f1c132339e0f789756ee354ed906a877d5169a81c44d0d36cb5c02207987d8c5433af70d830009b1213ebd20f382760207e0f702cf1a6281c4d811810147304402205b1fa0062f6c1c2993a6953bed4356e788a2fd69d2a3e05d34212496f2d9257f022034bf8abe5994b5ce8d61f91ea661aca58dcf679272c8a3aaa408638083105f010147522102923081bc3ff2e7c72969013265e99b1c4af1c59b6572f6f9734f632aeb7d319821037b8e3201837b670bafaf3fd3e5cb20e952e45cc406040eda27c32f192dad968c52ae88130000
 
 {
@@ -374,23 +417,40 @@ Refund Tx
 
 ### Send Fund Tx
 
-```
-% bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf sendrawtransaction \
+Run:
+```bash
+$ bitcoin-cli -conf=`pwd`/conf/bitcoin.regtest.conf sendrawtransaction \
 020000000001028679cb1369e0a690e8c27ea617e2ca00751df97a21c660f7927296cc8a6b58b40000000000ffffffff015e6fdfc8f936e8a019b36138d5bd611bc475399d31b774f3ed6629d5f081410000000000ffffffff03972bd805000000002200208fc69883a973c042c3d636ba6bf16c6d6fcb8e0645b17c49593d4a81b032c0e351d8c338000000001600149f96e83381d6cdd2547c4ba356799f3dd98e8aa5701a993800000000160014b2148ad2f69392741d6aea79c3e9a5b66a95527f02483045022100960ec31876d5250b5c06ec674149ba5229df35553b9dff901195bde65eb572ea02202d2f2f1ef937be7c654d4dfb9942adcf658111adf6b84d9b84d5465ba5d2a2bc012103cb7a859433bbda5ab9d5a956e05e3c0bc32c93ef89333354dd26ab0ff5a4771602473044022043d3f1f92a68ba7cd79903e150502452a5ea7100c1e70f527b649479f070c0e902202588b70052348e5180bcc0491e4b4dc80f8001a7a176a3d7af09e2d98dfad638012103eb9a227fbae493c2d310cccdd9151d0b372be81ccc9665842279c17fd8cf50a800000000
 
 50acb1c622218daf35919cbd667843ec7c070c43318409b43eb58d751e2aa874
 ```
-
+If in `regtest`, generate a block so that the transaction gets into the blockchain.
+```bash
+$ bitcoin-cli --conf=`pwd`/conf/bitcoin.regtest.conf generate 1
+[
+  "3394576eaf0d1fcc8158d03b7e6f72065acc235ecc67790250e895ca27f07d2f"
+]
+```
 
 ### Fix Message
 
+#### Using a script
+
+Run:
+
+```bash
+./test/cmd/fix_message.sh 3500
 ```
-% dlccli oracle messages fix \
+
+#### Using commands
+
+```bash
+$ dlccli oracle messages fix \
 	--conf ./conf/bitcoin.regtest.conf \
 	--oraclename "olivia" \
-	--rpoints 5 \
-	--fixingtime "2019-03-30T12:00:00Z" \
-	--fixingvalue 30099 \
+	--rpoints 4 \
+	--fixingtime "2019-08-30T12:00:00Z" \
+	--fixingvalue 3500 \
 > osig.json && cat osig.json
 
 {
@@ -401,27 +461,26 @@ Refund Tx
     "03fc4728ab8268c97a4aaf320bad3f78d6ee67ad42e37f861b759d5d6173a0ab",
     "fb9de05bf985a95ed99199004cb54bcc5b1504c41f5e77dd477bd662c30464e9"
   ],
-  "value": 30099
+  "value": 3500
 }
 ```
 
-or run
-
-```
-# regtest
-./test/cmd/fix_message.sh 3500
-
-# testnet
-BITCOIN_NET=testnet ./test/cmd/fix_message.sh 3500
-
-# mainet
-BITCOIN_NET=mainnet ./test/cmd/fix_message.sh 3500
-```
-
 ### Execute Contract
- 
+
+#### Using a script
+
+Run:
+
+```bash
+./test/cmd/fix_deal.sh 68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
 ```
-% dlccli contracts deals fix \
+
+where the parameter is the id of the contract generated in [create dlc](create-dlc).
+ 
+#### Using commands
+
+```bash
+$ dlccli contracts deals fix \
 	--conf ./conf/bitcoin.regtest.conf \
 	--dlcid 68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
 	--oracle_sig ./osig.json \
@@ -439,17 +498,4 @@ ClosingTx hex
 020000000001011ede1f49a28f214a69c4ba7da872c14f55aca6b281f703b2fcc45eee3a55abae0000000000ffffffff01a60900000000000016001480ea81624d813b845b4d61c562c7a3f555be51bc03483045022100c70fd68cb4fba78865d27c83976e1f31b8639808d9e17d0465c3032065c66485022040c795dea6c3b6802c4112436971d5a672640646bdbee3a1928bc2b1e9b7bf070101014d632103d554fe2c8c425ee13e91a06ea4d47daae597c7eebab643f178147738c2c2792767029000b27521031179e5d1c0f3faad53e9d5f3760705e3d006655e3ad0a5a32afe73639dc50dab68ac00000000
 ```
 
-or run
-
-```
-# regtest
-./test/cmd/fix_deal.sh 68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
-
-# testnet
-BITCOIN_NET=testnet ./test/cmd/fix_deal.sh 68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
-
-# mainet
-BITCOIN_NET=mainnet ./test/cmd/fix_deal.sh 68a0c4026c76800c33bd5614fec7b3402bf55067dc2670576f146ac26a98b692
-```
-
-send the created CETx and ClosingTx to the network using bitcoin-cli as did for fund tx
+Finally send the created CETx and ClosingTx to the network using bitcoin-cli as it was done in [send fund transaction](#send-fund-tx).

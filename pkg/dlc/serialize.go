@@ -28,6 +28,14 @@ type ConditionsJSON struct {
 	RedeemFeerate  int                `json:"redeem_feerate"`
 	RefundLockTime uint32             `json:"refund_locktime"`
 	Deals          []*DealJSON        `json:"deals"`
+	PremiumInfo    *PremiumInfoJSON   `json:"premium_info"`
+}
+
+// PremiumInfoJSON is PremiumInfo in JSON format
+type PremiumInfoJSON struct {
+	PremiumDestAddress string		`json:"premium_dest_address"`
+	PremiumAmount 	   int			`json:"premium_amount"`
+	PayingParty        int			`json:"paying_party"`
 }
 
 // DealJSON is DLC deals in JSON format
@@ -72,7 +80,20 @@ func (conds *Conditions) MarshalJSON() ([]byte, error) {
 		RedeemFeerate:  int(conds.RedeemFeerate),
 		RefundLockTime: conds.RefundLockTime,
 		Deals:          dealsToJSON(conds.Deals),
+		PremiumInfo:    premiumInfoToJSON(conds.PremiumInfo),
 	})
+}
+
+func premiumInfoToJSON(premiumInfo *PremiumInfo) *PremiumInfoJSON {
+	if premiumInfo == nil {
+		return nil
+	}
+
+	return &PremiumInfoJSON{
+		PremiumDestAddress: premiumInfo.PremiumDestAddress.EncodeAddress(),
+		PremiumAmount:      int(premiumInfo.PremiumAmount),
+		PayingParty:        int(premiumInfo.PayingParty),
+	}
 }
 
 func amtsToJSON(amts map[Contractor]btcutil.Amount) map[Contractor]int {
@@ -151,7 +172,30 @@ func (conds *Conditions) UnmarshalJSON(data []byte) error {
 	conds.RefundLockTime = condsJSON.RefundLockTime
 	conds.Deals = jsonToDeals(condsJSON.Deals)
 
-	return nil
+	conds.PremiumInfo, err = jsonToPremiumInfo(condsJSON.PremiumInfo, net)
+
+	return err
+}
+
+func jsonToPremiumInfo(premiumInfoJSON *PremiumInfoJSON, net *chaincfg.Params) (*PremiumInfo, error) {
+	if premiumInfoJSON == nil {
+		return nil, nil
+	}
+
+	address, err := btcutil.DecodeAddress(premiumInfoJSON.PremiumDestAddress, net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	amount := btcutil.Amount(premiumInfoJSON.PremiumAmount)
+	payingParty := Contractor(premiumInfoJSON.PayingParty)
+
+	return &PremiumInfo{
+		PremiumDestAddress: address,
+		PremiumAmount:      amount,
+		PayingParty:        payingParty,
+	}, nil
 }
 
 // InvalidNetworkNameError is used when invalid network name is given

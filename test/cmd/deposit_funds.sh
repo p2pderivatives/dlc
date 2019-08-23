@@ -6,17 +6,16 @@ if [[ "$net" == "maintest" ]];then
   exit 1
 fi
 
+if [[ -z $PARTY1_BASE_ADDRESS ]] || [[ -z $PARTY2_BASE_ADDRESS ]];then
+	echo "Base addresses not set, source create_addresses.sh script before."
+	exit 1
+fi
+
 conf="bitcoin.${net}.conf"
 bitcoincli="bitcoin-cli -conf=`pwd`/conf/${conf}"
-dlc_params="--conf ./conf/${conf} --walletdir ./wallets/${net}"
-create_address="dlccli wallets addresses create $dlc_params"
-alice_params="--walletname alice --pubpass pub_alice"
-bob_params="--walletname bob --pubpass pub_bob"
 
-addr_a=`$create_address $alice_params`
-addr_b=`$create_address $bob_params`
-$bitcoincli sendtoaddress $addr_a 0.35
-$bitcoincli sendtoaddress $addr_b 0.4
+$bitcoincli sendtoaddress $PARTY1_BASE_ADDRESS 0.35
+$bitcoincli sendtoaddress $PARTY2_BASE_ADDRESS 0.4
 
 if [[ "${net}" == "regtest" ]];then
   $bitcoincli generate 1
