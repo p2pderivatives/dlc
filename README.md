@@ -19,7 +19,7 @@ You can read more details in [this article](https://medium.com/@gertjaap/discree
 ### Communication between 3 parties
 [This sample code](https://github.com/p2pderivatives/dlc/blob/master/test/integration/dlc_test.go) demonstrates how 3 parties communicate. An oracle Olivia publishes a n-digit number lottery result everyday, and Alice and Bob bet on the lottery.
 
-In the tese, the following scenarios are tested.
+In the these, the following scenarios are tested.
 
 * Alice and Bob make contracts and execute a fixed one.
 * Oracle does't publish a valid message and sign, and contractors refund their funding transactions.
